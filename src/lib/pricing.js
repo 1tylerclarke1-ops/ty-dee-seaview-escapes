@@ -91,20 +91,22 @@ export function calculatePrice(arrival, nights) {
   if (!season) return null;
   const wknd = weekendNightlyRate(season);
   const wd = season.nightly_rate;
-  const groups = [];
+  let weekendCount = 0;
+  let weekdayCount = 0;
   let nightsSubtotal = 0;
   for (let i = 0; i < nights; i++) {
     const nightDate = addDays(arrival, i);
-    const type = isWeekendNight(nightDate) ? "weekend" : "weekday";
-    const rate = type === "weekend" ? wknd : wd;
-    nightsSubtotal += rate;
-    const last = groups[groups.length - 1];
-    if (last && last.type === type) {
-      last.count += 1;
+    if (isWeekendNight(nightDate)) {
+      weekendCount += 1;
+      nightsSubtotal += wknd;
     } else {
-      groups.push({ rate, count: 1, type });
+      weekdayCount += 1;
+      nightsSubtotal += wd;
     }
   }
+  const groups = [];
+  if (weekendCount) groups.push({ rate: wknd, count: weekendCount, type: "weekend" });
+  if (weekdayCount) groups.push({ rate: wd, count: weekdayCount, type: "weekday" });
   const shortBreakSupplement =
     nights < 7 ? PRICING_SETTINGS.short_break_supplement : 0;
   return {
@@ -133,6 +135,65 @@ export function firstArrivalInSeason(season, dayOfWeek) {
 
 // Format a number as pounds sterling, e.g. £1,070.
 export const gbp = (n) => `£${n.toLocaleString("en-GB")}`;
+
+// ── Booking rules ─────────────────────────────────────────────────────────
+// Data-driven stay lengths per arrival day. rule_type "fixed_or_multiples"
+// means: a day's allowed lengths = its fixed lengths, unioned with multiples
+// of each value in multiple_of, up to max_length. A season may override both
+// the allowed lengths and the arrival days. No stay length or weekday is
+// hard-coded in the logic below — only in this config.
+// JS getDay: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat.
+export const BOOKING_RULES = {
+  rule_type: "fixed_or_multiples",
+  multiple_of: [7],
+  max_length: 28,
+  by_arrival_day: {
+    1: { fixed: [4] },
+    5: { fixed: [3] },
+    6: { fixed: [] },
+  },
+  season_overrides: {
+    "Peak summer": { allowed_lengths: [7, 14, 21, 28], arrival_days: [1, 5, 6] },
+  },
+};
+
+function multiplesUpToMax(multipleOf, maxLength) {
+  const out = [];
+  for (const base of multipleOf) {
+    for (let n = base; n <= maxLength; n += base) {
+      if (!out.includes(n)) out.push(n);
+    }
+  }
+  return out.sort((a, b) => a - b);
+}
+
+export function seasonOverrideForDate(date) {
+  const season = seasonForDate(date);
+  if (!season) return null;
+  return BOOKING_RULES.season_overrides?.[season.name] || null;
+}
+
+export function allowedLengthsForArrival(date) {
+  const season = seasonForDate(date);
+  if (!season) return [];
+  const override = BOOKING_RULES.season_overrides?.[season.name];
+  if (override) {
+    if (!override.arrival_days.includes(date.getDay())) return [];
+    return [...override.allowed_lengths].sort((a, b) => a - b);
+  }
+  const dayRule = BOOKING_RULES.by_arrival_day[date.getDay()];
+  if (!dayRule) return [];
+  const combined = [
+    ...dayRule.fixed,
+    ...multiplesUpToMax(BOOKING_RULES.multiple_of, BOOKING_RULES.max_length),
+  ];
+  return [...new Set(combined)].sort((a, b) => a - b);
+}
+
+export function isArrivalDay(date) {
+  if (!isWithinBookingWindow(date)) return false;
+  return allowedLengthsForArrival(date).length > 0;
+}
 
 // Validate that seasons are contiguous and non-overlapping.
 export function validateSeasons() {

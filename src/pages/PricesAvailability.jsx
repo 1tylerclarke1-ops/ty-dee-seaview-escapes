@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { Image } from "@/components/ui/image";
-import StayCalendar, { stayForArrival, isParkClosedPeriod } from "@/components/StayCalendar";
-import { PRICING_SETTINGS, calculatePrice, firstArrivalInSeason, gbp, SEASON_START, SEASON_END } from "@/lib/pricing";
+import StayCalendar, { isParkClosedPeriod } from "@/components/StayCalendar";
+import { PRICING_SETTINGS, calculatePrice, firstArrivalInSeason, gbp, SEASON_START, SEASON_END, allowedLengthsForArrival } from "@/lib/pricing";
 
 const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
 const BANNER = `${BASE}/eba602fdb_View.jpg`;
@@ -23,8 +23,17 @@ const RATES = PRICING_SETTINGS.seasons.map((season) => {
 
 export default function PricesAvailability() {
   const [arrival, setArrival] = useState(null);
-  const stay = arrival ? stayForArrival(arrival) : null;
+  const [length, setLength] = useState(null);
+  const allowedLengths = arrival ? allowedLengthsForArrival(arrival) : [];
   const winter = arrival && isParkClosedPeriod(arrival);
+  const departure = arrival && length ? addDays(arrival, length) : null;
+  const breakdown = arrival && length ? calculatePrice(arrival, length) : null;
+
+  const handleSelectArrival = (d) => {
+    setArrival(d);
+    const allowed = allowedLengthsForArrival(d);
+    setLength(allowed[0]);
+  };
 
   return (
     <div>
@@ -41,7 +50,7 @@ export default function PricesAvailability() {
         <div className="relative h-full flex flex-col justify-end max-w-[1400px] mx-auto w-full px-6 md:px-10 pb-8">
           <h1 className="text-white text-4xl md:text-5xl">Prices & Availability</h1>
           <p className="mt-2 text-white/80 max-w-xl text-sm md:text-base">
-            Two stay lengths, a full twelve-month season. Friday arrivals are three nights; Monday arrivals are four. Every other date is the sea's.
+            Two stay lengths, a full twelve-month season. Friday arrivals are three nights; Monday arrivals four. Every other date is the sea's.
           </p>
         </div>
       </section>
@@ -82,37 +91,68 @@ export default function PricesAvailability() {
               <p className="text-sm text-muted-foreground mb-6">
                 Stay-block calendar · {SEASON_START} → {SEASON_END}
               </p>
-              <StayCalendar selectedArrival={arrival} onSelect={setArrival} />
+              <StayCalendar selectedArrival={arrival} selectedLength={length} onSelect={handleSelectArrival} />
             </div>
           </div>
           <div className="md:col-span-4">
             <div className="sticky top-28 bg-surface border border-line p-6 md:p-8">
               <p className="text-sm text-muted-foreground">Your selection</p>
-              {stay ? (
+              {!arrival ? (
+                <p className="mt-5 text-ink-soft text-sm">
+                  Select a highlighted arrival date. Available stay lengths will appear here.
+                </p>
+              ) : (
                 <div className="mt-5">
-                  <p className="text-2xl text-ink">{stay.label}</p>
-                  <p className="text-sm text-muted-foreground mt-1 tnum">
+                  <p className="text-sm text-muted-foreground tnum">
                     Arriving {format(arrival, "EEE d MMM yyyy")}
                   </p>
-                  {winter && (
-                    <div role="alert" aria-live="assertive" className="mt-5 bg-ink text-white p-4">
-                      <p className="text-xs tracking-wide uppercase text-signal">Winter residency</p>
-                      <p className="mt-2 text-sm text-white/90">
-                        Park facilities are closed from 1 November. You are booking a peaceful, self-catered retreat.
-                      </p>
-                    </div>
+                  {allowedLengths.length === 0 ? (
+                    <p className="mt-3 text-ink-soft text-sm">No stays available from this date.</p>
+                  ) : (
+                    <>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {allowedLengths.map((n) => (
+                          <button
+                            key={n}
+                            onClick={() => setLength(n)}
+                            className={`px-4 py-2 text-sm tnum min-h-[44px] transition-colors ${
+                              length === n
+                                ? "bg-sea text-white"
+                                : "bg-surface border border-line text-ink-soft hover:border-sea hover:text-sea"
+                            }`}
+                          >
+                            {n} nights
+                          </button>
+                        ))}
+                      </div>
+                      {length && breakdown && (
+                        <div className="mt-5">
+                          <div className="flex items-baseline justify-between">
+                            <span className="text-xs tracking-wide uppercase text-muted-foreground">Total</span>
+                            <span className="text-2xl text-ink tnum">{gbp(breakdown.total)}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 tnum">
+                            {length} nights · departing {format(departure, "EEE d MMM yyyy")}
+                          </p>
+                        </div>
+                      )}
+                      {winter && (
+                        <div role="alert" aria-live="assertive" className="mt-5 bg-ink text-white p-4">
+                          <p className="text-xs tracking-wide uppercase text-signal">Winter residency</p>
+                          <p className="mt-2 text-sm text-white/90">
+                            Park facilities are closed from 1 November. You are booking a peaceful, self-catered retreat.
+                          </p>
+                        </div>
+                      )}
+                      <Link
+                        to={`/book?arrival=${format(arrival, "yyyy-MM-dd")}&nights=${length}`}
+                        className="mt-6 flex items-center justify-center bg-sea text-white px-6 py-4 text-sm font-medium hover:bg-sea-deep transition-colors min-h-[44px]"
+                      >
+                        Continue to Book →
+                      </Link>
+                    </>
                   )}
-                  <Link
-                    to="/book"
-                    className="mt-6 flex items-center justify-center bg-sea text-white px-6 py-4 text-sm font-medium hover:bg-sea-deep transition-colors min-h-[44px]"
-                  >
-                    Continue to Book →
-                  </Link>
                 </div>
-              ) : (
-                <p className="mt-5 text-ink-soft text-sm">
-                  Select a highlighted arrival date. Only Fridays (3 nights) and Mondays (4 nights) within season are bookable.
-                </p>
               )}
 
               <div className="hairline mt-8" />

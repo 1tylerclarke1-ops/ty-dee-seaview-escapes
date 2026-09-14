@@ -6,11 +6,7 @@
 export { SEASON_START, SEASON_END } from "@/lib/pricing";
 
 // JS getDay(): 0 = Sunday, 1 = Monday, 5 = Friday
-export const STAYS = [
-  { id: "fri", label: "3 nights · Fri–Mon", nights: 3, arrivalDay: 5 },
-  { id: "mon", label: "4 nights · Mon–Fri", nights: 4, arrivalDay: 1 },
-];
-
+// Stay lengths are now data-driven from BOOKING_RULES in src/lib/pricing.js.
 export const MAX_GUESTS = 6;
 
 // From 1 November onwards on-site park facilities are closed.

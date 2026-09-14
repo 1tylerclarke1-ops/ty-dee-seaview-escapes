@@ -1,28 +1,77 @@
-import { useState } from "react";
-import { format, addDays, parseISO } from "date-fns";
+import { useState, useEffect } from "react";
+import { format, addDays, parseISO, isValid } from "date-fns";
 import { Image } from "@/components/ui/image";
-import StayCalendar, { stayForArrival, isParkClosedPeriod } from "@/components/StayCalendar";
+import StayCalendar, { isParkClosedPeriod } from "@/components/StayCalendar";
 import { MAX_GUESTS, PARK_CLOSURE_DATE } from "@/lib/siteConfig";
-import { calculatePrice, gbp } from "@/lib/pricing";
+import { calculatePrice, gbp, allowedLengthsForArrival, isArrivalDay } from "@/lib/pricing";
+import { base44 } from "@/api/base44Client";
 
 const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
 const BANNER = `${BASE}/5f987f181_Coverpicture.jpg`;
 
-// Pricing is now driven by src/lib/pricing.js (seasons + nightly rates).
-
 export default function Book() {
   const [arrival, setArrival] = useState(null);
+  const [length, setLength] = useState(null);
   const [guests, setGuests] = useState(2);
   const [details, setDetails] = useState({ name: "", email: "", phone: "", dogs: false });
   const [acknowledged, setAcknowledged] = useState(false);
   const [showDisclosure, setShowDisclosure] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [validationError, setValidationError] = useState(null);
 
-  const stay = arrival ? stayForArrival(arrival) : null;
+  // Pre-select from query params (arrival + nights passed from Prices & Availability).
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const a = urlParams.get("arrival");
+    const n = urlParams.get("nights");
+    if (a) {
+      const d = parseISO(a);
+      if (isValid(d) && isArrivalDay(d)) {
+        setArrival(d);
+        const allowed = allowedLengthsForArrival(d);
+        const nn = Number(n);
+        setLength(allowed.includes(nn) ? nn : allowed[0]);
+      }
+    }
+  }, []);
+
+  const allowedLengths = arrival ? allowedLengthsForArrival(arrival) : [];
   const winter = arrival && isParkClosedPeriod(arrival);
-  const departure = arrival && stay ? addDays(arrival, stay.nights) : null;
-  const breakdown = arrival && stay ? calculatePrice(arrival, stay.nights) : null;
+  const departure = arrival && length ? addDays(arrival, length) : null;
+  const breakdown = arrival && length ? calculatePrice(arrival, length) : null;
 
-  const canProceed = arrival && stay && guests <= MAX_GUESTS && details.name && details.email && (!winter || acknowledged);
+  const canProceed =
+    arrival && length && guests <= MAX_GUESTS && details.name && details.email && (!winter || acknowledged);
+
+  const handleSelectArrival = (d) => {
+    setArrival(d);
+    setValidationError(null);
+    const allowed = allowedLengthsForArrival(d);
+    setLength(allowed[0]);
+  };
+
+  // Server-side validation before confirming — rejects anything the rules
+  // disallow (e.g. a 3- or 4-night stay in Peak summer) regardless of the
+  // browser state.
+  const handleConfirm = async () => {
+    setValidating(true);
+    setValidationError(null);
+    try {
+      const res = await base44.functions.invoke("validateBooking", {
+        arrival_date: format(arrival, "yyyy-MM-dd"),
+        nights: length,
+      });
+      if (res.data && !res.data.valid) {
+        setValidationError(res.data.errors?.[0] || "This stay is not available.");
+      } else {
+        setShowDisclosure(true);
+      }
+    } catch (e) {
+      setValidationError("Could not validate this stay. Please try again.");
+    } finally {
+      setValidating(false);
+    }
+  };
 
   return (
     <div>
@@ -39,18 +88,39 @@ export default function Book() {
         <div className="relative h-full flex flex-col justify-end max-w-[1400px] mx-auto w-full px-6 md:px-10 pb-8">
           <h1 className="text-white text-4xl md:text-5xl">Book</h1>
           <p className="mt-2 text-white/80 max-w-xl text-sm md:text-base">
-            Choose your arrival, tell us who's coming, and see the price before you commit. The booking engine and payment step arrive shortly.
+            Choose your arrival, pick a stay length, and see the price before you commit. The booking engine and payment step arrive shortly.
           </p>
         </div>
       </section>
 
       <section className="px-6 md:px-10 max-w-[1400px] mx-auto py-14 md:py-20 pb-24 md:pb-32">
         <div className="grid md:grid-cols-12 gap-8 md:gap-12">
-          {/* Left: calendar + guest details */}
+          {/* Left: calendar + stay length + guest details */}
           <div className="md:col-span-8">
             <div className="bg-surface border border-line p-6 md:p-10">
               <p className="text-sm text-muted-foreground mb-6">1 · Choose your arrival</p>
-              <StayCalendar selectedArrival={arrival} onSelect={setArrival} />
+              <StayCalendar selectedArrival={arrival} selectedLength={length} onSelect={handleSelectArrival} />
+
+              {arrival && allowedLengths.length > 0 && (
+                <div className="mt-10">
+                  <p className="text-sm text-muted-foreground mb-4">Stay length</p>
+                  <div className="flex flex-wrap gap-2">
+                    {allowedLengths.map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => { setLength(n); setValidationError(null); }}
+                        className={`px-5 py-3 text-sm tnum min-h-[44px] transition-colors ${
+                          length === n
+                            ? "bg-sea text-white"
+                            : "bg-surface border border-line text-ink-soft hover:border-sea hover:text-sea"
+                        }`}
+                      >
+                        {n} nights
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="mt-12">
                 <p className="text-sm text-muted-foreground mb-5">2 · Guest details</p>
@@ -91,16 +161,16 @@ export default function Book() {
             <div className="sticky top-28 bg-surface border border-line p-6 md:p-8">
               <p className="text-sm text-muted-foreground">Your stay</p>
 
-              {!stay && (
+              {!arrival && (
                 <p className="mt-5 text-ink-soft text-sm">
-                  Select a highlighted arrival date to begin. Only Friday (3 nights) and Monday (4 nights) arrivals within season are bookable.
+                  Select a highlighted arrival date to begin. Available stay lengths will appear once you pick a date.
                 </p>
               )}
 
-              {stay && (
+              {arrival && length && (
                 <div className="mt-5 space-y-4">
                   <div>
-                    <p className="text-2xl text-ink">{stay.label}</p>
+                    <p className="text-2xl text-ink">{length} nights</p>
                     <p className="text-sm text-muted-foreground mt-1 tnum">
                       {format(arrival, "EEE d MMM")} → {format(departure, "EEE d MMM yyyy")}
                     </p>
@@ -155,19 +225,23 @@ export default function Book() {
                       </label>
                     </div>
                   )}
+
+                  {validationError && (
+                    <p className="text-sm text-destructive">{validationError}</p>
+                  )}
                 </div>
               )}
 
               <button
-                disabled={!canProceed}
-                onClick={() => setShowDisclosure(true)}
+                disabled={!canProceed || validating}
+                onClick={handleConfirm}
                 className={`mt-6 w-full flex items-center justify-center px-6 py-4 text-sm font-medium transition-colors min-h-[44px] ${
-                  canProceed
+                  canProceed && !validating
                     ? "bg-sea text-white hover:bg-sea-deep"
                     : "bg-offseason text-muted-foreground cursor-not-allowed"
                 }`}
               >
-                {winter && !acknowledged ? "Acknowledge to continue" : "Review & Confirm"}
+                {validating ? "Checking…" : winter && !acknowledged ? "Acknowledge to continue" : "Review & Confirm"}
               </button>
               <p className="text-xs text-muted-foreground mt-3 text-center">Booking engine & payment arrive in the next step.</p>
             </div>
@@ -187,7 +261,7 @@ export default function Book() {
             <p className="text-sm text-muted-foreground">Almost there</p>
             <h3 className="text-3xl text-ink mt-3">Confirm your booking</h3>
             <div className="mt-6 space-y-2 text-sm text-ink-soft">
-              <Row label="Stay" value={stay?.label} />
+              <Row label="Stay" value={`${length} nights`} />
               <Row label="Arrival" value={arrival && format(arrival, "EEE d MMM yyyy")} />
               <Row label="Departure" value={departure && format(departure, "EEE d MMM yyyy")} />
               <Row label="Guests" value={`${guests}`} />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   addDays,
   eachDayOfInterval,
@@ -12,8 +12,8 @@ import {
   startOfWeek,
   endOfWeek,
 } from "date-fns";
-import { STAYS, SEASON_START, SEASON_END, PARK_CLOSURE_DATE, MAX_GUESTS } from "@/lib/siteConfig";
-import { isWithinBookingWindow } from "@/lib/pricing";
+import { SEASON_START, SEASON_END, PARK_CLOSURE_DATE } from "@/lib/siteConfig";
+import { isArrivalDay } from "@/lib/pricing";
 
 const WEEK_STARTS_ON = 1; // Monday
 
@@ -34,14 +34,7 @@ function isParkClosedPeriod(date) {
   return isEqual(date, parseISO(PARK_CLOSURE_DATE)) || isAfter(date, parseISO(PARK_CLOSURE_DATE));
 }
 
-// Returns the stay config if this date is a valid arrival day within season
-function stayForArrival(date) {
-  if (!inSeason(date)) return null;
-  if (!isWithinBookingWindow(date)) return null;
-  return STAYS.find((s) => s.arrivalDay === date.getDay()) || null;
-}
-
-export default function StayCalendar({ selectedArrival, onSelect, compact = false }) {
+export default function StayCalendar({ selectedArrival, selectedLength, onSelect, compact = false }) {
   const seasonMonths = useMemo(() => {
     const start = parseISO(SEASON_START);
     const end = parseISO(SEASON_END);
@@ -54,11 +47,10 @@ export default function StayCalendar({ selectedArrival, onSelect, compact = fals
     return months;
   }, []);
 
-  const selectedStay = selectedArrival ? stayForArrival(selectedArrival) : null;
   const blockDates = useMemo(() => {
-    if (!selectedArrival || !selectedStay) return [];
-    return Array.from({ length: selectedStay.nights }, (_, i) => addDays(selectedArrival, i));
-  }, [selectedArrival, selectedStay]);
+    if (!selectedArrival || !selectedLength) return [];
+    return Array.from({ length: selectedLength }, (_, i) => addDays(selectedArrival, i));
+  }, [selectedArrival, selectedLength]);
 
   const inBlock = (date) => blockDates.some((d) => isEqual(d, date));
 
@@ -87,8 +79,7 @@ export default function StayCalendar({ selectedArrival, onSelect, compact = fals
               {days.map((date) => {
                 const inMonth = date.getMonth() === month;
                 const season = inSeason(date);
-                const stay = stayForArrival(date);
-                const isArrival = Boolean(stay);
+                const arrival = isArrivalDay(date);
                 const blocked = inBlock(date);
                 const closed = isParkClosedPeriod(date);
                 const isSelectedArrival = selectedArrival && isEqual(date, selectedArrival);
@@ -99,7 +90,7 @@ export default function StayCalendar({ selectedArrival, onSelect, compact = fals
                   cls += "text-transparent";
                 } else if (!season) {
                   cls += "text-muted-foreground opacity-50";
-                } else if (isArrival) {
+                } else if (arrival) {
                   cls += isSelectedArrival
                     ? "bg-sea text-white"
                     : blocked
@@ -116,13 +107,13 @@ export default function StayCalendar({ selectedArrival, onSelect, compact = fals
                 return (
                   <button
                     key={date.toISOString()}
-                    disabled={!isArrival}
-                    onClick={() => isArrival && onSelect && onSelect(date, stay)}
+                    disabled={!arrival}
+                    onClick={() => arrival && onSelect && onSelect(date)}
                     className={cls}
                     aria-label={format(date, "EEEE d MMMM yyyy")}
                   >
                     {inMonth && date.getDate()}
-                    {isArrival && !isSelectedArrival && (
+                    {arrival && !isSelectedArrival && (
                       <span className="absolute inset-0 ring-1 ring-sea pointer-events-none" />
                     )}
                   </button>
@@ -136,4 +127,4 @@ export default function StayCalendar({ selectedArrival, onSelect, compact = fals
   );
 }
 
-export { stayForArrival, inSeason, isParkClosedPeriod };
+export { inSeason, isParkClosedPeriod };
