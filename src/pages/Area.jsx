@@ -1,5 +1,7 @@
+import { useState } from "react";
 import PageHero from "@/components/PageHero";
 import { Image } from "@/components/ui/image";
+import ProximityExplorer from "@/components/ProximityExplorer";
 
 const HARBOUR = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/e32785bb9_DeckingandView2.jpg";
 const DECKING = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/0ccdb513c_DeckingandView3.jpg";
@@ -38,6 +40,25 @@ export default function Area() {
 
       <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24">
         <Image src={HARBOUR} alt="Polperro harbour at low tide" className="w-full aspect-[16/9] object-cover" fittingType="fill" />
+      </section>
+
+      {/* Interactive map + proximity list */}
+      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-40">
+        <div className="grid md:grid-cols-12 gap-12 items-end mb-12">
+          <div className="md:col-span-7">
+            <p className="eyebrow">How close you are</p>
+            <h2 className="font-display text-4xl md:text-6xl text-atlantic mt-4 leading-tight">
+              On the map
+            </h2>
+          </div>
+          <div className="md:col-span-5">
+            <p className="text-cornish-slate">
+              Ty Dee sits between Looe and Polperro on the South West Coast Path. Tap a spot to fly the map — the harbour, the beaches and the clifftop walks are all closer than you'd think.
+            </p>
+          </div>
+        </div>
+
+        <ProximityExplorer />
       </section>
 
       <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-40">
