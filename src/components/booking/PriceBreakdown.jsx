@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { gbpMoney, balanceDueDate } from "@/lib/pricing";
+import CancellationSummary from "@/components/booking/CancellationSummary";
 
 // Itemised, live price breakdown. Updates as guests and dogs change.
 export default function PriceBreakdown({ breakdown, arrival }) {
@@ -43,6 +44,7 @@ export default function PriceBreakdown({ breakdown, arrival }) {
           <span className="text-sm text-ink tnum">{gbpMoney(breakdown.balance)}</span>
         </div>
       </div>
+      <CancellationSummary arrival={arrival} />
     </div>
   );
 }

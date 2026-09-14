@@ -1,0 +1,89 @@
+{
+  "name": "CancellationPolicy",
+  "type": "object",
+  "properties": {
+    "tiers": {
+      "type": "array",
+      "title": "Refund tiers (ordered, evaluated top-down by days before arrival)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "days_before_arrival": {
+            "type": "number",
+            "title": "Days before arrival (minimum for this band)"
+          },
+          "refund_percent": {
+            "type": "number",
+            "title": "Refund percent"
+          }
+        },
+        "required": [
+          "days_before_arrival",
+          "refund_percent"
+        ]
+      }
+    },
+    "season_overrides": {
+      "type": "array",
+      "title": "Per-season tier overrides (stricter schedule for individual seasons)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "season": {
+            "type": "string",
+            "title": "Season name"
+          },
+          "tiers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "days_before_arrival": {
+                  "type": "number"
+                },
+                "refund_percent": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "days_before_arrival",
+                "refund_percent"
+              ]
+            }
+          }
+        },
+        "required": [
+          "season",
+          "tiers"
+        ]
+      }
+    },
+    "deposit_refundable": {
+      "type": "boolean",
+      "default": true,
+      "title": "Deposit refundable (within the 100% band)"
+    }
+  },
+  "required": [
+    "tiers",
+    "deposit_refundable"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

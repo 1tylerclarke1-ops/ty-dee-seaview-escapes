@@ -51,10 +51,38 @@
       "default": 0,
       "title": "Deposit paid"
     },
+    "balance_paid": {
+      "type": "number",
+      "default": 0,
+      "title": "Balance paid"
+    },
     "deposit_retained": {
       "type": "number",
       "default": 0,
-      "title": "Deposit retained on cancellation"
+      "title": "Amount retained on cancellation"
+    },
+    "refund_due": {
+      "type": "number",
+      "default": 0,
+      "title": "Refund due"
+    },
+    "refund_paid": {
+      "type": "number",
+      "default": 0,
+      "title": "Refund paid"
+    },
+    "refund_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Refund date"
+    },
+    "refund_tier": {
+      "type": "string",
+      "title": "Refund tier applied"
+    },
+    "cancellation_policy_text": {
+      "type": "string",
+      "title": "Cancellation policy text agreed at booking"
     },
     "dogs": {
       "type": "boolean",

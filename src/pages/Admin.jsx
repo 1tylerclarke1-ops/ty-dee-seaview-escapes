@@ -3,6 +3,8 @@ import { Lock } from "lucide-react";
 import { BUSINESS } from "@/lib/siteConfig";
 import PitchFeeTracker from "@/components/admin/PitchFeeTracker";
 import FacilitiesSettingsEditor from "@/components/admin/FacilitiesSettingsEditor";
+import CancellationPolicyEditor from "@/components/admin/CancellationPolicyEditor";
+import BookingsManager from "@/components/admin/BookingsManager";
 
 export default function Admin() {
   const [authed, setAuthed] = useState(false);
@@ -30,6 +32,14 @@ export default function Admin() {
           <div className="mb-12">
             <h2 className="text-2xl text-white mb-6">Park facilities settings</h2>
             <FacilitiesSettingsEditor />
+          </div>
+          <div className="mb-12">
+            <h2 className="text-2xl text-white mb-6">Cancellation policy</h2>
+            <CancellationPolicyEditor />
+          </div>
+          <div className="mb-12">
+            <h2 className="text-2xl text-white mb-6">Bookings</h2>
+            <BookingsManager />
           </div>
           <div className="mb-12">
             <h2 className="text-2xl text-white mb-6">Pitch fee tracker</h2>
