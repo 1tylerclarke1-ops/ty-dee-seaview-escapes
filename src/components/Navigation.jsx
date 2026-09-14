@@ -51,7 +51,7 @@ export default function Navigation() {
       </header>
 
       {open && (
-        <div className="fixed inset-0 z-[60] bg-ink flex flex-col">
+        <div className="fixed inset-0 z-[1200] bg-ink flex flex-col">
           <div className="h-20 flex items-center justify-between px-6 md:px-10 max-w-[1400px] mx-auto w-full">
             <span className="text-2xl md:text-3xl text-white" style={{ fontFamily: "var(--font-display)" }}>Ty Dee</span>
             <button

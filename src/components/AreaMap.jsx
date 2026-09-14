@@ -116,7 +116,7 @@ export default function AreaMap({ active }) {
       center={CARAVAN}
       zoom={13}
       scrollWheelZoom={false}
-      style={{ height: "100%", width: "100%", background: "#EDEFEE" }}
+      style={{ height: "100%", width: "100%", background: "#EDEFEE", isolation: "isolate" }}
       attributionControl={true}
     >
       <TileLayer
