@@ -12,7 +12,7 @@ export function lodgingSchema(reviews = []) {
     "@id": `${SITE_ORIGIN}/#lodging`,
     name: BUSINESS.name,
     description:
-      "A privately owned static caravan at Polperro Holiday Park, Cornwall. Sleeps six with sea views and private decking. Direct booking with the owner, all year round.",
+      "A privately owned static caravan between Looe and Polperro, Cornwall. Sleeps six with sea views and private decking. Direct booking with the owner, all year round.",
     url: SITE_ORIGIN,
     image: `${SITE_ORIGIN}/og.jpg`,
     telephone: BUSINESS.phone,
@@ -25,7 +25,7 @@ export function lodgingSchema(reviews = []) {
       postalCode: "PL13 2JE",
       addressCountry: "GB",
     },
-    geo: { "@type": "GeoCoordinates", latitude: 50.34, longitude: -4.548 },
+    geo: { "@type": "GeoCoordinates", latitude: 50.3398, longitude: -4.5145 },
     hasMap: `${SITE_ORIGIN}/find-us`,
     starRating: { "@type": "Rating", ratingValue: "5" },
     amenityFeature: [
@@ -38,6 +38,9 @@ export function lodgingSchema(reviews = []) {
     ],
     knowsAbout: [
       "Dog friendly caravan holidays Cornwall",
+      "Dog friendly Looe",
+      "Looe and Polperro caravan hire",
+      "Holiday caravan near Looe",
       "Polperro holiday park",
       "South West Coast Path",
       "Off-season Cornwall breaks",

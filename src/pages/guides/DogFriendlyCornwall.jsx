@@ -3,7 +3,7 @@ import GuideArticle from "@/components/GuideArticle";
 export default function DogFriendlyCornwall() {
   return (
     <GuideArticle
-      title="Dog-friendly Cornwall, from Polperro"
+      title="Dog-friendly Cornwall, from Looe & Polperro"
       subtitle="Where to walk, swim and eat with your dog on the south Cornish coast — without the summer dog bans."
       description="A first-person guide to dog-friendly beaches, coast path walks and dog-welcome pubs around Polperro and Looe in Cornwall."
       path="/guides/dog-friendly-cornwall"
@@ -27,6 +27,12 @@ export default function DogFriendlyCornwall() {
         October. At low tide you can walk for an hour and not pass a soul. <strong>Lantic Bay</strong> above
         Polruan is a steeper climb but worth it — clear water and a wide sweep of sand, dogs welcome year-round
         on the eastern end.
+      </p>
+      <p>
+        <strong>East Looe beach</strong> is the sandy town beach, ten minutes' drive — but it carries a summer
+        dog restriction (July to August, 10am to 6pm), so in high summer we save it for the evening.
+        <strong>Hannafore</strong> on the West Looe side is quieter and rockier, good for a low-tide potter, and
+        the walk out to Hannafore Point is flat. From October both are open to dogs again.
       </p>
 
       <h2>The coast path, off-lead where it's safe</h2>

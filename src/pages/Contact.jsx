@@ -11,8 +11,8 @@ export default function Contact() {
   return (
     <div>
       <Seo
-        title="Contact — Ty Dee Seaview Escapes, Polperro"
-        description="Contact the owner of Ty Dee Seaview Escapes with questions about the caravan, the area, dog-friendly stays or availability at Polperro, Cornwall."
+        title="Contact — Ty Dee Seaview Escapes, Looe & Polperro"
+        description="Contact the owner of Ty Dee Seaview Escapes with questions about the caravan, the area, dog-friendly stays or availability — a holiday caravan between Looe and Polperro, Cornwall."
         canonical={`${SITE_ORIGIN}/contact`}
       />
       <PageHero

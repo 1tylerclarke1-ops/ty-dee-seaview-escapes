@@ -44,8 +44,8 @@ export default function PricesAvailability() {
   return (
     <div>
       <Seo
-        title="Prices & Availability — Ty Dee Seaview Escapes, Polperro"
-        description="Live availability and pricing for a sea-view caravan at Polperro, Cornwall. Three-night Friday or four-night Monday stays. Book direct, up to twelve months ahead."
+        title="Prices & Availability — Ty Dee Seaview Escapes, near Looe & Polperro"
+        description="Live availability and pricing for a sea-view caravan between Looe and Polperro, Cornwall. Three-night Friday or four-night Monday stays. Book direct, up to twelve months ahead."
         canonical={`${SITE_ORIGIN}/prices`}
       />
       {/* Narrow banner strip — no more than 220px */}

@@ -5,7 +5,7 @@ export default function WhatsOpenOffSeason() {
     <GuideArticle
       title="What's open off-season"
       subtitle="An honest guide to what's running from November to April — the park facilities close, but the village doesn't."
-      description="What's actually open in and around Polperro, Cornwall from November to April — pubs, shops, Looe, and which holiday park facilities close for winter. Written by the owner."
+      description="What's actually open in and around Looe and Polperro, Cornwall from November to April — pubs, shops, supermarkets, and which holiday park facilities close for winter. Written by the owner."
       path="/guides/whats-open-off-season"
     >
       <p>

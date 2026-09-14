@@ -7,17 +7,17 @@ const GUIDES = [
   {
     path: "/guides/dog-friendly-cornwall",
     title: "Dog-friendly Cornwall, from Polperro",
-    desc: "Where to walk, swim and eat with your dog on the south Cornish coast — beaches, the coast path and pubs that mean it.",
+    desc: "Where to walk, swim and eat with your dog on the south Cornish coast around Looe and Polperro — beaches, the coast path and pubs that mean it.",
   },
   {
     path: "/guides/polperro-in-winter",
-    title: "Polperro in winter",
-    desc: "Why the quiet months are the best ones here — stormy seas, empty harbours, and a village that still has its lights on.",
+    title: "Looe & Polperro in winter",
+    desc: "Why the quiet months are the best ones here — stormy seas, empty harbours, and two villages that still have their lights on.",
   },
   {
     path: "/guides/coast-path-walks",
     title: "Coast path walks from the park",
-    desc: "Four walks you can start without a car — Polperro to Talland Bay, on to Looe, and up toward Fowey.",
+    desc: "Four walks you can start without a car — to Talland Bay, on to Looe, and up toward Fowey.",
   },
   {
     path: "/guides/whats-open-off-season",
@@ -31,7 +31,7 @@ export default function GuidesIndex() {
     <div>
       <Seo
         title="Guides — Ty Dee Seaview Escapes"
-        description="Honest, first-person guides to staying at Polperro in the quieter months: dog-friendly Cornwall, winter in the village, coast path walks, and what's really open."
+        description="Honest, first-person guides to staying between Looe and Polperro in the quieter months: dog-friendly Cornwall, winter in the villages, coast path walks, and what's really open."
         canonical={`${SITE_ORIGIN}/guides`}
       />
       <PageHero

@@ -46,8 +46,8 @@ export default function Home() {
   return (
     <div>
       <Seo
-        title="Ty Dee Seaview Escapes — Sea-view caravan at Polperro, Cornwall"
-        description="A privately owned static caravan at Polperro Holiday Park, Cornwall. Sleeps six, sea views, private decking, dog-friendly. Direct booking with the owner, all year round."
+        title="Ty Dee Seaview Escapes — Sea-view caravan near Looe & Polperro, Cornwall"
+        description="A privately owned static caravan between Looe and Polperro, Cornwall. Sleeps six, sea views, private decking, dog-friendly. Direct booking with the owner, all year round."
         canonical={`${SITE_ORIGIN}/`}
         jsonLd={lodgingSchema(reviews)}
       />
@@ -68,7 +68,7 @@ export default function Home() {
         <div className="relative h-full flex flex-col items-center justify-end md:justify-center text-center px-6 pb-16 md:pb-0">
           <h1 className="text-white text-5xl md:text-7xl leading-[1.02]">Ty Dee Seaview Escapes</h1>
           <p className="mt-5 text-lg md:text-2xl text-white/90 max-w-xl">
-            A sea-view caravan for six at Polperro, Cornwall. Short breaks and weeks, all year round.
+            A sea-view caravan for six between Looe and Polperro, Cornwall. Short breaks and weeks, all year round.
           </p>
           <Link
             to="/prices"
@@ -96,7 +96,7 @@ export default function Home() {
               A quiet base above the Atlantic
             </h2>
             <p className="mt-5 text-ink-soft leading-relaxed">
-              A privately owned static caravan perched above the sea at Polperro Holiday Park — sleeps six, with private decking, a sea view, and the South West Coast Path on the doorstep. Booked directly with the owner.
+              A privately owned static caravan perched above the sea at Polperro Holiday Park — between Looe and Polperro, about ten minutes from each. Sleeps six, with private decking, a sea view, and the South West Coast Path on the doorstep. Booked directly with the owner.
             </p>
             <Link
               to="/caravan"

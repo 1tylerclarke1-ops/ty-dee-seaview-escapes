@@ -3,9 +3,9 @@ import GuideArticle from "@/components/GuideArticle";
 export default function PolperroInWinter() {
   return (
     <GuideArticle
-      title="Polperro in winter"
-      subtitle="Why the quiet months are the best ones here — stormy seas, empty harbours, and a village that still has its lights on."
-      description="A first-person guide to Polperro, Cornwall in the quieter months — winter walks, storm-watching from the decking, which pubs and cafés stay open, and why the crowds are the only thing you'll miss."
+      title="Looe & Polperro in winter"
+      subtitle="Why the quiet months are the best ones here — stormy seas, empty harbours, and two villages that still have their lights on."
+      description="A first-person guide to Looe and Polperro, Cornwall in the quieter months — winter walks, storm-watching from the decking, which pubs and cafés stay open, and why the crowds are the only thing you'll miss."
       path="/guides/polperro-in-winter"
     >
       <p>
@@ -35,6 +35,14 @@ export default function PolperroInWinter() {
         For anything practical — a proper shop, a pharmacy, a chippy — <strong>Looe</strong> is ten minutes
         away and fully open year-round. We send guests there for the big food shop and the fishmonger on the
         quay.
+      </p>
+
+      <h2>Looe in winter</h2>
+      <p>
+        Looe is the larger of the two towns and it stays livelier through the winter than Polperro does. The
+        fishmonger on the quay keeps selling when the boats go out, the convenience stores open seven days, and
+        more of the restaurants keep weekend hours. On a stormy day when you want a hot lunch and a shop that's
+        actually open, Looe is where you'll find them — ten minutes down the road.
       </p>
 
       <h2>Walking without the crowds</h2>

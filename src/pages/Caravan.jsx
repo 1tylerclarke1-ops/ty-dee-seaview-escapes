@@ -100,7 +100,7 @@ export default function Caravan() {
     <div>
       <Seo
         title="The Caravan — Ty Dee Seaview Escapes, Polperro"
-        description="A walkthrough of the Ty Dee caravan at Polperro Holiday Park: open-plan living, galley kitchen, two bedrooms, family bathroom and ensuite, private sea-view decking. Sleeps six."
+        description="A walkthrough of the Ty Dee caravan at Polperro Holiday Park, between Looe and Polperro: open-plan living, galley kitchen, two bedrooms, family bathroom and ensuite, private sea-view decking. Sleeps six."
         canonical={`${SITE_ORIGIN}/caravan`}
       />
       <PageHero

@@ -33,7 +33,7 @@ export default function Navigation() {
               Ty Dee Seaview Escapes
             </span>
             <span className={`hidden md:inline text-[0.7rem] tracking-wide ${solid ? "text-muted-foreground" : "text-white/70"}`}>
-              Polperro, Cornwall
+              Looe &amp; Polperro, Cornwall
             </span>
           </Link>
 

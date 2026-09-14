@@ -5,7 +5,7 @@ export default function CoastPathWalks() {
     <GuideArticle
       title="Coast path walks from the park"
       subtitle="Four walks you can start without a car — straight out of the park gate and onto the South West Coast Path."
-      description="Four first-person South West Coast Path walks from Polperro Holiday Park — to Talland Bay, on to Looe, west to Fowey, with distances, what to expect and where to stop."
+      description="Four first-person South West Coast Path walks from Ty Dee, between Looe and Polperro — to Talland Bay, on to Looe, west to Fowey, with distances, what to expect and where to stop."
       path="/guides/coast-path-walks"
     >
       <p>

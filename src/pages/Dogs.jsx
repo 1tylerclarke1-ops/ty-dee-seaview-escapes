@@ -16,8 +16,8 @@ export default function Dogs() {
   return (
     <div>
       <Seo
-        title="Dog Friendly Caravan in Cornwall — Two Dogs Welcome at Polperro"
-        description="A dog-friendly static caravan at Polperro, Cornwall — up to two dogs of any size welcome by arrangement, £25 per dog. Dog-friendly beaches, coast path walks and pubs nearby."
+        title="Dog Friendly Caravan near Looe & Polperro, Cornwall — Two Dogs Welcome"
+        description="A dog-friendly static caravan between Looe and Polperro, Cornwall — up to two dogs of any size welcome by arrangement, £25 per dog. Dog-friendly beaches, coast path walks and pubs near Looe and Polperro."
         canonical={`${SITE_ORIGIN}/dogs`}
       />
       {/* Hero */}
