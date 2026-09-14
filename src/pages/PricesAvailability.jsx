@@ -2,8 +2,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { format, addDays } from "date-fns";
 import { Image } from "@/components/ui/image";
-import StayCalendar, { isParkClosedPeriod } from "@/components/StayCalendar";
+import StayCalendar from "@/components/StayCalendar";
+import FacilitiesStatusPanel from "@/components/FacilitiesStatusPanel";
+import FacilitiesMarker from "@/components/FacilitiesMarker";
 import { calculatePrice, gbp, SEASON_START, SEASON_END, allowedLengthsForArrival } from "@/lib/pricing";
+import { useFacilitiesSettings, stayFacilitiesStatus } from "@/lib/facilities";
 
 const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
 const BANNER = `${BASE}/eba602fdb_View.jpg`;
@@ -11,8 +14,10 @@ const BANNER = `${BASE}/eba602fdb_View.jpg`;
 export default function PricesAvailability() {
   const [arrival, setArrival] = useState(null);
   const [length, setLength] = useState(null);
+  const { settings } = useFacilitiesSettings();
   const allowedLengths = arrival ? allowedLengthsForArrival(arrival) : [];
-  const winter = arrival && isParkClosedPeriod(arrival);
+  const facStatus = arrival && length ? stayFacilitiesStatus(arrival, length, settings) : null;
+  const affected = facStatus && facStatus.state !== "open";
   const departure = arrival && length ? addDays(arrival, length) : null;
   const breakdown = arrival && length ? calculatePrice(arrival, length) : null;
 
@@ -40,6 +45,11 @@ export default function PricesAvailability() {
             Two stay lengths, a full twelve-month season. Friday arrivals are three nights; Monday arrivals four. Every other date is the sea's.
           </p>
         </div>
+      </section>
+
+      {/* Park facilities — per-season status */}
+      <section className="px-6 md:px-10 max-w-[1400px] mx-auto py-14 md:py-20">
+        <FacilitiesStatusPanel settings={settings} />
       </section>
 
       {/* Calendar */}
@@ -95,14 +105,7 @@ export default function PricesAvailability() {
                           </p>
                         </div>
                       )}
-                      {winter && (
-                        <div role="alert" aria-live="assertive" className="mt-5 bg-ink text-white p-4">
-                          <p className="text-xs tracking-wide uppercase text-signal">Winter residency</p>
-                          <p className="mt-2 text-sm text-white/90">
-                            Park facilities are closed from 1 November. You are booking a peaceful, self-catered retreat.
-                          </p>
-                        </div>
-                      )}
+                      {affected && <FacilitiesMarker status={facStatus} />}
                       <Link
                         to={`/book?arrival=${format(arrival, "yyyy-MM-dd")}&nights=${length}`}
                         className="mt-6 flex items-center justify-center bg-sea text-white px-6 py-4 text-sm font-medium hover:bg-sea-deep transition-colors min-h-[44px]"

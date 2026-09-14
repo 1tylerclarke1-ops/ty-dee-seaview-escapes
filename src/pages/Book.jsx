@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { format, addDays, parseISO, isValid } from "date-fns";
 import { Image } from "@/components/ui/image";
-import StayCalendar, { isParkClosedPeriod } from "@/components/StayCalendar";
-import { MAX_GUESTS, PARK_CLOSURE_DATE } from "@/lib/siteConfig";
+import StayCalendar from "@/components/StayCalendar";
+import FacilitiesMarker from "@/components/FacilitiesMarker";
+import { MAX_GUESTS } from "@/lib/siteConfig";
 import { calculatePrice, gbp, allowedLengthsForArrival, isArrivalDay } from "@/lib/pricing";
+import { useFacilitiesSettings, stayFacilitiesStatus, formatFacilitiesDate } from "@/lib/facilities";
 import { base44 } from "@/api/base44Client";
 
 const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
@@ -14,10 +16,11 @@ export default function Book() {
   const [length, setLength] = useState(null);
   const [guests, setGuests] = useState(2);
   const [details, setDetails] = useState({ name: "", email: "", phone: "", dogs: false });
-  const [acknowledged, setAcknowledged] = useState(false);
+  const [facilitiesAck, setFacilitiesAck] = useState(false);
   const [showDisclosure, setShowDisclosure] = useState(false);
   const [validating, setValidating] = useState(false);
   const [validationError, setValidationError] = useState(null);
+  const { settings } = useFacilitiesSettings();
 
   // Pre-select from query params (arrival + nights passed from Prices & Availability).
   useEffect(() => {
@@ -36,12 +39,13 @@ export default function Book() {
   }, []);
 
   const allowedLengths = arrival ? allowedLengthsForArrival(arrival) : [];
-  const winter = arrival && isParkClosedPeriod(arrival);
+  const facStatus = arrival && length ? stayFacilitiesStatus(arrival, length, settings) : null;
+  const affected = facStatus && facStatus.state !== "open";
   const departure = arrival && length ? addDays(arrival, length) : null;
   const breakdown = arrival && length ? calculatePrice(arrival, length) : null;
 
   const canProceed =
-    arrival && length && guests <= MAX_GUESTS && details.name && details.email && (!winter || acknowledged);
+    arrival && length && guests <= MAX_GUESTS && details.name && details.email;
 
   const handleSelectArrival = (d) => {
     setArrival(d);
@@ -119,6 +123,22 @@ export default function Book() {
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {affected && (
+                <div role="alert" aria-live="polite" className="mt-10 bg-ink text-white p-6 md:p-8">
+                  <p className="text-xs tracking-wide uppercase text-signal">Park facilities — read before booking</p>
+                  <p className="mt-3 text-base text-white">
+                    {facStatus.state === "closed"
+                      ? settings.facilities_winter_note
+                      : facStatus.direction === "opening"
+                      ? `The park's facilities are closed until ${formatFacilitiesDate(facStatus.boundaryDate)} — this is Cornwall at its quietest, and priced accordingly.`
+                      : `The park's facilities are open until ${formatFacilitiesDate(facStatus.boundaryDate)}, then closed for the rest of your stay — this is Cornwall at its quietest, and priced accordingly.`}
+                  </p>
+                  <p className="mt-3 text-sm text-white/80">
+                    Your booking is for the caravan and your stay only — the on-site facilities (pool, club, entertainment) are not available{facStatus.state === "partial" ? ` ${facStatus.direction === "opening" ? "until" : "from"} ${formatFacilitiesDate(facStatus.boundaryDate)}` : ""}.
+                  </p>
                 </div>
               )}
 
@@ -206,25 +226,7 @@ export default function Book() {
                   </div>
                   <p className="text-xs text-muted-foreground">Price shown before commitment. No payment taken yet.</p>
 
-                  {winter && (
-                    <div role="alert" aria-live="assertive" className="bg-ink text-white p-4">
-                      <p className="text-xs tracking-wide uppercase text-signal">Winter residency disclosure</p>
-                      <p className="mt-2 text-sm text-white/90">
-                        From {format(parseISO(PARK_CLOSURE_DATE), "d MMMM")} onwards, on-site park facilities (pool, club, entertainment) are closed. You are booking a peaceful, self-catered retreat.
-                      </p>
-                      <label className="flex items-start gap-3 mt-4 cursor-pointer min-h-[44px]">
-                        <input
-                          type="checkbox"
-                          checked={acknowledged}
-                          onChange={(e) => setAcknowledged(e.target.checked)}
-                          className="w-5 h-5 mt-1 accent-sea shrink-0"
-                        />
-                        <span className="text-sm text-white">
-                          I understand that I am booking a peaceful retreat and that park facilities are closed during this period.
-                        </span>
-                      </label>
-                    </div>
-                  )}
+                  {affected && <FacilitiesMarker status={facStatus} />}
 
                   {validationError && (
                     <p className="text-sm text-destructive">{validationError}</p>
@@ -241,7 +243,7 @@ export default function Book() {
                     : "bg-offseason text-muted-foreground cursor-not-allowed"
                 }`}
               >
-                {validating ? "Checking…" : winter && !acknowledged ? "Acknowledge to continue" : "Review & Confirm"}
+                {validating ? "Checking…" : "Review & Confirm"}
               </button>
               <p className="text-xs text-muted-foreground mt-3 text-center">Booking engine & payment arrive in the next step.</p>
             </div>
@@ -267,14 +269,43 @@ export default function Book() {
               <Row label="Guests" value={`${guests}`} />
               <Row label="Total" value={breakdown ? gbp(breakdown.total) : "—"} />
             </div>
+            {affected && (
+              <div className="mt-6 bg-offseason border border-line p-5">
+                <p className="text-sm text-ink">
+                  {facStatus.state === "closed"
+                    ? "The park's on-site facilities are closed for these dates."
+                    : facStatus.direction === "opening"
+                    ? `The park's on-site facilities are closed until ${formatFacilitiesDate(facStatus.boundaryDate)}.`
+                    : `The park's on-site facilities are open until ${formatFacilitiesDate(facStatus.boundaryDate)}, then closed.`}{" "}
+                  This booking is for the accommodation only.
+                </p>
+                <label className="flex items-start gap-3 mt-4 cursor-pointer min-h-[44px]">
+                  <input
+                    type="checkbox"
+                    checked={facilitiesAck}
+                    onChange={(e) => setFacilitiesAck(e.target.checked)}
+                    className="w-5 h-5 mt-1 accent-sea shrink-0"
+                  />
+                  <span className="text-sm text-ink">
+                    I understand the park's on-site facilities are closed for my dates and my booking is for the accommodation only.
+                  </span>
+                </label>
+              </div>
+            )}
+
             <p className="mt-6 text-sm text-ink-soft">
               The booking engine and secure payment step are being finalised. Your details have been prepared — you'll be able to complete payment shortly.
             </p>
             <button
+              disabled={affected && !facilitiesAck}
               onClick={() => setShowDisclosure(false)}
-              className="mt-8 w-full bg-ink text-white py-4 text-sm font-medium hover:bg-ink-soft transition-colors min-h-[44px]"
+              className={`mt-8 w-full py-4 text-sm font-medium transition-colors min-h-[44px] ${
+                affected && !facilitiesAck
+                  ? "bg-offseason text-muted-foreground cursor-not-allowed"
+                  : "bg-ink text-white hover:bg-ink-soft"
+              }`}
             >
-              Close
+              {affected && !facilitiesAck ? "Tick the box to confirm" : "Confirm booking"}
             </button>
           </div>
         </div>

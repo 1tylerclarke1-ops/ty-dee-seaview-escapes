@@ -1,0 +1,46 @@
+{
+  "name": "FacilitiesSettings",
+  "type": "object",
+  "properties": {
+    "facilities_closed_from": {
+      "type": "string",
+      "format": "date",
+      "title": "Facilities closed from"
+    },
+    "facilities_open_from": {
+      "type": "string",
+      "format": "date",
+      "title": "Facilities open from"
+    },
+    "facilities_list": {
+      "type": "string",
+      "title": "Facilities list (when open)"
+    },
+    "facilities_winter_note": {
+      "type": "string",
+      "title": "Winter note (shown for closed dates)"
+    }
+  },
+  "required": [
+    "facilities_closed_from",
+    "facilities_open_from"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

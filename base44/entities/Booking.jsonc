@@ -64,6 +64,16 @@
     "notes": {
       "type": "string",
       "title": "Notes"
+    },
+    "facilities_acknowledged": {
+      "type": "boolean",
+      "default": false,
+      "title": "Facilities acknowledged"
+    },
+    "facilities_acknowledged_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Facilities acknowledged at"
     }
   },
   "required": [
