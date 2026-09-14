@@ -52,7 +52,7 @@ export default function Dogs() {
         <p>
           The caravan sits on its own plot with wraparound decking and a gate. It is not a
           shared balcony — it is yours, enclosed, so the dogs can be out with you without being
-          underfoot. Rinse sandy paws at the outside tap before they come in, and the sea view is
+          underfoot. Give sandy paws a quick brush down before they come in, and the sea view is
           right there while you do it.
         </p>
       </Section>
@@ -92,36 +92,20 @@ export default function Dogs() {
         </p>
       </Section>
 
-      {/* Washing a wet dog */}
-      <Section title="Where to wash a wet dog">
-        <p>
-          Not in the family bathroom — please. Use the outside tap on the decking and the dog towel
-          we leave by the door. A quick rinse and a towelling down keeps the caravan clean and the
-          dog happy, and the mud never makes it past the mat.
-        </p>
-      </Section>
-
-      {/* What we provide / bring */}
+      {/* What to bring */}
       <div className="px-6 md:px-10 max-w-[1400px] mx-auto pb-14 md:pb-20">
-        <div className="grid md:grid-cols-2 gap-10 md:gap-16">
-          <div>
-            <h2 className="text-2xl md:text-3xl text-ink">What we provide</h2>
-            <ul className="mt-5 space-y-3 text-ink-soft">
-              <li>Two dog bowls (food and water)</li>
-              <li>A dog towel for the decking rinse</li>
-              <li>A washable throw for the sofa, so they can be with you in the evening</li>
-              <li>Poo bags, in case you run out</li>
-            </ul>
-          </div>
-          <div>
-            <h2 className="text-2xl md:text-3xl text-ink">What to bring</h2>
-            <ul className="mt-5 space-y-3 text-ink-soft">
-              <li>Your dog's bed or blanket — a familiar smell settles them fast</li>
-              <li>Food and any medication</li>
-              <li>A lead and a long line for the cliff paths</li>
-              <li>Their favourite towel for the beach</li>
-            </ul>
-          </div>
+        <div className="hairline pt-10 md:pt-14">
+          <h2 className="text-2xl md:text-3xl text-ink max-w-2xl">What to bring</h2>
+          <ul className="mt-5 space-y-3 text-ink-soft max-w-2xl">
+            <li>Two dog bowls (food and water)</li>
+            <li>A dog towel for sandy or wet paws</li>
+            <li>A washable throw for the sofa, so they can be with you in the evening</li>
+            <li>Poo bags, in case you run out</li>
+            <li>Your dog's bed or blanket — a familiar smell settles them fast</li>
+            <li>Food and any medication</li>
+            <li>A lead and a long line for the cliff paths</li>
+            <li>Their favourite towel for the beach</li>
+          </ul>
         </div>
       </div>
 
