@@ -3,6 +3,12 @@ import PageHero from "@/components/PageHero";
 import ParkMap from "@/components/ParkMap";
 import Seo from "@/components/Seo";
 import { lodgingSchema, SITE_ORIGIN } from "@/lib/structuredData";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const MAP_IMAGE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/55b08392b_image.png";
 const MAP_CREDIT = "Park map © Polperro Holiday Park";
@@ -33,6 +39,7 @@ const LAST_MILE = [
 const AMENITIES = [
   "Reception", "Shop", "Bar & restaurant", "Indoor pool", "Arcade",
   "Crazy golf", "Launderette", "Dog walking area", "Car park", "EV charging point",
+  "Dog waste — big bins down the road",
 ];
 
 export default function FindUs() {
@@ -49,27 +56,34 @@ export default function FindUs() {
         subtitle="Two jobs: getting to the park, and finding the van once you're inside. Here's both, honestly."
       />
 
-      <PartLabel part="Part one" title="Getting here" />
-
-      {/* Address + embedded map */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-14 md:pb-20">
-        <div className="grid md:grid-cols-2 gap-8 md:gap-16">
+      {/* 1 — GETTING HERE */}
+      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-8 md:pb-10">
+        <h2 className="text-2xl md:text-3xl text-ink mb-6">Getting here</h2>
+        <div className="grid md:grid-cols-2 gap-8 md:gap-12">
           <div>
-            <p className="text-sm text-muted-foreground mb-3">The address</p>
-            <p className="text-lg text-ink leading-relaxed">
+            <p className="text-sm text-muted-foreground mb-2">The address</p>
+            <p className="text-base text-ink leading-relaxed">
               Polperro Holiday Park<br />
               Polperro Road<br />
               Polperro, Looe<br />
               Cornwall<br />
               PL13 2JE
             </p>
-            <p className="mt-4 text-ink-soft">
+            <p className="mt-3 text-ink-soft text-sm">
               The park is signposted from the A387 between Looe and Polperro.
             </p>
+            <a
+              href={DIRECTIONS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-2 bg-ink text-white px-5 py-2.5 text-sm font-medium hover:bg-ink-soft transition-colors min-h-[44px]"
+            >
+              Directions <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
+            </a>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground mb-3">On the map</p>
-            <div className="w-full h-[300px] md:h-[360px] bg-offseason border border-line overflow-hidden">
+            <p className="text-sm text-muted-foreground mb-2">On the map</p>
+            <div className="w-full h-[260px] md:h-[320px] bg-offseason border border-line overflow-hidden">
               <iframe
                 title="Map centred on Polperro Holiday Park entrance"
                 src={EMBED_SRC}
@@ -78,139 +92,104 @@ export default function FindUs() {
                 referrerPolicy="no-referrer-when-downgrade"
               />
             </div>
-            <a
-              href={DIRECTIONS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-2 bg-ink text-white px-6 py-3 text-sm font-medium hover:bg-ink-soft transition-colors min-h-[44px]"
-            >
-              Directions <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
-            </a>
           </div>
         </div>
-      </section>
 
-      {/* Drive times */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-14 md:pb-20">
-        <div className="hairline pt-10 md:pt-14">
-          <h2 className="text-2xl md:text-3xl text-ink max-w-2xl">Drive times</h2>
-          <p className="mt-3 text-ink-soft max-w-2xl">
+        {/* Drive times — tight two-column list */}
+        <div className="mt-8">
+          <h3 className="text-lg text-ink mb-1">Drive times</h3>
+          <p className="text-sm text-ink-soft mb-3 max-w-2xl">
             Off-peak, sensible driving. Summer Saturdays are worse — add an hour or two, especially past Exeter.
           </p>
-          <div className="mt-6 max-w-md">
-            <table className="w-full text-left">
-              <tbody>
-                {DRIVE_TIMES.map((d) => (
-                  <tr key={d.from} className="border-b border-line">
-                    <th scope="row" className="py-3 text-ink font-normal">{d.from}</th>
-                    <td className="py-3 text-right text-ink tnum">{d.time}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* The last mile */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-14 md:pb-20">
-        <div className="hairline pt-10 md:pt-14">
-          <h2 className="text-2xl md:text-3xl text-ink max-w-2xl">The last mile</h2>
-          <ul className="mt-5 space-y-3 max-w-2xl">
-            {LAST_MILE.map((line) => (
-              <li key={line} className="text-ink-soft leading-relaxed pl-5 relative">
-                <span className="absolute left-0 text-sea">—</span>
-                {line}
+          <ul className="grid grid-cols-2 gap-x-10 gap-y-0 max-w-md text-sm">
+            {DRIVE_TIMES.map((d) => (
+              <li key={d.from} className="flex justify-between border-b border-line py-1.5">
+                <span className="text-ink">{d.from}</span>
+                <span className="text-ink tnum">{d.time}</span>
               </li>
             ))}
           </ul>
         </div>
+
+        {/* The last mile / By train / Parking — collapsed by default */}
+        <Accordion type="single" collapsible className="mt-8">
+          <AccordionItem value="last-mile">
+            <AccordionTrigger className="text-base text-ink">The last mile</AccordionTrigger>
+            <AccordionContent>
+              <ul className="space-y-2 pt-1">
+                {LAST_MILE.map((line) => (
+                  <li key={line} className="text-ink-soft leading-relaxed pl-5 relative text-sm">
+                    <span className="absolute left-0 text-sea">—</span>
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="train">
+            <AccordionTrigger className="text-base text-ink">By train</AccordionTrigger>
+            <AccordionContent>
+              <p className="text-ink-soft leading-relaxed text-sm">
+                Looe station, on the branch line from Liskeard, is about 3 miles from the park. A taxi from the
+                station is straightforward — there's usually one waiting, or the driver rings one — and costs
+                around £12. Liskeard is on the main Penzance–London line, so you can change there from most of
+                the country.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="parking">
+            <AccordionTrigger className="text-base text-ink">Parking</AccordionTrigger>
+            <AccordionContent>
+              <p className="text-ink-soft leading-relaxed text-sm">
+                Parking is free and right on the pitch — up to two cars. There's no separate car park to walk
+                back from at night.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </section>
 
-      {/* By train + parking */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-14 md:pb-20">
-        <div className="hairline pt-10 md:pt-14 grid md:grid-cols-2 gap-8 md:gap-16">
-          <div>
-            <h2 className="text-2xl md:text-3xl text-ink">By train</h2>
-            <p className="mt-4 text-ink-soft leading-relaxed">
-              Looe station, on the branch line from Liskeard, is about 3 miles from the park. A taxi from the
-              station is straightforward — there's usually one waiting, or the driver rings one — and costs
-              around £12. Liskeard is on the main Penzance–London line, so you can change there from most of
-              the country.
-            </p>
-          </div>
-          <div>
-            <h2 className="text-2xl md:text-3xl text-ink">Parking</h2>
-            <p className="mt-4 text-ink-soft leading-relaxed">
-              Parking is free and right on the pitch — up to two cars. There's no separate car park to walk
-              back from at night.
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* 2 — FINDING THE VAN */}
+      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-8 md:pb-10">
+        <div className="hairline pt-8 md:pt-10">
+          <h2 className="text-2xl md:text-3xl text-ink mb-3">Finding the van</h2>
+          <p className="text-ink-soft max-w-2xl mb-4 text-sm">
+            The van is on pitch 157, marked on the map below. Tap it to zoom — it's detailed, and hard to read
+            on a phone otherwise.
+          </p>
+          <ParkMap
+            src={MAP_IMAGE}
+            alt="Polperro Holiday Park site map showing the layout of pitches, facilities and pitch 157 highlighted"
+            caption="Tap the map to zoom. Pitch 157 is marked in green."
+            credit={MAP_CREDIT}
+            markerPos={MARKER_POS}
+          />
+          <p className="mt-2 text-xs text-muted-foreground">{MAP_CREDIT}</p>
 
-      <PartLabel part="Part two" title="Finding the van" />
-
-      {/* Park map */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-6">
-        <p className="text-ink-soft max-w-2xl mb-5">
-          The van is on pitch 157, marked on the map below. Tap it to zoom — it's detailed, and hard to read
-          on a phone otherwise.
-        </p>
-        <ParkMap
-          src={MAP_IMAGE}
-          alt="Polperro Holiday Park site map showing the layout of pitches, facilities and pitch 157 highlighted"
-          caption="Tap the map to zoom. Pitch 157 is marked in green."
-          credit={MAP_CREDIT}
-          markerPos={MARKER_POS}
-        />
-        <p className="mt-3 text-xs text-muted-foreground">{MAP_CREDIT}</p>
-      </section>
-
-      {/* Walking in */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-14 md:pb-20">
-        <div className="hairline pt-10 md:pt-14">
-          <h2 className="text-2xl md:text-3xl text-ink max-w-2xl">Walking in from the entrance</h2>
-          <p className="mt-4 text-ink-soft leading-relaxed max-w-2xl">
+          {/* Walking in — prose, no heading */}
+          <p className="mt-5 text-ink-soft leading-relaxed max-w-2xl text-sm">
             In through the entrance, past reception and the entertainment venue, then follow the road east
             through the park. Pitch 157 is toward the top right of the map, near the car park. It's a short
             walk from the entrance — five minutes at most.
           </p>
-        </div>
-      </section>
 
-      {/* What's where */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-14 md:pb-20">
-        <div className="hairline pt-10 md:pt-14">
-          <h2 className="text-2xl md:text-3xl text-ink max-w-2xl">What's where on the park</h2>
-          <ul className="mt-5 grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2 max-w-3xl">
+          {/* What's where — tight three-column list */}
+          <h3 className="text-lg text-ink mt-6 mb-3">What's where on the park</h3>
+          <ul className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 max-w-3xl text-sm">
             {AMENITIES.map((a) => (
               <li key={a} className="text-ink-soft">{a}</li>
             ))}
           </ul>
-          <p className="mt-5 text-ink-soft max-w-2xl">
-            A 10 mph speed limit applies throughout the park — please keep to it.
-          </p>
-          <p className="mt-4 text-ink-soft max-w-2xl">
-            Between 1 November and 19 March the indoor pool, bar and restaurant, shop, arcade, crazy golf
-            and launderette close for winter. The dog walking area, car park and EV charging point stay open.
+          <p className="mt-4 text-xs text-muted-foreground max-w-2xl">
+            A 10 mph speed limit applies throughout the park — please keep to it. Between 1 November and 19
+            March the indoor pool, bar and restaurant, shop, arcade, crazy golf and launderette close for
+            winter; the dog walking area, car park and EV charging point stay open.
           </p>
         </div>
       </section>
 
-      {/* Dog waste */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-14 md:pb-20">
-        <div className="hairline pt-10 md:pt-14">
-          <h2 className="text-2xl md:text-3xl text-ink max-w-2xl">Dog waste</h2>
-          <p className="mt-4 text-ink-soft leading-relaxed max-w-2xl">
-            There's a bin right beside the van for dog waste — you can see it on the park map, next to pitch
-            157. No long walk with a full bag.
-          </p>
-        </div>
-      </section>
-
-      {/* After booking */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-32">
+      {/* After booking — kept as is */}
+      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-16 md:pb-20">
         <div className="bg-ink text-white p-8 md:p-12">
           <h2 className="text-3xl md:text-4xl text-white">What you get after booking</h2>
           <p className="mt-4 text-white/70 max-w-2xl">
@@ -221,16 +200,5 @@ export default function FindUs() {
         </div>
       </section>
     </div>
-  );
-}
-
-function PartLabel({ part, title }) {
-  return (
-    <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-14 md:pb-20">
-      <div className="hairline pt-10 md:pt-14">
-        <p className="text-sm text-sea tracking-wide uppercase">{part}</p>
-        <h2 className="text-3xl md:text-4xl text-ink mt-2">{title}</h2>
-      </div>
-    </section>
   );
 }
