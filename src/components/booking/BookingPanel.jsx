@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { addDays, format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -115,6 +116,9 @@ export default function BookingPanel({ arrival, length, affected }) {
           </h2>
           <p className="mt-4 text-ink-soft max-w-lg mx-auto">
             We've received your request for {length} nights, arriving {format(arrival, "EEE d MMM yyyy")}. We'll be in touch to confirm availability and arrange your {gbpMoney(breakdown.deposit)} deposit.
+          </p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Planning your journey? <Link to="/find-us" className="text-sea underline">Find us</Link> — drive times, the last mile, and a map to the van.
           </p>
           <button
             type="button"

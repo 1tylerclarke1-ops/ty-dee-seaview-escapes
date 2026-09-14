@@ -19,13 +19,14 @@ export function lodgingSchema(reviews = []) {
     priceRange: "£70–£140",
     address: {
       "@type": "PostalAddress",
-      streetAddress: "Polperro Holiday Park",
+      streetAddress: "Polperro Road, Polperro Holiday Park",
       addressLocality: "Polperro",
       addressRegion: "Cornwall",
-      postalCode: "PL13 2RT",
+      postalCode: "PL13 2JE",
       addressCountry: "GB",
     },
-    geo: { "@type": "GeoCoordinates", latitude: 50.336, longitude: -4.616 },
+    geo: { "@type": "GeoCoordinates", latitude: 50.34, longitude: -4.548 },
+    hasMap: `${SITE_ORIGIN}/find-us`,
     starRating: { "@type": "Rating", ratingValue: "5" },
     amenityFeature: [
       { "@type": "LocationFeatureSpecification", name: "Sea view", value: true },

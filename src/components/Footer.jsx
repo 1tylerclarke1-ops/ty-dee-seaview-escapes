@@ -13,6 +13,9 @@ export default function Footer() {
             <p className="mt-5 text-sm text-white/60 max-w-xs">
               {BUSINESS.name} · {BUSINESS.location}
             </p>
+            <p className="mt-3 text-sm text-white/60 max-w-xs">
+              {BUSINESS.address}. {BUSINESS.postcode}
+            </p>
           </div>
 
           <nav className="md:col-span-4 grid grid-cols-2 gap-x-6 gap-y-3">

@@ -92,6 +92,14 @@ export default function Dogs() {
         </p>
       </Section>
 
+      {/* Dog waste */}
+      <Section title="Dog waste, sorted">
+        <p>
+          There's a bin right beside the van for dog waste — you can see it on the park map, next to pitch
+          157. No carrying a full bag back across the park.
+        </p>
+      </Section>
+
       {/* What to bring */}
       <div className="px-6 md:px-10 max-w-[1400px] mx-auto pb-14 md:pb-20">
         <div className="hairline pt-10 md:pt-14">

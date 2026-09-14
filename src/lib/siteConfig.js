@@ -21,6 +21,7 @@ export const NAV_LINKS = [
   { label: "The Area", path: "/area" },
   { label: "Dog Friendly", path: "/dogs" },
   { label: "Guides", path: "/guides" },
+  { label: "Find Us", path: "/find-us" },
   { label: "Terms & Conditions", path: "/terms" },
   { label: "Contact", path: "/contact" },
 ];
@@ -29,6 +30,8 @@ export const BUSINESS = {
   name: "Ty Dee Seaview Escapes",
   tagline: "The Sea, Framed",
   location: "Polperro Holiday Park, Cornwall",
+  address: "Polperro Holiday Park, Polperro Road, Polperro, Looe, Cornwall",
+  postcode: "PL13 2JE",
   sleeps: 6,
   bedrooms: "2 bedrooms plus sofa bed",
   bathrooms: "Family bathroom plus ensuite WC",

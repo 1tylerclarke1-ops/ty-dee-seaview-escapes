@@ -15,6 +15,7 @@ import Dogs from '@/pages/Dogs';
 import Consent from '@/pages/Consent';
 import Terms from '@/pages/Terms';
 import Contact from '@/pages/Contact';
+import FindUs from '@/pages/FindUs';
 import Admin from '@/pages/Admin';
 import OfferLanding from '@/pages/OfferLanding';
 import Unsubscribe from '@/pages/Unsubscribe';
@@ -66,6 +67,7 @@ const AuthenticatedApp = () => {
         <Route path="/book" element={<RedirectToPrices />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/find-us" element={<FindUs />} />
         <Route path="/offer/:token" element={<OfferLanding />} />
         <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
         <Route path="/review/:bookingId" element={<Review />} />
