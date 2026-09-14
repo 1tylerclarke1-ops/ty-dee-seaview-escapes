@@ -27,7 +27,7 @@ export default function Area() {
           <AreaMap />
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Distances are approximate, by road. Tap a pin on the map for detail.
+          Drive times from the park, approximate. Tap a pin on the map for detail.
         </p>
       </section>
 

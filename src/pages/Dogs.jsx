@@ -61,10 +61,9 @@ export default function Dogs() {
       <Section title="The nearest dog-friendly beach">
         <p>
           <strong>Talland Bay</strong> is the closest — a ten-minute drive, two sheltered shingle
-          coves with rock pools at low tide. Dogs are welcome year-round on the eastern end; the
-          sandy cove has the usual May-to-September restriction, so walk the shingle side in summer
-          and the whole bay in winter. Check the signs on arrival — Cornwall councils update the
-          bounds most years.
+          coves with rock pools at low tide. Check the beach signs for any seasonal dog
+          restrictions, which Cornwall councils update most years — out of season the whole bay is
+          open to dogs.
         </p>
         <p className="mt-4">
           From October to March, almost every beach in Cornwall is open to dogs, which
@@ -75,10 +74,11 @@ export default function Dogs() {
       {/* Dog-friendly pubs */}
       <Section title="Dog-friendly pubs in Polperro and Looe">
         <p>
-          In Polperro, <strong>The Three Pilchards</strong> at the harbour welcomes dogs in the bar
-          and the snug. In Looe, <strong>The Shipwrights</strong> on the quayside is dog-friendly
-          and does a good lunch after a morning on the coast path. Opening hours narrow in winter —
-          ring ahead or check their socials before you set out.
+          In Polperro, <strong>The Three Pilchards</strong> at the harbour and <strong>The Crumplehorn
+          Inn</strong> at the top of the village both welcome dogs. In Looe, <strong>The Jolly
+          Sailor</strong> in West Looe is dog-friendly and does a good lunch after a morning on the
+          coast path. Opening hours narrow in winter — ring ahead or check their socials before you
+          set out.
         </p>
       </Section>
 
@@ -123,7 +123,7 @@ export default function Dogs() {
           <li>Up to {maxDogs} dogs, any size — £{dogFee} per dog per stay, added to your booking.</li>
           <li>Please don't leave dogs unattended in the caravan.</li>
           <li>Dogs on beds or soft furnishings only with a throw underneath.</li>
-          <li>Pick up on the park and on the path — bins are by the gate.</li>
+          <li>Pick up on the park and on the path — there's a bin right beside the van.</li>
           <li>A short lead through the cliff-top fields, for the livestock's sake.</li>
         </ul>
       </Section>
