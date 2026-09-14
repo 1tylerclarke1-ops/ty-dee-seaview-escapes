@@ -62,6 +62,16 @@
       "type": "boolean",
       "default": true,
       "title": "Deposit refundable (within the 100% band)"
+    },
+    "cooling_off_hours": {
+      "type": "number",
+      "default": 48,
+      "title": "Cooling-off window (hours after booking)"
+    },
+    "cooling_off_min_hours_before_arrival": {
+      "type": "number",
+      "default": 24,
+      "title": "Cooling-off cap (minimum hours before arrival)"
     }
   },
   "required": [

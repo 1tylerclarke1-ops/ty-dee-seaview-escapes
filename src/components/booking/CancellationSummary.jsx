@@ -1,12 +1,14 @@
 import { format, parseISO } from "date-fns";
-import { useCancellationPolicy, cancellationDisplay, addDaysIso } from "@/lib/cancellation";
+import { useCancellationPolicy, cancellationDisplay } from "@/lib/cancellation";
 import { gbp } from "@/lib/pricing";
 
-// The guest's actual cancellation position at checkout, computed from the
-// arrival date, the current tier set, and today. Expired tiers are dropped
-// entirely (never greyed out). The guest's current position leads; remaining
-// tiers follow with real "from" dates and the pounds each is worth. When the
-// guest is inside the no-refund window that fact is the most visible line.
+// The guest's cancellation position at checkout, with the 48-hour cooling-off
+// period leading. Cooling-off gives a full refund of everything paid within
+// the window regardless of arrival, so it is the first, reassuring line; the
+// tiered bands then follow, dated to start AFTER the cooling-off window
+// closes (never "Cancel now: 75%" while a full refund is still on the table
+// today). When arrival is fewer than 7 days away the window is capped at 24
+// hours before arrival and the lead line says so plainly.
 export default function CancellationSummary({ arrival, total }) {
   const { settings } = useCancellationPolicy();
   if (!arrival) return null;
@@ -15,39 +17,30 @@ export default function CancellationSummary({ arrival, total }) {
   const info = cancellationDisplay(arrivalIso, total, settings);
   if (!info) return null;
 
-  const daysWord = info.days === 1 ? "1 day" : `${info.days} days`;
-  const fullRefundUntil = addDaysIso(arrivalIso, -settings.tiers[0].days_before_arrival);
+  const co = info.coolingOff;
+  const leadLine = co.sevenDayException
+    ? "Change your mind? Full refund until 24 hours before you arrive."
+    : "Change your mind? Full refund within 48 hours of booking.";
 
-  let positionLine;
-  if (info.inNoRefund) {
-    positionLine = `You are ${daysWord} from arrival — this booking is in the no-refund window. A cancellation would not be refunded.`;
-  } else if (info.pastFullRefund) {
-    positionLine = `You are ${daysWord} from arrival, so this booking is already past the full refund window.`;
-  } else {
-    positionLine = `You are ${daysWord} from arrival — full refund available until ${format(parseISO(fullRefundUntil), "d MMM yyyy")}.`;
-  }
-
-  const bandLabel = (b) => {
+  const bandLabel = (b, i) => {
     const pctLabel =
       b.percent === 100 ? "full refund" : b.percent === 0 ? "no refund" : `${b.percent}% refund`;
     const pounds = b.percent === 0 ? "" : ` (${gbp(b.pounds)})`;
     if (b.kind === "now") return `Cancel now: ${pctLabel}${pounds}`;
-    return `From ${format(parseISO(b.date), "d MMM")}: ${pctLabel}${pounds}`;
+    const prefix = i === 0 ? "Cancel from " : "From ";
+    return `${prefix}${format(parseISO(b.date), "d MMM")}: ${pctLabel}${pounds}`;
   };
-
-  const noRefundActive = info.inNoRefund;
 
   return (
     <div className="mt-5 pt-4 border-t border-line">
       <p className="text-xs tracking-wide uppercase text-muted-foreground">
         Cancellation — please read before booking
       </p>
-      <p
-        className={`mt-2 text-sm ${noRefundActive ? "text-destructive font-medium" : "text-ink"}`}
-      >
-        {positionLine}
-      </p>
-      <div className="mt-3 space-y-1.5">
+      {co.active && (
+        <p className="mt-2 text-sm text-sea font-medium">{leadLine}</p>
+      )}
+      {co.active && <p className="mt-2 text-xs text-muted-foreground">After that:</p>}
+      <div className="mt-1 space-y-1.5">
         {info.bands.map((b, i) => {
           const isNoRefundLine = b.kind === "now" && b.percent === 0;
           return (
@@ -61,7 +54,7 @@ export default function CancellationSummary({ arrival, total }) {
                   : "text-ink-soft"
               }`}
             >
-              {bandLabel(b)}
+              {bandLabel(b, i)}
             </p>
           );
         })}

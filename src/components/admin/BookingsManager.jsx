@@ -117,6 +117,15 @@ export default function BookingsManager() {
                   {error && <p className="text-sm text-signal">{error}</p>}
                   {preview && (
                     <div className="space-y-4">
+                      {preview.inside_cooling_off ? (
+                        <p className="text-sm text-sea">
+                          Inside the cooling-off window — full refund{preview.cooling_off_expires_display ? ` (ends ${preview.cooling_off_expires_display})` : ""}.
+                        </p>
+                      ) : (
+                        <p className="text-sm text-white/50">
+                          Outside the cooling-off window{preview.cooling_off_expires_display ? ` (ended ${preview.cooling_off_expires_display})` : ""}.
+                        </p>
+                      )}
                       <div className="grid sm:grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-xs tracking-wide uppercase text-white/40">Days remaining</p>

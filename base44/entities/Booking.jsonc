@@ -88,6 +88,11 @@
       "type": "string",
       "title": "Cancellation policy text agreed at booking"
     },
+    "cooling_off_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Cooling-off window expiry (fixed at booking)"
+    },
     "dogs": {
       "type": "boolean",
       "default": false,

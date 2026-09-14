@@ -6,6 +6,8 @@ import {
   describeRefundTier,
   buildPolicyText,
   todayIso,
+  computeCoolingOffExpiry,
+  formatCoolingOffExpiry,
 } from "../../shared/cancellation.ts";
 
 // Cancel a booking under the tiered refund policy. confirm=false (default)
@@ -41,20 +43,50 @@ export default async function (req) {
         ? amount_paid
         : (booking.deposit_paid || 0) + (booking.balance_paid || 0);
 
-    const calc = computeRefund(booking.arrival_date, totalPaid, policy, today);
-    const refundTier = describeRefundTier(calc.tier, policy);
+    // Cooling-off: a fixed window from the booking's creation time. If the
+    // owner already stored cooling_off_expires_at, honour that frozen value;
+    // otherwise compute it from created_date + the current settings (and
+    // persist it on confirm so a later settings change can't shift it).
+    const bookedAtMs = booking.created_date
+      ? new Date(booking.created_date).getTime()
+      : Date.now();
+    const coolingOffExpiryMs = booking.cooling_off_expires_at
+      ? new Date(booking.cooling_off_expires_at).getTime()
+      : computeCoolingOffExpiry(bookedAtMs, booking.arrival_date, policy);
+    const insideCoolingOff = Date.now() < coolingOffExpiryMs;
+
+    let refundPercent, refundDue, retained, refundTier, daysBeforeArrival;
+    if (insideCoolingOff) {
+      refundPercent = 100;
+      refundDue = totalPaid;
+      retained = 0;
+      refundTier = "100% (cooling-off)";
+    } else {
+      const calc = computeRefund(booking.arrival_date, totalPaid, policy, today);
+      refundPercent = calc.refundPercent;
+      refundDue = calc.refundDue;
+      retained = calc.retained;
+      refundTier = describeRefundTier(calc.tier, policy);
+      daysBeforeArrival = calc.daysBeforeArrival;
+    }
+    if (daysBeforeArrival === undefined) {
+      daysBeforeArrival = Math.max(0, Math.floor((new Date(booking.arrival_date + "T00:00:00Z").getTime() - new Date(today + "T00:00:00Z").getTime()) / 86400000));
+    }
     const policyText = booking.cancellation_policy_text || buildPolicyText(policy);
 
     const preview = {
       booking_id,
       arrival_date: booking.arrival_date,
       guest_name: booking.guest_name,
-      days_before_arrival: calc.daysBeforeArrival,
-      refund_percent: calc.refundPercent,
+      days_before_arrival: daysBeforeArrival,
+      refund_percent: refundPercent,
       refund_tier: refundTier,
-      total_paid: calc.totalPaid,
-      refund_due: calc.refundDue,
-      retained: calc.retained,
+      total_paid: totalPaid,
+      refund_due: refundDue,
+      retained: retained,
+      inside_cooling_off: insideCoolingOff,
+      cooling_off_expires_at: new Date(coolingOffExpiryMs).toISOString(),
+      cooling_off_expires_display: formatCoolingOffExpiry(coolingOffExpiryMs),
       policy_text: policyText,
     };
 
@@ -66,15 +98,19 @@ export default async function (req) {
       return Response.json({ error: "Admin required to cancel a booking" }, { status: 403 });
     }
 
-    const updated = await base44.asServiceRole.entities.Booking.update(booking_id, {
+    const updateData = {
       status: "cancelled",
-      refund_due: calc.refundDue,
+      refund_due: refundDue,
       refund_paid: 0,
       refund_date: today,
       refund_tier: refundTier,
-      deposit_retained: calc.retained,
+      deposit_retained: retained,
       balance_paid: totalPaid - (booking.deposit_paid || 0),
-    });
+    };
+    if (!booking.cooling_off_expires_at) {
+      updateData.cooling_off_expires_at = new Date(coolingOffExpiryMs).toISOString();
+    }
+    const updated = await base44.asServiceRole.entities.Booking.update(booking_id, updateData);
 
     return Response.json({ ok: true, confirm: true, ...preview, updated });
   } catch (error) {

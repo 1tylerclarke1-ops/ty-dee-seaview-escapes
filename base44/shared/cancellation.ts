@@ -95,10 +95,16 @@ export function computeCoolingOffExpiry(bookedAtMs: number, arrivalIso: string, 
   return expiry;
 }
 
-// Whether the shorter "24 hours before you arrive" wording applies: arrival
-// fewer than 7 days from the booking time.
-export function coolingOffSevenDayException(bookedAtMs: number, arrivalIso: string): boolean {
-  return arrivalMs(arrivalIso) - bookedAtMs < SEVEN_DAYS_MS;
+// Whether the "24 hours before you arrive" wording applies: the arrival cap
+// (arrival - min_hours_before_arrival) is the binding deadline, i.e. it lands
+// sooner than the plain bookedAt + cooling_off_hours window. Only then is it
+// honest to say "until 24 hours before you arrive" — otherwise the 48-hour
+// window is sooner and that is what we state.
+export function coolingOffUsesArrivalCap(bookedAtMs: number, arrivalIso: string, policy: any): boolean {
+  const p = normalizePolicy(policy);
+  const fromBooking = bookedAtMs + p.cooling_off_hours * HOUR_MS;
+  const cap = arrivalMs(arrivalIso) - p.cooling_off_min_hours_before_arrival * HOUR_MS;
+  return cap <= fromBooking;
 }
 
 // Human-readable cooling-off close, in Europe/London, for the confirmation

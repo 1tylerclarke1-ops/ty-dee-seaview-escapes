@@ -45,6 +45,9 @@ export default function BookingPanel({ arrival, length, affected }) {
     arrivalIso && breakdown ? cancellationDisplay(arrivalIso, breakdown.total, cancelPolicy) : null;
   const pastFullRefund = !!cancelInfo?.pastFullRefund;
   const cancelPercent = cancelInfo?.currentTier?.refund_percent ?? 0;
+  const coolingOffPhrase = cancelInfo?.coolingOff?.sevenDayException
+    ? "24 hours before you arrive"
+    : "48 hours";
   const canSubmit = !!(
     details.name &&
     details.email &&
@@ -164,6 +167,7 @@ export default function BookingPanel({ arrival, length, affected }) {
                 affected={affected}
                 pastFullRefund={pastFullRefund}
                 cancelPercent={cancelPercent}
+                coolingOffPhrase={coolingOffPhrase}
                 cancelAck={cancelAck}
                 setCancelAck={setCancelAck}
                 canSubmit={canSubmit}

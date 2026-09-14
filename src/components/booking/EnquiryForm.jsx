@@ -28,6 +28,7 @@ export default function EnquiryForm({
   affected,
   pastFullRefund,
   cancelPercent,
+  coolingOffPhrase,
   cancelAck,
   setCancelAck,
   canSubmit,
@@ -85,8 +86,8 @@ export default function EnquiryForm({
           <input type="checkbox" checked={cancelAck} onChange={(e) => setCancelAck(e.target.checked)} className="w-5 h-5 mt-1 accent-sea shrink-0" />
           <span className="text-sm text-ink-soft">
             {cancelPercent === 0
-              ? "I understand this booking is in the no-refund window and a cancellation would not be refunded."
-              : `I understand this booking is already past the full refund window and a cancellation would refund ${cancelPercent}%.`}
+              ? `I understand that after ${coolingOffPhrase}, cancelling this booking would not be refunded.`
+              : `I understand that after ${coolingOffPhrase}, cancelling this booking would refund ${cancelPercent}%.`}
           </span>
         </label>
       )}

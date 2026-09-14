@@ -62,6 +62,8 @@ export default function CancellationPolicyEditor() {
   const [tiers, setTiers] = useState(DEFAULT_CANCELLATION_POLICY.tiers.map((t) => ({ ...t })));
   const [depositRefundable, setDepositRefundable] = useState(true);
   const [seasonOverrides, setSeasonOverrides] = useState([]);
+  const [coolingOffHours, setCoolingOffHours] = useState(48);
+  const [coolingOffMin, setCoolingOffMin] = useState(24);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -75,6 +77,8 @@ export default function CancellationPolicyEditor() {
           setTiers(p.tiers.map((t) => ({ ...t })));
           setDepositRefundable(p.deposit_refundable !== false);
           setSeasonOverrides(Array.isArray(rows[0].season_overrides) ? rows[0].season_overrides : []);
+          setCoolingOffHours(p.cooling_off_hours || 48);
+          setCoolingOffMin(p.cooling_off_min_hours_before_arrival || 24);
         }
       })
       .catch(() => {})
@@ -90,6 +94,8 @@ export default function CancellationPolicyEditor() {
       tiers: sorted,
       season_overrides: seasonOverrides,
       deposit_refundable: depositRefundable,
+      cooling_off_hours: Number(coolingOffHours) || 48,
+      cooling_off_min_hours_before_arrival: Number(coolingOffMin) || 24,
     };
     try {
       if (recordId) {
@@ -110,7 +116,7 @@ export default function CancellationPolicyEditor() {
 
   if (loading) return <p className="text-sm text-white/50">Loading cancellation policy…</p>;
 
-  const previewPolicy = normalizePolicy({ tiers, season_overrides: seasonOverrides, deposit_refundable: depositRefundable });
+  const previewPolicy = normalizePolicy({ tiers, season_overrides: seasonOverrides, deposit_refundable: depositRefundable, cooling_off_hours: Number(coolingOffHours) || 48, cooling_off_min_hours_before_arrival: Number(coolingOffMin) || 24 });
 
   return (
     <form onSubmit={handleSave} className="max-w-2xl space-y-8">
@@ -132,6 +138,31 @@ export default function CancellationPolicyEditor() {
         />
         <span className="text-sm text-white/80">Deposit is refundable within the 100% band</span>
       </label>
+
+      <div className="grid sm:grid-cols-2 gap-6">
+        <div>
+          <label className="text-xs tracking-wide uppercase text-white/50 block mb-2">Cooling-off window (hours after booking)</label>
+          <input
+            type="number"
+            min={1}
+            value={coolingOffHours}
+            onChange={(e) => setCoolingOffHours(e.target.value)}
+            className="w-full bg-transparent border-b border-white/30 py-2 text-white tnum focus:outline-none focus:border-sea min-h-[40px]"
+          />
+          <p className="text-[0.65rem] text-white/40 mt-1">Full refund within this many hours of booking, regardless of arrival.</p>
+        </div>
+        <div>
+          <label className="text-xs tracking-wide uppercase text-white/50 block mb-2">Minimum hours before arrival (cap)</label>
+          <input
+            type="number"
+            min={0}
+            value={coolingOffMin}
+            onChange={(e) => setCoolingOffMin(e.target.value)}
+            className="w-full bg-transparent border-b border-white/30 py-2 text-white tnum focus:outline-none focus:border-sea min-h-[40px]"
+          />
+          <p className="text-[0.65rem] text-white/40 mt-1">Window never extends past this many hours before arrival.</p>
+        </div>
+      </div>
 
       <div>
         <label className="text-xs tracking-wide uppercase text-white/50 block mb-3">Per-season overrides (optional)</label>

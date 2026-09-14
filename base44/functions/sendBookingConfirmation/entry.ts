@@ -9,6 +9,8 @@ import {
   normalizePolicy,
   buildPolicyText,
   DEFAULT_CANCELLATION_POLICY,
+  computeCoolingOffExpiry,
+  formatCoolingOffExpiry,
 } from "../../shared/cancellation.ts";
 
 // Builds (and optionally sends) the booking confirmation email. For any
@@ -41,11 +43,21 @@ export default async function (req) {
     const status = stayFacilitiesStatus(booking.arrival_date, booking.nights, settings);
     const affected = status.state !== "open";
 
+    const policyRows = await base44.asServiceRole.entities.CancellationPolicy.list();
+    const policy = policyRows && policyRows.length ? normalizePolicy(policyRows[0]) : DEFAULT_CANCELLATION_POLICY;
+    const bookedAtMs = booking.created_date ? new Date(booking.created_date).getTime() : Date.now();
+    const coolingOffExpiryMs = booking.cooling_off_expires_at
+      ? new Date(booking.cooling_off_expires_at).getTime()
+      : computeCoolingOffExpiry(bookedAtMs, booking.arrival_date, policy);
+    const coolingOffDisplay = formatCoolingOffExpiry(coolingOffExpiryMs);
+
     const subject = `Your stay at Ty Dee Seaview Escapes — arriving ${booking.arrival_date}`;
     const lines = [
       `Hello ${booking.guest_name || ""},`,
       ``,
       `Your stay is confirmed: arriving ${booking.arrival_date}, ${booking.nights} night(s), ${booking.guests || ""} guest(s).`,
+      ``,
+      `Change your mind? You have a full refund until ${coolingOffDisplay} — cancel before then and everything you've paid comes back.`,
     ];
     if (affected) {
       lines.push(``);
@@ -68,8 +80,6 @@ export default async function (req) {
       lines.push(``);
       lines.push(`When the park is open, on-site facilities include: ${settings.facilities_list}`);
     }
-    const policyRows = await base44.asServiceRole.entities.CancellationPolicy.list();
-    const policy = policyRows && policyRows.length ? normalizePolicy(policyRows[0]) : DEFAULT_CANCELLATION_POLICY;
     const policyText = booking.cancellation_policy_text || buildPolicyText(policy);
     lines.push(``);
     lines.push(policyText);
@@ -94,6 +104,11 @@ export default async function (req) {
           text: emailText,
         });
         sent = true;
+        if (!booking.cooling_off_expires_at) {
+          await base44.asServiceRole.entities.Booking.update(booking.id, {
+            cooling_off_expires_at: new Date(coolingOffExpiryMs).toISOString(),
+          }).catch(() => {});
+        }
       } catch (e) {
         sendResult = { error: e.message };
       }
@@ -108,6 +123,8 @@ export default async function (req) {
       body: emailText,
       sent,
       sendResult,
+      cooling_off_expires_at: new Date(coolingOffExpiryMs).toISOString(),
+      cooling_off_expires_display: coolingOffDisplay,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

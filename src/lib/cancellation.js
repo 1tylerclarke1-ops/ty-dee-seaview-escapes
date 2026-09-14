@@ -68,6 +68,53 @@ export function normalizePolicy(record) {
   };
 }
 
+const HOUR_MS = 3600000;
+const DAY_MS = 86400000;
+const SEVEN_DAYS_MS = 7 * DAY_MS;
+
+export function arrivalMs(arrivalIso) {
+  return new Date(arrivalIso + "T00:00:00Z").getTime();
+}
+
+export function computeCoolingOffExpiry(bookedAtMs, arrivalIso, policy) {
+  const p = normalizePolicy(policy);
+  const arr = arrivalMs(arrivalIso);
+  const fromBooking = bookedAtMs + p.cooling_off_hours * HOUR_MS;
+  const cap = arr - p.cooling_off_min_hours_before_arrival * HOUR_MS;
+  let expiry = Math.min(fromBooking, cap);
+  if (expiry > arr) expiry = arr;
+  if (expiry < bookedAtMs) expiry = bookedAtMs;
+  return expiry;
+}
+
+export function coolingOffUsesArrivalCap(bookedAtMs, arrivalIso, policy) {
+  const p = normalizePolicy(policy);
+  const fromBooking = bookedAtMs + p.cooling_off_hours * HOUR_MS;
+  const cap = arrivalMs(arrivalIso) - p.cooling_off_min_hours_before_arrival * HOUR_MS;
+  return cap <= fromBooking;
+}
+
+export function formatCoolingOffExpiry(expiryMs) {
+  try {
+    const d = new Date(expiryMs);
+    const date = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(d);
+    const time = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(d);
+    return `${date} at ${time}`;
+  } catch {
+    return new Date(expiryMs).toISOString().replace("T", " ").slice(0, 16);
+  }
+}
+
 export function refundTierForDays(days, policy) {
   const p = normalizePolicy(policy);
   for (const t of p.tiers) {
@@ -113,7 +160,7 @@ export function cancellationDisplay(arrivalIso, total, policy, todayIsoValue) {
   const p = normalizePolicy(policy);
   const expiryMs = computeCoolingOffExpiry(nowMs, arrivalIso, p);
   const coolingOffActive = nowMs < expiryMs;
-  const sevenDayException = coolingOffSevenDayException(nowMs, arrivalIso);
+  const sevenDayException = coolingOffUsesArrivalCap(nowMs, arrivalIso, p);
   // Tier positioning is relative to the cooling-off close, so the first band
   // starts AFTER the full-refund window — never "Cancel now: 75%" while a
   // full refund is still on the table today.
