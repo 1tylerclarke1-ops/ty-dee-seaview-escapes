@@ -4,7 +4,6 @@ import Photo from "@/components/Photo";
 import Lightbox from "@/components/Lightbox";
 import RoomSection from "@/components/RoomSection";
 import GalleryGrid from "@/components/GalleryGrid";
-import ReservedSlot from "@/components/ReservedSlot";
 import Seo from "@/components/Seo";
 import Reviews from "@/components/Reviews";
 import { SITE_ORIGIN } from "@/lib/structuredData";
@@ -115,17 +114,6 @@ export default function Caravan() {
           {SECTIONS.map((s) => (
             <RoomSection key={s.title} {...s} onOpen={openAt} />
           ))}
-        </div>
-      </section>
-
-      {/* Ensuite — no photograph yet. Reserved slot only, not a section. */}
-      {/* RESERVED IMAGE SLOT — awaiting a photograph of the ensuite WC. Drop a file URL here when available. */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-20 md:pb-28">
-        <div className="max-w-[560px]">
-          <ReservedSlot label="Ensuite WC" className="aspect-[4/3]" />
-          <p className="mt-3 text-sm text-muted-foreground">
-            The ensuite WC opens off the principal bedroom. A photograph will be added here.
-          </p>
         </div>
       </section>
 
