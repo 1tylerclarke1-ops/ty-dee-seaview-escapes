@@ -1,33 +1,11 @@
-import { motion } from "framer-motion";
-
-export default function PageHero({ eyebrow, title, subtitle }) {
+export default function PageHero({ title, subtitle }) {
   return (
-    <section className="pt-40 md:pt-48 pb-16 md:pb-24 px-6 md:px-10 max-w-[1400px] mx-auto">
-      <motion.p
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="eyebrow"
-      >
-        {eyebrow}
-      </motion.p>
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.1 }}
-        className="font-display text-5xl md:text-7xl lg:text-8xl text-atlantic mt-4 leading-[0.95]"
-      >
-        {title}
-      </motion.h1>
+    <section className="pt-36 md:pt-44 pb-12 md:pb-16 px-6 md:px-10 max-w-[1400px] mx-auto">
+      <h1 className="text-5xl md:text-7xl text-ink leading-[1.02]">{title}</h1>
       {subtitle && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
-          className="font-display italic text-2xl md:text-3xl text-cornish-slate mt-6 max-w-2xl"
-        >
+        <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
           {subtitle}
-        </motion.p>
+        </p>
       )}
     </section>
   );

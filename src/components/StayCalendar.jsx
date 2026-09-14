@@ -61,24 +61,24 @@ export default function StayCalendar({ selectedArrival, onSelect, compact = fals
   const inBlock = (date) => blockDates.some((d) => isEqual(d, date));
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-10">
       {seasonMonths.map(({ year, month }) => {
         const days = monthGrid(year, month);
         return (
           <div key={`${year}-${month}`}>
-            <div className="flex items-baseline justify-between mb-5">
-              <h3 className="font-display text-2xl text-atlantic">
+            <div className="flex items-baseline justify-between mb-4">
+              <h3 className="text-2xl text-ink">
                 {format(new Date(year, month, 1), "MMMM yyyy")}
               </h3>
               {month === 10 && year === 2026 && (
-                <span className="font-mono text-[0.6rem] tracking-[0.2em] uppercase text-cornish-slate">
+                <span className="text-[0.65rem] tracking-wide uppercase text-muted-foreground">
                   Park facilities close Nov 1
                 </span>
               )}
             </div>
             <div className="grid grid-cols-7 gap-1.5">
               {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-                <div key={i} className="font-mono text-[0.6rem] tracking-[0.15em] text-cornish-slate/60 text-center pb-2">
+                <div key={i} className="text-[0.6rem] tracking-wide text-muted-foreground text-center pb-2">
                   {d}
                 </div>
               ))}
@@ -92,23 +92,23 @@ export default function StayCalendar({ selectedArrival, onSelect, compact = fals
                 const isSelectedArrival = selectedArrival && isEqual(date, selectedArrival);
 
                 let cls =
-                  "relative aspect-square flex items-center justify-center text-sm transition-all min-h-[44px] min-w-[44px] ";
+                  "relative aspect-square flex items-center justify-center text-sm transition-colors min-h-[44px] min-w-[44px] tnum ";
                 if (!inMonth) {
                   cls += "text-transparent";
                 } else if (!season) {
-                  cls += "text-cornish-slate/30 strike-diagonal";
+                  cls += "text-muted-foreground opacity-50";
                 } else if (isArrival) {
                   cls += isSelectedArrival
-                    ? "bg-atlantic text-salt font-mono font-medium"
+                    ? "bg-sea text-white"
                     : blocked
-                    ? "bg-gorse/30 text-atlantic"
-                    : "bg-gorse/15 text-atlantic hover:bg-gorse hover:text-atlantic cursor-pointer font-mono";
+                    ? "bg-offseason text-sea"
+                    : "bg-surface text-sea border border-sea hover:bg-sea hover:text-white cursor-pointer";
                 } else if (blocked) {
-                  cls += "bg-gorse/20 text-atlantic/70 font-mono";
+                  cls += "bg-offseason text-ink-soft";
                 } else if (closed) {
-                  cls += "text-cornish-slate/50 font-mono";
+                  cls += "text-muted-foreground";
                 } else {
-                  cls += "text-cornish-slate/40 font-mono";
+                  cls += "text-muted-foreground opacity-60";
                 }
 
                 return (
@@ -121,7 +121,7 @@ export default function StayCalendar({ selectedArrival, onSelect, compact = fals
                   >
                     {inMonth && date.getDate()}
                     {isArrival && !isSelectedArrival && (
-                      <span className="absolute inset-0 rounded-full ring-1 ring-gorse/40 pointer-events-none" />
+                      <span className="absolute inset-0 ring-1 ring-sea pointer-events-none" />
                     )}
                   </button>
                 );
@@ -130,12 +130,6 @@ export default function StayCalendar({ selectedArrival, onSelect, compact = fals
           </div>
         );
       })}
-
-      <style>{`
-        .strike-diagonal {
-          background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(74,93,102,0.25) 4px, rgba(74,93,102,0.25) 5px);
-        }
-      `}</style>
     </div>
   );
 }

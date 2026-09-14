@@ -20,11 +20,11 @@ export default function Admin() {
 
   if (authed) {
     return (
-      <div className="min-h-screen bg-atlantic text-salt flex items-center justify-center px-6">
+      <div className="min-h-screen bg-ink text-white flex items-center justify-center px-6">
         <div className="max-w-xl w-full text-center">
-          <p className="eyebrow text-salt/50">Admin</p>
-          <h1 className="font-display text-5xl mt-4">{BUSINESS.name}</h1>
-          <p className="text-salt/70 mt-6">
+          <p className="text-sm text-white/50">Admin</p>
+          <h1 className="text-5xl text-white mt-4">{BUSINESS.name}</h1>
+          <p className="text-white/70 mt-6">
             The owner dashboard — booking management, availability and reporting — will appear here once the booking engine is built.
           </p>
         </div>
@@ -33,26 +33,26 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-atlantic text-salt flex items-center justify-center px-6">
+    <div className="min-h-screen bg-ink text-white flex items-center justify-center px-6">
       <form onSubmit={handleLogin} className="max-w-sm w-full">
         <div className="flex justify-center mb-8">
-          <Lock className="w-8 h-8 text-gorse" strokeWidth={1.25} />
+          <Lock className="w-8 h-8 text-sea" strokeWidth={1.25} />
         </div>
-        <p className="eyebrow text-salt/50 text-center">Owner access</p>
-        <h1 className="font-display text-4xl text-salt text-center mt-3">Admin</h1>
+        <p className="text-sm text-white/50 text-center">Owner access</p>
+        <h1 className="text-4xl text-white text-center mt-3">Admin</h1>
         <div className="mt-10">
-          <label className="font-mono text-[0.65rem] tracking-[0.2em] uppercase text-salt/50 block mb-2">Password</label>
+          <label className="text-xs tracking-wide uppercase text-white/50 block mb-2">Password</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-transparent border-b border-salt/30 py-3 text-salt focus:outline-none focus:border-gorse"
+            className="w-full bg-transparent border-b border-white/30 py-3 text-white focus:outline-none focus:border-sea min-h-[44px]"
           />
-          {error && <p className="font-mono text-xs text-gorse mt-3">A password is required.</p>}
+          {error && <p className="text-xs text-signal mt-3">A password is required.</p>}
         </div>
         <button
           type="submit"
-          className="mt-8 w-full bg-gorse text-atlantic py-4 font-mono text-xs tracking-[0.25em] uppercase hover:bg-salt transition-colors min-h-[44px]"
+          className="mt-8 w-full bg-sea text-white py-4 text-sm font-medium hover:bg-sea-deep transition-colors min-h-[44px]"
         >
           Enter
         </button>

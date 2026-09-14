@@ -1,5 +1,5 @@
 import PageHero from "@/components/PageHero";
-import { SEASON_START, SEASON_END, MAX_GUESTS, PARK_CLOSURE_DATE } from "@/lib/siteConfig";
+import { PARK_CLOSURE_DATE } from "@/lib/siteConfig";
 import { format, parseISO } from "date-fns";
 
 const SECTIONS = [
@@ -55,32 +55,31 @@ export default function Terms() {
   return (
     <div>
       <PageHero
-        eyebrow="The Small Print"
         title="Terms & Conditions"
         subtitle="Clear, fair, and built around the two-stay, one-season model that keeps Ty Dee simple."
       />
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-40">
-        <div className="grid md:grid-cols-12 gap-12">
+      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-32">
+        <div className="grid md:grid-cols-12 gap-10 md:gap-12">
           <div className="md:col-span-4">
             <div className="sticky top-28 space-y-3">
               {SECTIONS.map((s, i) => (
                 <a
                   key={s.title}
                   href={`#sec-${i}`}
-                  className="block font-mono text-[0.65rem] tracking-[0.2em] uppercase text-cornish-slate hover:text-gorse transition-colors"
+                  className="block text-sm text-muted-foreground hover:text-sea transition-colors"
                 >
                   {String(i + 1).padStart(2, "0")} · {s.title}
                 </a>
               ))}
             </div>
           </div>
-          <div className="md:col-span-8 space-y-16">
+          <div className="md:col-span-8 space-y-14">
             {SECTIONS.map((s, i) => (
               <div key={s.title} id={`sec-${i}`}>
-                <p className="font-mono text-[0.65rem] tracking-[0.3em] text-gorse">{String(i + 1).padStart(2, "0")}</p>
-                <h2 className="font-display text-3xl md:text-4xl text-atlantic mt-3">{s.title}</h2>
-                <div className="mt-5 decking-divider" />
-                <div className="mt-5 space-y-4 text-cornish-slate">
+                <p className="text-sm text-sea tnum">{String(i + 1).padStart(2, "0")}</p>
+                <h2 className="text-3xl md:text-4xl text-ink mt-2">{s.title}</h2>
+                <div className="hairline mt-5" />
+                <div className="mt-5 space-y-4 text-ink-soft">
                   {s.body.map((p, j) => (
                     <p key={j}>{p}</p>
                   ))}

@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import PageHero from "@/components/PageHero";
+import { Image } from "@/components/ui/image";
 import StayCalendar, { stayForArrival, isParkClosedPeriod } from "@/components/StayCalendar";
-import { STAYS, SEASON_START, SEASON_END, PARK_CLOSURE_DATE } from "@/lib/siteConfig";
+import { SEASON_START, SEASON_END } from "@/lib/siteConfig";
+
+const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
+const BANNER = `${BASE}/eba602fdb_View.jpg`;
 
 // Placeholder rate tiers (per stay) — to be confirmed by owner.
 const RATES = [
@@ -20,83 +23,97 @@ export default function PricesAvailability() {
 
   return (
     <div>
-      <PageHero
-        eyebrow="The Binary Matrix"
-        title="Prices & Availability"
-        subtitle="Two stay lengths, one season. Friday arrivals are three nights; Monday arrivals are four. Every other date is the sea's."
-      />
+      {/* Narrow banner strip — no more than 220px */}
+      <section className="relative w-full h-[220px] overflow-hidden">
+        <Image
+          src={BANNER}
+          alt="The Atlantic horizon from the caravan decking at Polperro"
+          fittingType="fill"
+          loading="eager"
+          className="block w-full h-full"
+        />
+        <div className="absolute inset-0 scrim-bottom" />
+        <div className="relative h-full flex flex-col justify-end max-w-[1400px] mx-auto w-full px-6 md:px-10 pb-8">
+          <h1 className="text-white text-4xl md:text-5xl">Prices & Availability</h1>
+          <p className="mt-2 text-white/80 max-w-xl text-sm md:text-base">
+            Two stay lengths, one season. Friday arrivals are three nights; Monday arrivals are four. Every other date is the sea's.
+          </p>
+        </div>
+      </section>
 
       {/* Rate table */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24">
-        <p className="eyebrow mb-8">Rate card · per stay</p>
-        <div className="border-t border-cornish-slate/20">
-          <div className="grid grid-cols-12 py-4 border-b border-cornish-slate/20 font-mono text-[0.65rem] tracking-[0.2em] uppercase text-cornish-slate">
-            <div className="col-span-6">Period</div>
-            <div className="col-span-3 text-right">3 nights · Fri</div>
-            <div className="col-span-3 text-right">4 nights · Mon</div>
-          </div>
-          {RATES.map((r) => (
-            <div key={r.period} className="grid grid-cols-12 py-5 border-b border-cornish-slate/15 items-baseline">
-              <div className="col-span-6">
-                <span className="font-display text-xl md:text-2xl text-atlantic">{r.period}</span>
-                {r.note && (
-                  <span className="block font-mono text-[0.6rem] tracking-[0.15em] uppercase text-cornish-slate mt-1">
-                    {r.note}
-                  </span>
-                )}
-              </div>
-              <div className="col-span-3 text-right font-mono text-atlantic">£{r.fri}</div>
-              <div className="col-span-3 text-right font-mono text-atlantic">£{r.mon}</div>
+      <section className="px-6 md:px-10 max-w-[1400px] mx-auto py-14 md:py-20">
+        <div className="bg-surface border border-line p-6 md:p-10">
+          <p className="text-sm text-muted-foreground mb-6">Rate card · per stay</p>
+          <div className="border-t border-line">
+            <div className="grid grid-cols-12 py-3 border-b border-line text-xs tracking-wide uppercase text-muted-foreground">
+              <div className="col-span-6">Period</div>
+              <div className="col-span-3 text-right">3 nights · Fri</div>
+              <div className="col-span-3 text-right">4 nights · Mon</div>
             </div>
-          ))}
+            {RATES.map((r) => (
+              <div key={r.period} className="grid grid-cols-12 py-4 border-b border-line items-baseline">
+                <div className="col-span-6">
+                  <span className="text-lg text-ink">{r.period}</span>
+                  {r.note && <span className="block text-xs text-signal mt-1">{r.note}</span>}
+                </div>
+                <div className="col-span-3 text-right tnum text-ink">£{r.fri}</div>
+                <div className="col-span-3 text-right tnum text-ink">£{r.mon}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-5">
+            Rates are indicative pending final confirmation. No agency fees — booked direct with the owner.
+          </p>
         </div>
-        <p className="font-mono text-[0.65rem] tracking-[0.1em] text-cornish-slate/70 mt-6">
-          Rates are indicative pending final confirmation. No agency fees — booked direct with the owner.
-        </p>
       </section>
 
       {/* Calendar */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-40">
-        <div className="grid md:grid-cols-12 gap-12">
+      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-32">
+        <div className="grid md:grid-cols-12 gap-8 md:gap-12">
           <div className="md:col-span-8">
-            <p className="eyebrow mb-8">Stay-block calendar · {SEASON_START} → {SEASON_END}</p>
-            <StayCalendar selectedArrival={arrival} onSelect={setArrival} />
+            <div className="bg-surface border border-line p-6 md:p-10">
+              <p className="text-sm text-muted-foreground mb-6">
+                Stay-block calendar · {SEASON_START} → {SEASON_END}
+              </p>
+              <StayCalendar selectedArrival={arrival} onSelect={setArrival} />
+            </div>
           </div>
           <div className="md:col-span-4">
-            <div className="sticky top-28 bg-salt border border-cornish-slate/20 p-8">
-              <p className="eyebrow">Your selection</p>
+            <div className="sticky top-28 bg-surface border border-line p-6 md:p-8">
+              <p className="text-sm text-muted-foreground">Your selection</p>
               {stay ? (
-                <div className="mt-6">
-                  <p className="font-display text-3xl text-atlantic">{stay.label}</p>
-                  <p className="font-mono text-sm text-cornish-slate mt-2">
+                <div className="mt-5">
+                  <p className="text-2xl text-ink">{stay.label}</p>
+                  <p className="text-sm text-muted-foreground mt-1 tnum">
                     Arriving {format(arrival, "EEE d MMM yyyy")}
                   </p>
                   {winter && (
-                    <div role="alert" aria-live="assertive" className="mt-6 bg-atlantic text-salt p-5">
-                      <p className="font-mono text-[0.6rem] tracking-[0.25em] uppercase text-gorse">Winter residency</p>
-                      <p className="mt-2 text-sm text-salt/90">
+                    <div role="alert" aria-live="assertive" className="mt-5 bg-ink text-white p-4">
+                      <p className="text-xs tracking-wide uppercase text-signal">Winter residency</p>
+                      <p className="mt-2 text-sm text-white/90">
                         Park facilities are closed from 1 November. You are booking a peaceful, self-catered retreat.
                       </p>
                     </div>
                   )}
                   <Link
                     to="/book"
-                    className="mt-8 flex items-center justify-center bg-gorse text-atlantic px-6 py-4 font-mono text-xs tracking-[0.25em] uppercase hover:bg-atlantic hover:text-salt transition-colors min-h-[44px]"
+                    className="mt-6 flex items-center justify-center bg-sea text-white px-6 py-4 text-sm font-medium hover:bg-sea-deep transition-colors min-h-[44px]"
                   >
                     Continue to Book →
                   </Link>
                 </div>
               ) : (
-                <p className="mt-6 text-cornish-slate">
+                <p className="mt-5 text-ink-soft text-sm">
                   Select a highlighted arrival date. Only Fridays (3 nights) and Mondays (4 nights) within season are bookable.
                 </p>
               )}
 
-              <div className="mt-10 decking-divider" />
-              <div className="mt-6 space-y-3 font-mono text-[0.65rem] tracking-[0.1em] text-cornish-slate">
-                <p className="flex items-center gap-3"><span className="w-4 h-4 bg-gorse/30 inline-block" /> Valid arrival</p>
-                <p className="flex items-center gap-3"><span className="w-4 h-4 bg-gorse/20 inline-block" /> Selected stay block</p>
-                <p className="flex items-center gap-3"><span className="w-4 h-4 strike-diagonal inline-block border border-cornish-slate/20" /> Outside season</p>
+              <div className="hairline mt-8" />
+              <div className="mt-5 space-y-2 text-xs text-muted-foreground">
+                <p className="flex items-center gap-3"><span className="w-4 h-4 bg-surface border border-sea inline-block" /> Available arrival</p>
+                <p className="flex items-center gap-3"><span className="w-4 h-4 bg-offseason inline-block" /> Your stay</p>
+                <p className="flex items-center gap-3"><span className="w-4 h-4 bg-offseason inline-block opacity-50" /> Out of season</p>
               </div>
             </div>
           </div>

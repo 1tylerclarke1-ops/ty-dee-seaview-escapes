@@ -1,153 +1,193 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowDown, Waves, BedDouble, Wifi, PawPrint, Car, Eye } from "lucide-react";
+import { Image } from "@/components/ui/image";
+import Photo from "@/components/Photo";
+import Lightbox from "@/components/Lightbox";
 import { BUSINESS } from "@/lib/siteConfig";
 
-const HERO_IMG = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/eba602fdb_View.jpg";
-const DECKING_IMG = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/939b9df1f_Decking.jpg";
+const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
+const HERO = `${BASE}/eba602fdb_View.jpg`;
+const EXTERIOR = `${BASE}/5f987f181_Coverpicture.jpg`;
+const DECKING_VIEW = `${BASE}/23d07571c_DeckingandView.jpg`;
+const LIVING = `${BASE}/697cab73e_LivingArea3.jpg`;
+const BEDROOM = `${BASE}/3283e5042_MasterBedroom3.jpg`;
 
-const FEATURES = [
-  { icon: BedDouble, label: "Sleeps six", note: "2 bedrooms + sofa bed" },
-  { icon: Eye, label: "Sea views", note: "Private decking facing the Atlantic" },
-  { icon: Wifi, label: "Free WiFi", note: "Stay connected if you must" },
-  { icon: Car, label: "Free parking", note: "On-site at Polperro Holiday Park" },
-  { icon: PawPrint, label: "Dogs welcome", note: "By prior arrangement" },
-  { icon: Waves, label: "Coast path", note: "Minutes from the South West Coast Path" },
+// Content photographs (the hero is not clickable). Order = lightbox order.
+const PHOTOS = [
+  { src: EXTERIOR, alt: "Ty Dee caravan on its elevated pitch at Polperro Holiday Park, wraparound timber deck and glass balustrade facing the sea", caption: "Ty Dee on its elevated pitch — wraparound timber deck and glass balustrade facing the Atlantic." },
+  { src: DECKING_VIEW, alt: "An elevated corner of the decking looking out over the park toward the coast, outdoor sectional seating and a glass-topped table", caption: "An elevated corner of the decking, looking out over the park to the coast." },
+  { src: LIVING, alt: "Open-plan lounge and dining area under a pitched ceiling with tall windows onto the green hillside", caption: "Open-plan lounge and dining under a pitched ceiling, tall windows to the hillside." },
+  { src: BEDROOM, alt: "Principal bedroom with a double bed against a light-oak headboard panel and soft neutral linens", caption: "Principal bedroom — double bed, light-oak headboard, soft neutral linens." },
+];
+
+const FACTS = [
+  { big: "6", small: "sleeps" },
+  { big: "2", small: "bedrooms" },
+  { big: "Sea view", small: "from the decking" },
+  { big: "Dogs", small: "welcome by arrangement" },
 ];
 
 export default function Home() {
+  const [lightbox, setLightbox] = useState(null); // index or null
+  const openAt = (i) => setLightbox(i);
+
   return (
     <div>
-      {/* Horizon Hero */}
-      <section className="relative h-screen min-h-[640px] w-full overflow-hidden">
-        <img src={HERO_IMG} alt="Sea view from the caravan decking at sunrise" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-atlantic/30 via-transparent to-atlantic/40" />
-        <div className="relative h-full flex flex-col items-center justify-center text-center px-6">
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="font-mono text-[0.7rem] md:text-xs tracking-[0.35em] uppercase text-salt/80"
-          >
-            Polperro Holiday Park · Cornwall
-          </motion.p>
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.5 }}
-            className="font-display text-salt text-6xl md:text-8xl lg:text-9xl leading-[0.95] mt-6"
-          >
-            Ty Dee
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1 }}
-            className="font-display italic text-salt/90 text-2xl md:text-4xl mt-4"
-          >
-            The Sea, Framed
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1.4 }}
-            className="mt-12"
-          >
-            <Link
-              to="/book"
-              className="inline-flex items-center gap-3 bg-gorse text-atlantic px-8 py-4 font-mono text-xs tracking-[0.25em] uppercase hover:bg-salt transition-colors min-h-[44px]"
-            >
-              Check Availability
-            </Link>
-          </motion.div>
+      {/* Hero — full-bleed sea view, cropped not stretched */}
+      <section className="relative w-full h-[68vh] md:h-[88vh] min-h-[480px] overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src={HERO}
+            alt="The Atlantic horizon seen from the caravan decking at Polperro, calm sea and a wide Cornish sky"
+            fittingType="fill"
+            loading="eager"
+            fetchpriority="high"
+            className="block w-full h-full"
+          />
         </div>
-        <motion.button
-          onClick={() => window.scrollTo({ top: window.innerHeight - 80, behavior: "smooth" })}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.8 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-salt/80 flex flex-col items-center gap-2"
-          aria-label="Scroll to discover"
-        >
-          <span className="font-mono text-[0.6rem] tracking-[0.3em] uppercase">Scroll to discover</span>
-          <ArrowDown className="w-4 h-4 animate-bounce" strokeWidth={1.25} />
-        </motion.button>
-      </section>
-
-      {/* Short pitch */}
-      <section className="max-w-[1400px] mx-auto px-6 md:px-10 py-24 md:py-40">
-        <div className="grid md:grid-cols-12 gap-12 items-start">
-          <div className="md:col-span-4">
-            <p className="eyebrow">The Retreat</p>
-          </div>
-          <div className="md:col-span-8">
-            <p className="font-display text-3xl md:text-5xl text-atlantic leading-[1.15]">
-              A privately owned static caravan perched above the Atlantic at Polperro — a quiet, refined base for six, where the view does the talking and the pace is set by the tide.
-            </p>
-            <div className="mt-10 decking-divider" />
-            <div className="mt-10 grid sm:grid-cols-2 gap-6 text-cornish-slate">
-              <p>{BUSINESS.bedrooms}. {BUSINESS.bathrooms}. Private decking with uninterrupted sea views, free WiFi, and on-site parking.</p>
-              <p>Booked directly with the owner — no agency fees, no commission, just you and the coast. Two stay lengths, one season, one view.</p>
-            </div>
-          </div>
+        <div className="absolute inset-0 scrim-bottom" />
+        <div className="absolute inset-0 grain" />
+        <div className="relative h-full flex flex-col items-center justify-end md:justify-center text-center px-6 pb-16 md:pb-0">
+          <h1 className="text-white text-6xl md:text-8xl leading-[0.98]">Ty Dee</h1>
+          <p className="mt-5 text-lg md:text-2xl text-white/90 max-w-xl">
+            A sea-view caravan for six at Polperro — October to April, when the coast belongs to you.
+          </p>
+          <Link
+            to="/prices"
+            className="mt-8 inline-flex items-center bg-sea text-white px-8 py-4 text-sm font-medium hover:bg-sea-deep transition-colors min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-sea focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+          >
+            See available dates
+          </Link>
         </div>
       </section>
 
-      {/* Key features */}
-      <section className="bg-atlantic text-salt">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-24 md:py-32">
-          <p className="eyebrow text-salt/50 mb-12">What's included</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-salt/10">
-            {FEATURES.map((f) => (
-              <div key={f.label} className="bg-atlantic p-8 md:p-10">
-                <f.icon className="w-6 h-6 text-gorse mb-6" strokeWidth={1.25} />
-                <p className="font-display text-2xl text-salt">{f.label}</p>
-                <p className="font-mono text-[0.7rem] tracking-[0.1em] text-salt/50 mt-2">{f.note}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Decking feature */}
-      <section className="max-w-[1400px] mx-auto px-6 md:px-10 py-24 md:py-40">
-        <div className="grid md:grid-cols-12 gap-12 items-center">
+      {/* Contained pair — exterior + pitch (image left) */}
+      <section className="max-w-[1400px] mx-auto px-6 md:px-10 py-20 md:py-28">
+        <div className="grid md:grid-cols-12 gap-8 md:gap-12 items-center">
           <div className="md:col-span-7">
-            <img src={DECKING_IMG} alt="Private decking with sea view" className="w-full aspect-[3/2] object-cover" />
+            <Photo
+              src={PHOTOS[0].src}
+              alt={PHOTOS[0].alt}
+              caption={PHOTOS[0].caption}
+              onClick={() => openAt(0)}
+              imgClassName="block w-full aspect-[4/3]"
+            />
           </div>
           <div className="md:col-span-5">
-            <p className="eyebrow">Private Decking</p>
-            <h2 className="font-display text-4xl md:text-5xl text-atlantic mt-4 leading-tight">
-              Your own horizon line
+            <h2 className="text-3xl md:text-5xl text-ink leading-tight">
+              A quiet base above the Atlantic
             </h2>
-            <p className="mt-6 text-cornish-slate">
-              Step out onto the private timber decking with a morning coffee and watch the mist lift off the Atlantic. The view is yours alone — no shared promenades, no crowds, just the slow theatre of the Cornish coast.
+            <p className="mt-5 text-ink-soft leading-relaxed">
+              A privately owned static caravan perched above the sea at Polperro Holiday Park — sleeps six, with private decking, a sea view, and the South West Coast Path on the doorstep. Booked directly with the owner.
             </p>
-            <Link to="/caravan" className="inline-flex mt-8 items-center gap-2 font-mono text-xs tracking-[0.25em] uppercase text-atlantic hover:text-gorse transition-colors min-h-[44px]">
+            <Link
+              to="/caravan"
+              className="mt-6 inline-flex items-center text-sea font-medium hover:text-sea-deep transition-colors min-h-[44px]"
+            >
               Explore the caravan →
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Availability CTA */}
-      <section className="bg-gorse/15">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-24 md:py-32 text-center">
-          <p className="eyebrow">Season 2026 / 27</p>
-          <h2 className="font-display text-4xl md:text-6xl text-atlantic mt-4 leading-tight">
-            5 October 2026 — 27 April 2027
-          </h2>
-          <p className="mt-6 text-cornish-slate max-w-xl mx-auto">
+      {/* Dark facts band — large numerals, no photo */}
+      <section className="bg-ink text-white">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-16 md:py-24">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
+            {FACTS.map((f) => (
+              <div key={f.small}>
+                <p className="tnum text-4xl md:text-6xl text-white leading-none">{f.big}</p>
+                <p className="mt-3 text-sm text-white/60">{f.small}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Full-bleed band — decking & view */}
+      <section className="relative w-full h-[60vh] min-h-[360px] overflow-hidden">
+        <button
+          type="button"
+          onClick={() => openAt(1)}
+          aria-label={`Enlarge image: ${PHOTOS[1].alt}`}
+          className="block w-full h-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sea"
+        >
+          <Image src={PHOTOS[1].src} alt={PHOTOS[1].alt} fittingType="fill" loading="lazy" className="block w-full h-full" />
+        </button>
+        <div className="absolute inset-0 scrim-bottom pointer-events-none" />
+        <div className="absolute inset-0 flex items-end px-6 md:px-12 pb-10 pointer-events-none">
+          <p className="text-white text-2xl md:text-4xl max-w-xl leading-tight">
+            Your own horizon line — the view does the talking.
+          </p>
+        </div>
+      </section>
+
+      {/* Contained pair — living area (image right) */}
+      <section className="max-w-[1400px] mx-auto px-6 md:px-10 py-20 md:py-28">
+        <div className="grid md:grid-cols-12 gap-8 md:gap-12 items-center">
+          <div className="md:col-span-5 md:order-1">
+            <h2 className="text-3xl md:text-5xl text-ink leading-tight">
+              Warm, light, and built for the weather
+            </h2>
+            <p className="mt-5 text-ink-soft leading-relaxed">
+              Open-plan living and dining under a pitched ceiling, with tall windows that pull the hillside indoors. An L-shaped sofa, an electric fireplace, and a dining nook for six — the space to dry out after a day on the coast path.
+            </p>
+          </div>
+          <div className="md:col-span-7 md:order-2">
+            <Photo
+              src={PHOTOS[2].src}
+              alt={PHOTOS[2].alt}
+              caption={PHOTOS[2].caption}
+              onClick={() => openAt(2)}
+              imgClassName="block w-full aspect-[4/3]"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Full-bleed band — principal bedroom */}
+      <section className="relative w-full h-[60vh] min-h-[360px] overflow-hidden">
+        <button
+          type="button"
+          onClick={() => openAt(3)}
+          aria-label={`Enlarge image: ${PHOTOS[3].alt}`}
+          className="block w-full h-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sea"
+        >
+          <Image src={PHOTOS[3].src} alt={PHOTOS[3].alt} fittingType="fill" loading="lazy" className="block w-full h-full" />
+        </button>
+        <div className="absolute inset-0 scrim-bottom pointer-events-none" />
+        <div className="absolute inset-0 flex items-end px-6 md:px-12 pb-10 pointer-events-none">
+          <p className="text-white text-2xl md:text-4xl max-w-xl leading-tight">
+            Sleep to the sound of the sea.
+          </p>
+        </div>
+      </section>
+
+      {/* CTA band */}
+      <section className="bg-surface border-t border-line">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-20 md:py-28 text-center">
+          <p className="text-sm text-muted-foreground">Season 2026 / 27</p>
+          <h2 className="mt-3 text-3xl md:text-5xl text-ink">5 October 2026 — 27 April 2027</h2>
+          <p className="mt-5 text-ink-soft max-w-xl mx-auto">
             Two ways to stay: three nights arriving Friday, or four nights arriving Monday. The rest of the calendar is the sea's.
           </p>
           <Link
-            to="/prices"
-            className="inline-flex mt-10 items-center bg-atlantic text-salt px-8 py-4 font-mono text-xs tracking-[0.25em] uppercase hover:bg-cornish-slate transition-colors min-h-[44px]"
+            to="/book"
+            className="mt-8 inline-flex items-center bg-sea text-white px-8 py-4 text-sm font-medium hover:bg-sea-deep transition-colors min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-sea focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
           >
-            View Prices & Availability
+            Begin your booking
           </Link>
         </div>
       </section>
+
+      {lightbox !== null && (
+        <Lightbox
+          photos={PHOTOS}
+          index={lightbox}
+          onClose={() => setLightbox(null)}
+          onIndex={setLightbox}
+        />
+      )}
     </div>
   );
 }
