@@ -195,6 +195,44 @@ export function isArrivalDay(date) {
   return allowedLengthsForArrival(date).length > 0;
 }
 
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function formatDayList(days) {
+  const names = [...days].sort((a, b) => a - b).map((d) => DAY_NAMES[d]);
+  if (names.length <= 1) return names.join("");
+  return names.slice(0, -1).join(", ") + " or " + names[names.length - 1];
+}
+
+// Price for a given length in a season, or null if that length is not
+// bookable in the season. Reads the booking rules + pricing engine directly
+// so the rate card can never drift from the booking engine.
+export function seasonPriceForLength(season, length) {
+  const override = BOOKING_RULES.season_overrides?.[season.name];
+  const arrivalDays = override
+    ? override.arrival_days
+    : Object.keys(BOOKING_RULES.by_arrival_day).map(Number);
+  for (const day of arrivalDays) {
+    const rep = firstArrivalInSeason(season, day);
+    if (!rep) continue;
+    if (allowedLengthsForArrival(rep).includes(length)) {
+      return calculatePrice(rep, length)?.total ?? null;
+    }
+  }
+  return null;
+}
+
+// A human note for any season whose stay options are restricted (overridden),
+// e.g. "Peak summer — weekly stays only, arriving Monday, Friday or Saturday."
+export function seasonRestrictionNote(season) {
+  const override = BOOKING_RULES.season_overrides?.[season.name];
+  if (!override) return null;
+  const allWeekly = override.allowed_lengths.every((l) => l % 7 === 0);
+  const lengthDesc = allWeekly
+    ? "weekly stays only"
+    : `${override.allowed_lengths.join(", ")}-night stays only`;
+  return `${season.name} — ${lengthDesc}, arriving ${formatDayList(override.arrival_days)}.`;
+}
+
 // Validate that seasons are contiguous and non-overlapping.
 export function validateSeasons() {
   const seasons = [...PRICING_SETTINGS.seasons].sort((a, b) =>
