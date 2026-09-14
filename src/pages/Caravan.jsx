@@ -125,7 +125,7 @@ export default function Caravan() {
             <p className="mt-3 text-sm text-muted-foreground">
               Single-storey, ~447 sq ft. Tap to zoom on a phone.
             </p>
-            <div className="mt-8 bg-base p-4 inline-block">
+            <div className="mt-8 bg-base p-4 block">
               <Photo
                 src={byId("floor-plan").src}
                 alt={byId("floor-plan").alt}
