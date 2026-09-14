@@ -47,7 +47,7 @@ export default function PricesAvailability() {
 
       {/* Park facilities — per-season status */}
       <section className="px-6 md:px-10 max-w-[1400px] mx-auto py-14 md:py-20">
-        <FacilitiesStatusPanel settings={settings} />
+        <FacilitiesStatusPanel settings={settings} arrival={arrival} length={length} facStatus={facStatus} />
       </section>
 
       {/* Calendar + selection */}

@@ -1,35 +1,70 @@
-import { PRICING_SETTINGS } from "@/lib/pricing";
-import { seasonFacilitiesStatus, formatFacilitiesDate } from "@/lib/facilities";
+import { useState } from "react";
+import { parseISO, subDays, format } from "date-fns";
+import { ChevronDown } from "lucide-react";
+import FacilitiesTimeline from "@/components/FacilitiesTimeline";
 
-// Per-season facilities status — replaces the removed rate card's location
-// on Prices & Availability. Reads the same engine the booking rules use, so
-// it can never advertise a state the engine contradicts.
-export default function FacilitiesStatusPanel({ settings }) {
+// One status line reflecting the dates the guest is looking at, the winter
+// note as context directly beneath, a slim year timeline, and the on-site
+// facilities behind a disclosure. The per-season list is gone.
+function statusLine(arrival, facStatus, settings) {
+  const open = format(parseISO(settings.facilities_open_from), "d MMMM");
+  const closed = format(parseISO(settings.facilities_closed_from), "d MMMM");
+  const closedEve = format(subDays(parseISO(settings.facilities_closed_from), 1), "d MMMM");
+  if (!arrival || !facStatus) {
+    return `Park facilities are open from ${open} to ${closedEve}.`;
+  }
+  if (facStatus.state === "open") return "Park facilities are open for your dates.";
+  if (facStatus.state === "closed") {
+    return `Park facilities are closed for your dates — reopening ${open}.`;
+  }
+  if (facStatus.direction === "opening") {
+    return `Park facilities open on ${open}, partway through your stay.`;
+  }
+  return `Park facilities close on ${closed}, partway through your stay.`;
+}
+
+export default function FacilitiesStatusPanel({ settings, arrival, length, facStatus }) {
+  const [showSite, setShowSite] = useState(false);
+  const items = (settings.facilities_list || "")
+    .split(" — ")[0]
+    .split(", ")
+    .filter(Boolean);
+
   return (
     <div className="bg-surface border border-line p-6 md:p-10">
-      <p className="text-sm text-muted-foreground mb-3">Park facilities · by season</p>
-      <p className="text-ink-soft text-sm max-w-2xl mb-6">{settings.facilities_list}</p>
-      <div className="border-t border-line">
-        {PRICING_SETTINGS.seasons.map((season) => {
-          const st = seasonFacilitiesStatus(season, settings);
-          const tone = st.state === "open" ? "text-sea" : "text-signal";
-          const label =
-            st.state === "open"
-              ? "Open"
-              : st.state === "closed"
-              ? "Closed"
-              : st.direction === "opening"
-              ? `Opening ${formatFacilitiesDate(st.boundaryDate)}`
-              : `Open until ${formatFacilitiesDate(st.boundaryDate)}`;
-          return (
-            <div key={season.name} className="flex items-baseline justify-between py-3 border-b border-line gap-4">
-              <span className="text-base text-ink">{season.name}</span>
-              <span className={`text-sm ${tone}`}>{label}</span>
-            </div>
-          );
-        })}
+      <p className="text-xl md:text-2xl text-ink leading-snug max-w-3xl">
+        {statusLine(arrival, facStatus, settings)}
+      </p>
+      <p className="text-sm text-ink-soft mt-3 max-w-2xl">{settings.facilities_winter_note}</p>
+
+      <div className="mt-8">
+        <FacilitiesTimeline settings={settings} arrival={arrival} length={length} />
       </div>
-      <p className="text-sm text-ink-soft mt-5 max-w-2xl">{settings.facilities_winter_note}</p>
+
+      <div className="mt-8 hairline pt-6">
+        <button
+          type="button"
+          onClick={() => setShowSite((v) => !v)}
+          className="flex items-center gap-2 text-sm text-ink-soft hover:text-sea transition-colors min-h-[44px]"
+          aria-expanded={showSite}
+        >
+          <ChevronDown
+            className={`w-4 h-4 transition-transform ${showSite ? "rotate-180" : ""}`}
+            strokeWidth={1.5}
+          />
+          What's on site
+        </button>
+        {showSite && (
+          <ul className="mt-4 grid sm:grid-cols-2 gap-x-8 gap-y-2 max-w-2xl">
+            {items.map((it) => (
+              <li key={it} className="text-sm text-ink-soft flex items-start gap-2">
+                <span className="mt-2 w-1 h-1 rounded-full bg-sea shrink-0" />
+                <span>{it}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

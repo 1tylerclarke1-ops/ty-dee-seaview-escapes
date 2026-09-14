@@ -17,7 +17,7 @@ function md(iso) {
   return parseInt(parts[1], 10) * 100 + parseInt(parts[2], 10);
 }
 
-function addDaysIso(iso, n) {
+export function addDaysIso(iso, n) {
   const d = new Date(iso + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);

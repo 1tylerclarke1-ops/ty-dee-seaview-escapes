@@ -2,6 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import {
   stayFacilitiesStatus,
   formatFacilitiesDate,
+  addDaysIso,
   DEFAULT_FACILITIES_SETTINGS,
 } from "../../shared/facilities.ts";
 
@@ -50,11 +51,11 @@ export default async function (req) {
         );
       } else if (status.direction === "opening") {
         lines.push(
-          `The park's on-site facilities are closed until ${formatFacilitiesDate(status.boundaryDate)} — your booking is for the accommodation only until then.`
+          `The park's on-site facilities reopen on ${formatFacilitiesDate(status.boundaryDate)} — your booking is for the accommodation only before then.`
         );
       } else {
         lines.push(
-          `The park's on-site facilities are open until ${formatFacilitiesDate(status.boundaryDate)}, then closed — your booking is for the accommodation only from then.`
+          `The park's on-site facilities are open to ${formatFacilitiesDate(addDaysIso(status.boundaryDate, -1))} and closed from ${formatFacilitiesDate(status.boundaryDate)} — your booking is for the accommodation only from then.`
         );
       }
     }
