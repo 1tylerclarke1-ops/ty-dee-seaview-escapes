@@ -1,130 +1,141 @@
-import { useMemo } from "react";
-import {
-  addDays,
-  eachDayOfInterval,
-  endOfMonth,
-  format,
-  isAfter,
-  isBefore,
-  isEqual,
-  parseISO,
-  startOfMonth,
-  startOfWeek,
-  endOfWeek,
-} from "date-fns";
+import { useMemo, useState } from "react";
+import { format, isBefore, isEqual, parseISO, startOfMonth } from "date-fns";
+import { motion, useReducedMotion } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SEASON_START, SEASON_END, PARK_CLOSURE_DATE } from "@/lib/siteConfig";
-import { isArrivalDay } from "@/lib/pricing";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MonthGrid from "@/components/MonthGrid";
+import CalendarLegend from "@/components/CalendarLegend";
 
-const WEEK_STARTS_ON = 1; // Monday
+// Single-month view with prev/next arrows + a dropdown of every month in the
+// booking window. Mobile shows one month; desktop shows two side by side.
+// The selected stay is preserved while navigating — only the view moves.
+export default function StayCalendar({ selectedArrival, selectedLength, onSelect }) {
+  const isMobile = useIsMobile();
+  const showCount = isMobile ? 1 : 2;
+  const reduce = useReducedMotion();
 
-// Build a 6x7 grid of dates for a given month
-function monthGrid(year, month) {
-  const start = startOfWeek(startOfMonth(new Date(year, month, 1)), { weekStartsOn: WEEK_STARTS_ON });
-  const end = endOfWeek(endOfMonth(new Date(year, month, 1)), { weekStartsOn: WEEK_STARTS_ON });
-  return eachDayOfInterval({ start, end });
-}
-
-function inSeason(date) {
-  const s = parseISO(SEASON_START);
-  const e = parseISO(SEASON_END);
-  return (isEqual(date, s) || isAfter(date, s)) && (isEqual(date, e) || isBefore(date, e));
-}
-
-function isParkClosedPeriod(date) {
-  return isEqual(date, parseISO(PARK_CLOSURE_DATE)) || isAfter(date, parseISO(PARK_CLOSURE_DATE));
-}
-
-export default function StayCalendar({ selectedArrival, selectedLength, onSelect, compact = false }) {
-  const seasonMonths = useMemo(() => {
-    const start = parseISO(SEASON_START);
-    const end = parseISO(SEASON_END);
-    const months = [];
-    let cursor = startOfMonth(start);
-    while (isBefore(cursor, end) || isEqual(startOfMonth(cursor), startOfMonth(end))) {
-      months.push({ year: cursor.getFullYear(), month: cursor.getMonth() });
+  const months = useMemo(() => {
+    const start = startOfMonth(parseISO(SEASON_START));
+    const end = startOfMonth(parseISO(SEASON_END));
+    const list = [];
+    let cursor = new Date(start);
+    while (isBefore(cursor, end) || isEqual(cursor, end)) {
+      list.push({
+        year: cursor.getFullYear(),
+        month: cursor.getMonth(),
+        label: format(cursor, "MMMM yyyy"),
+      });
       cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
     }
-    return months;
+    return list;
   }, []);
 
-  const blockDates = useMemo(() => {
-    if (!selectedArrival || !selectedLength) return [];
-    return Array.from({ length: selectedLength }, (_, i) => addDays(selectedArrival, i));
-  }, [selectedArrival, selectedLength]);
+  const [viewIndex, setViewIndex] = useState(() => {
+    const now = new Date();
+    const exact = months.findIndex((m) => m.year === now.getFullYear() && m.month === now.getMonth());
+    if (exact !== -1) return exact;
+    const nowMs = startOfMonth(now).getTime();
+    const firstMs = new Date(months[0].year, months[0].month, 1).getTime();
+    return nowMs < firstMs ? 0 : months.length - 1;
+  });
+  const [dir, setDir] = useState(0);
 
-  const inBlock = (date) => blockDates.some((d) => isEqual(d, date));
+  const atStart = viewIndex === 0;
+  const atEnd = viewIndex + showCount >= months.length;
+
+  const goPrev = () => {
+    if (viewIndex > 0) {
+      setDir(-1);
+      setViewIndex(viewIndex - 1);
+    }
+  };
+  const goNext = () => {
+    if (viewIndex + showCount < months.length) {
+      setDir(1);
+      setViewIndex(viewIndex + 1);
+    }
+  };
+  const handleKey = (e) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      goPrev();
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      goNext();
+    }
+  };
+
+  const closedNoteFor = (m) =>
+    m.year === 2026 && (m.month === 9 || m.month === 10)
+      ? `Facilities closed from ${format(parseISO(PARK_CLOSURE_DATE), "d MMM")}`
+      : null;
+
+  const visible = months.slice(viewIndex, viewIndex + showCount);
 
   return (
-    <div className="space-y-10">
-      {seasonMonths.map(({ year, month }) => {
-        const days = monthGrid(year, month);
-        return (
-          <div key={`${year}-${month}`}>
-            <div className="flex items-baseline justify-between mb-4">
-              <h3 className="text-2xl text-ink">
-                {format(new Date(year, month, 1), "MMMM yyyy")}
-              </h3>
-              {month === 10 && year === 2026 && (
-                <span className="text-[0.65rem] tracking-wide uppercase text-muted-foreground">
-                  Park facilities close Nov 1
-                </span>
-              )}
-            </div>
-            <div className="grid grid-cols-7 gap-1.5">
-              {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-                <div key={i} className="text-[0.6rem] tracking-wide text-muted-foreground text-center pb-2">
-                  {d}
-                </div>
-              ))}
-              {days.map((date) => {
-                const inMonth = date.getMonth() === month;
-                const season = inSeason(date);
-                const arrival = isArrivalDay(date);
-                const blocked = inBlock(date);
-                const closed = isParkClosedPeriod(date);
-                const isSelectedArrival = selectedArrival && isEqual(date, selectedArrival);
+    <div onKeyDown={handleKey} tabIndex={-1} className="outline-none">
+      <div className="flex items-center justify-between gap-4 mb-8">
+        <button
+          type="button"
+          onClick={goPrev}
+          disabled={atStart}
+          aria-label="Previous month"
+          className="w-10 h-10 inline-flex items-center justify-center border border-line text-ink-soft hover:border-sea hover:text-sea disabled:opacity-30 disabled:pointer-events-none transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5" strokeWidth={1.5} />
+        </button>
 
-                let cls =
-                  "relative aspect-square flex items-center justify-center text-sm transition-colors min-h-[44px] min-w-[44px] tnum ";
-                if (!inMonth) {
-                  cls += "text-transparent";
-                } else if (!season) {
-                  cls += "text-muted-foreground opacity-50";
-                } else if (arrival) {
-                  cls += isSelectedArrival
-                    ? "bg-sea text-white"
-                    : blocked
-                    ? "bg-offseason text-sea"
-                    : "bg-surface text-sea border border-sea hover:bg-sea hover:text-white cursor-pointer";
-                } else if (blocked) {
-                  cls += "bg-offseason text-ink-soft";
-                } else if (closed) {
-                  cls += "text-muted-foreground";
-                } else {
-                  cls += "text-muted-foreground opacity-60";
-                }
+        <select
+          value={viewIndex}
+          onChange={(e) => {
+            setDir(0);
+            setViewIndex(Number(e.target.value));
+          }}
+          aria-label="Choose month"
+          className="bg-transparent text-xl md:text-2xl font-heading text-ink text-center cursor-pointer focus:outline-none focus:text-sea px-2 py-1"
+        >
+          {months.map((m, i) => (
+            <option key={`${m.year}-${m.month}`} value={i}>
+              {m.label}
+            </option>
+          ))}
+        </select>
 
-                return (
-                  <button
-                    key={date.toISOString()}
-                    disabled={!arrival}
-                    onClick={() => arrival && onSelect && onSelect(date)}
-                    className={cls}
-                    aria-label={format(date, "EEEE d MMMM yyyy")}
-                  >
-                    {inMonth && date.getDate()}
-                    {arrival && !isSelectedArrival && (
-                      <span className="absolute inset-0 ring-1 ring-sea pointer-events-none" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
+        <button
+          type="button"
+          onClick={goNext}
+          disabled={atEnd}
+          aria-label="Next month"
+          className="w-10 h-10 inline-flex items-center justify-center border border-line text-ink-soft hover:border-sea hover:text-sea disabled:opacity-30 disabled:pointer-events-none transition-colors"
+        >
+          <ChevronRight className="w-5 h-5" strokeWidth={1.5} />
+        </button>
+      </div>
+
+      <div className="overflow-hidden">
+        <motion.div
+          key={viewIndex}
+          initial={reduce ? false : { x: dir * 40, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.22, ease: "easeOut" }}
+          className={showCount === 2 ? "grid grid-cols-2 gap-8" : ""}
+        >
+          {visible.map((m) => (
+            <MonthGrid
+              key={`${m.year}-${m.month}`}
+              year={m.year}
+              month={m.month}
+              selectedArrival={selectedArrival}
+              selectedLength={selectedLength}
+              onSelect={onSelect}
+              closedNote={closedNoteFor(m)}
+            />
+          ))}
+        </motion.div>
+      </div>
+
+      <CalendarLegend />
     </div>
   );
 }
-
-export { inSeason, isParkClosedPeriod };
