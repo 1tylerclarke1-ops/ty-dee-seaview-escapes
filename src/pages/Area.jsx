@@ -1,6 +1,8 @@
 import PageHero from "@/components/PageHero";
 import AreaMap, { SPOTS } from "@/components/AreaMap";
 import ReservedSlot from "@/components/ReservedSlot";
+import Seo from "@/components/Seo";
+import { SITE_ORIGIN } from "@/lib/structuredData";
 
 // Location cards drawn from the map pins. The caravan base is shown on the
 // map only; these cards are the places a guest might walk or drive to.
@@ -9,6 +11,11 @@ const LOCATIONS = SPOTS.filter((s) => !s.isCaravan);
 export default function Area() {
   return (
     <div>
+      <Seo
+        title="The Area — Polperro, Looe & the Cornish Coast"
+        description="What's around Ty Dee Seaview Escapes at Polperro Holiday Park — the harbour, Looe, Talland Bay, the South West Coast Path and the coves of the south Cornish coast."
+        canonical={`${SITE_ORIGIN}/area`}
+      />
       <PageHero
         title="The Area"
         subtitle="Polperro, Looe, the coast path and a string of hidden coves — and a quieter, lovelier side of Cornwall once the season turns."

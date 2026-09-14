@@ -5,6 +5,9 @@ import Lightbox from "@/components/Lightbox";
 import RoomSection from "@/components/RoomSection";
 import GalleryGrid from "@/components/GalleryGrid";
 import ReservedSlot from "@/components/ReservedSlot";
+import Seo from "@/components/Seo";
+import Reviews from "@/components/Reviews";
+import { SITE_ORIGIN } from "@/lib/structuredData";
 
 const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
 
@@ -96,6 +99,11 @@ export default function Caravan() {
 
   return (
     <div>
+      <Seo
+        title="The Caravan — Ty Dee Seaview Escapes, Polperro"
+        description="A walkthrough of the Ty Dee caravan at Polperro Holiday Park: open-plan living, galley kitchen, two bedrooms, family bathroom and ensuite, private sea-view decking. Sleeps six."
+        canonical={`${SITE_ORIGIN}/caravan`}
+      />
       <PageHero
         title="The Caravan"
         subtitle="A walkthrough of every space — six sleeps across two bedrooms and a sofa bed, a view that follows you from the decking to the pillow."
@@ -148,6 +156,8 @@ export default function Caravan() {
         <h2 className="text-3xl md:text-4xl text-ink mb-8">The full gallery</h2>
         <GalleryGrid photos={GALLERY} onOpen={openAt} />
       </section>
+
+      <Reviews />
 
       {lightbox !== null && (
         <Lightbox

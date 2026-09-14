@@ -63,6 +63,7 @@ export default async function (req) {
           offer_link: "",
           unsubscribe_link: `${APP_ORIGIN}/unsubscribe/${contact.unsubscribe_token}`,
           consent_link: `${APP_ORIGIN}/consent/${contact.unsubscribe_token}`,
+          review_link: `${APP_ORIGIN}/review/${b.id}`,
         };
         const { subject, text } = renderTemplate(tpl, vars);
         const html = textToHtml(text);

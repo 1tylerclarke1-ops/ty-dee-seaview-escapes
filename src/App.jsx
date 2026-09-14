@@ -18,6 +18,12 @@ import Contact from '@/pages/Contact';
 import Admin from '@/pages/Admin';
 import OfferLanding from '@/pages/OfferLanding';
 import Unsubscribe from '@/pages/Unsubscribe';
+import Review from '@/pages/Review';
+import GuidesIndex from '@/pages/guides/GuidesIndex';
+import DogFriendlyCornwall from '@/pages/guides/DogFriendlyCornwall';
+import PolperroInWinter from '@/pages/guides/PolperroInWinter';
+import CoastPathWalks from '@/pages/guides/CoastPathWalks';
+import WhatsOpenOffSeason from '@/pages/guides/WhatsOpenOffSeason';
 
 function RedirectToPrices() {
   const { search } = useLocation();
@@ -62,6 +68,12 @@ const AuthenticatedApp = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/offer/:token" element={<OfferLanding />} />
         <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
+        <Route path="/review/:bookingId" element={<Review />} />
+        <Route path="/guides" element={<GuidesIndex />} />
+        <Route path="/guides/dog-friendly-cornwall" element={<DogFriendlyCornwall />} />
+        <Route path="/guides/polperro-in-winter" element={<PolperroInWinter />} />
+        <Route path="/guides/coast-path-walks" element={<CoastPathWalks />} />
+        <Route path="/guides/whats-open-off-season" element={<WhatsOpenOffSeason />} />
         <Route path="/admin" element={<Admin />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />

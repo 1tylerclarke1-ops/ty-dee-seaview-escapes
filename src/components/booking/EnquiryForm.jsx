@@ -51,6 +51,24 @@ export default function EnquiryForm({
         />
       </div>
 
+      <div className="mt-6">
+        <label className="text-xs tracking-wide uppercase text-muted-foreground block mb-2">How did you hear about us?</label>
+        <select
+          value={details.how_heard || ""}
+          onChange={(e) => update("how_heard")(e.target.value)}
+          className="w-full bg-transparent border-b border-line py-3 text-ink focus:outline-none focus:border-sea min-h-[44px]"
+        >
+          <option value="">Select…</option>
+          <option>Search (Google)</option>
+          <option>Instagram</option>
+          <option>Facebook</option>
+          <option>Recommended by a friend</option>
+          <option>Returning guest</option>
+          <option>Saw the park / a sign</option>
+          <option>Other</option>
+        </select>
+      </div>
+
       <label className="flex items-start gap-3 mt-6 cursor-pointer min-h-[44px]">
         <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} className="w-5 h-5 mt-1 accent-sea shrink-0" />
         <span className="text-sm text-ink-soft">

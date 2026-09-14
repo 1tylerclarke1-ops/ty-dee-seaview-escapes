@@ -1,5 +1,7 @@
 import { useState } from "react";
 import PageHero from "@/components/PageHero";
+import Seo from "@/components/Seo";
+import { SITE_ORIGIN } from "@/lib/structuredData";
 import { BUSINESS } from "@/lib/siteConfig";
 
 export default function Contact() {
@@ -8,6 +10,11 @@ export default function Contact() {
 
   return (
     <div>
+      <Seo
+        title="Contact — Ty Dee Seaview Escapes, Polperro"
+        description="Contact the owner of Ty Dee Seaview Escapes with questions about the caravan, the area, dog-friendly stays or availability at Polperro, Cornwall."
+        canonical={`${SITE_ORIGIN}/contact`}
+      />
       <PageHero
         title="Contact"
         subtitle="Questions about the caravan, the area, or bringing your dog? The owner is happy to help — and to talk you through the view."

@@ -92,6 +92,15 @@
   .tydee-scroll::-webkit-scrollbar { width: 6px; }
   .tydee-scroll::-webkit-scrollbar-track { background: transparent; }
   .tydee-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  .prose-tydee { color: var(--ink-soft); font-size: 1.0625rem; line-height: 1.75; }
+  .prose-tydee p { margin: 0 0 1.25rem; }
+  .prose-tydee h2 { font-family: var(--font-display); font-weight: 360; font-size: 1.75rem; line-height: 1.15; letter-spacing: -0.015em; color: var(--ink); margin: 2.5rem 0 1rem; }
+  .prose-tydee h3 { font-family: var(--font-display); font-weight: 380; font-size: 1.25rem; color: var(--ink); margin: 1.75rem 0 0.5rem; }
+  .prose-tydee ul { margin: 0 0 1.25rem; padding-left: 1.25rem; list-style: none; }
+  .prose-tydee li { position: relative; margin-bottom: 0.5rem; padding-left: 0.25rem; }
+  .prose-tydee li::before { content: "—"; position: absolute; left: -1.1rem; color: var(--accent); }
+  .prose-tydee strong { color: var(--ink); font-weight: 500; }
+  .prose-tydee a { color: var(--accent); text-decoration: underline; }
 }
 
 @media (prefers-reduced-motion: reduce) {

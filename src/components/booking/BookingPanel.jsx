@@ -25,6 +25,15 @@ export default function BookingPanel({ arrival, length, affected }) {
   const [confirmed, setConfirmed] = useState(false);
   const [sticky, setSticky] = useState(false);
   const breakdownRef = useRef(null);
+  const utmRef = useRef({});
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    utmRef.current = {
+      utm_source: p.get("utm_source") || "",
+      utm_medium: p.get("utm_medium") || "",
+      utm_campaign: p.get("utm_campaign") || "",
+    };
+  }, []);
 
   const breakdown = arrival && length ? calculatePrice(arrival, length, dogs) : null;
   const canSubmit = !!(details.name && details.email && terms && (!affected || facilitiesAck));
@@ -60,10 +69,15 @@ export default function BookingPanel({ arrival, length, affected }) {
         setConfirmed(true);
         // Record the contact + marketing consent (best-effort, never blocks the
         // confirmation). Consent is opt-in only — an unticked box stays false.
+        const u = utmRef.current;
+        const utm = [u.utm_source, u.utm_medium, u.utm_campaign].filter(Boolean).join("/");
+        const acquisition_source = [details.how_heard, utm].filter(Boolean).join(" · ");
         base44.functions.invoke("captureEnquiry", {
           name: details.name, email: details.email, phone: details.phone,
           marketing_consent: marketing, consent_source: "checkout",
           party_size: guests, dogs, arrival_date: format(arrival, "yyyy-MM-dd"), nights: length,
+          how_heard: details.how_heard, utm_source: u.utm_source, utm_medium: u.utm_medium, utm_campaign: u.utm_campaign,
+          acquisition_source,
         }).catch(() => {});
       }
     } catch (e) {

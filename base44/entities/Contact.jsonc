@@ -26,6 +26,10 @@
       "default": "enquiry",
       "title": "Source"
     },
+    "acquisition_source": {
+      "type": "string",
+      "title": "Acquisition source (UTM / how-heard)"
+    },
     "first_seen": {
       "type": "string",
       "format": "date",
@@ -94,6 +98,19 @@
     "unsubscribe_token": {
       "type": "string",
       "title": "Unsubscribe token"
+    },
+    "referral_code": {
+      "type": "string",
+      "title": "Referral code (unique, per past guest)"
+    },
+    "referred_by": {
+      "type": "string",
+      "title": "Referral code of the guest who referred this contact"
+    },
+    "referral_credits_earned": {
+      "type": "number",
+      "default": 0,
+      "title": "Referral credits earned (\u00a3)"
     },
     "notes": {
       "type": "string",

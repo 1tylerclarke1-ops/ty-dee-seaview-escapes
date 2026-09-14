@@ -1,6 +1,8 @@
 import { Image } from "@/components/ui/image";
 import { BUSINESS } from "@/lib/siteConfig";
 import { PRICING_SETTINGS } from "@/lib/pricing";
+import Seo from "@/components/Seo";
+import { SITE_ORIGIN } from "@/lib/structuredData";
 
 const DOG_HERO = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/ecc14f14e_generated_image.png";
 
@@ -13,6 +15,11 @@ export default function Dogs() {
 
   return (
     <div>
+      <Seo
+        title="Dog Friendly Caravan in Cornwall — Two Dogs Welcome at Polperro"
+        description="A dog-friendly static caravan at Polperro, Cornwall — up to two dogs of any size welcome by arrangement, £25 per dog. Dog-friendly beaches, coast path walks and pubs nearby."
+        canonical={`${SITE_ORIGIN}/dogs`}
+      />
       {/* Hero */}
       <section className="relative w-full h-[300px] md:h-[380px] overflow-hidden">
         <Image

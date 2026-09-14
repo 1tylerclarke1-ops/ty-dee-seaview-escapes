@@ -7,6 +7,8 @@ import FacilitiesStatusPanel from "@/components/FacilitiesStatusPanel";
 import FacilitiesMarker from "@/components/FacilitiesMarker";
 import BookingPanel from "@/components/booking/BookingPanel";
 import PublicOfferMarker from "@/components/PublicOfferMarker";
+import Seo from "@/components/Seo";
+import { SITE_ORIGIN } from "@/lib/structuredData";
 import { SEASON_START, SEASON_END, allowedLengthsForArrival, calculatePrice } from "@/lib/pricing";
 import { useFacilitiesSettings, stayFacilitiesStatus } from "@/lib/facilities";
 
@@ -41,6 +43,11 @@ export default function PricesAvailability() {
 
   return (
     <div>
+      <Seo
+        title="Prices & Availability — Ty Dee Seaview Escapes, Polperro"
+        description="Live availability and seasonal pricing for a sea-view caravan at Polperro, Cornwall. Three-night Friday or four-night Monday stays, October to April. Book direct."
+        canonical={`${SITE_ORIGIN}/prices`}
+      />
       {/* Narrow banner strip — no more than 220px */}
       <section className="relative w-full h-[220px] overflow-hidden">
         <Image

@@ -1,4 +1,6 @@
 import PageHero from "@/components/PageHero";
+import Seo from "@/components/Seo";
+import { SITE_ORIGIN } from "@/lib/structuredData";
 import { PARK_CLOSURE_DATE } from "@/lib/siteConfig";
 import { format, parseISO } from "date-fns";
 import { useCancellationPolicy, tierDisplayRows } from "@/lib/cancellation";
@@ -96,6 +98,11 @@ export default function Terms() {
 
   return (
     <div>
+      <Seo
+        title="Terms & Conditions — Ty Dee Seaview Escapes"
+        description="Booking terms for Ty Dee Seaview Escapes at Polperro: stay lengths, the winter facilities closure, dogs, guest responsibilities, and the tiered cancellation policy."
+        canonical={`${SITE_ORIGIN}/terms`}
+      />
       <PageHero
         title="Terms & Conditions"
         subtitle="Clear, fair, and built around the two-stay, one-season model that keeps Ty Dee simple."

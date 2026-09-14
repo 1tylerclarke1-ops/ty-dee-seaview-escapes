@@ -19,6 +19,8 @@ export default async function (req) {
     const arrival = body.arrival_date || null;
     const month = arrival ? new Date(arrival + "T00:00:00Z").getUTCMonth() + 1 : null;
     const consent = !!body.marketing_consent;
+    const utm = [body.utm_source, body.utm_medium, body.utm_campaign].filter(Boolean).join("/");
+    const acquisition_source = body.acquisition_source || [body.how_heard, utm].filter(Boolean).join(" · ");
 
     const existing = await base44.asServiceRole.entities.Contact.filter({ email });
     const ex = existing && existing[0];
@@ -28,6 +30,7 @@ export default async function (req) {
       email,
       phone: body.phone || ex?.phone || "",
       source: ex?.source === "past_guest" ? "past_guest" : "enquiry",
+      acquisition_source: acquisition_source || ex?.acquisition_source || "",
       party_size_typical: party || ex?.party_size_typical || null,
       has_dog: !!(dogs || ex?.has_dog),
       dog_count: Math.max(dogs, ex?.dog_count || 0),

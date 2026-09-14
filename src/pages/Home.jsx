@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Image } from "@/components/ui/image";
+import { base44 } from "@/api/base44Client";
 import Photo from "@/components/Photo";
 import Lightbox from "@/components/Lightbox";
+import Seo from "@/components/Seo";
+import Reviews from "@/components/Reviews";
 import { BUSINESS } from "@/lib/siteConfig";
+import { lodgingSchema, SITE_ORIGIN } from "@/lib/structuredData";
 
 const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
 const HERO = `${BASE}/eba602fdb_View.jpg`;
@@ -29,10 +33,24 @@ const FACTS = [
 
 export default function Home() {
   const [lightbox, setLightbox] = useState(null); // index or null
+  const [reviews, setReviews] = useState([]);
   const openAt = (i) => setLightbox(i);
+
+  useEffect(() => {
+    base44.functions
+      .invoke("getPublishedReviews", {})
+      .then((res) => setReviews((res.data || res).reviews || []))
+      .catch(() => {});
+  }, []);
 
   return (
     <div>
+      <Seo
+        title="Ty Dee Seaview Escapes — Sea-view caravan at Polperro, Cornwall"
+        description="A privately owned static caravan at Polperro Holiday Park, Cornwall. Sleeps six, sea views, private decking, dog-friendly. Direct booking with the owner, October to April."
+        canonical={`${SITE_ORIGIN}/`}
+        jsonLd={lodgingSchema(reviews)}
+      />
       {/* Hero — full-bleed sea view, cropped not stretched */}
       <section className="relative w-full h-[68vh] md:h-[88vh] min-h-[480px] overflow-hidden">
         <div className="absolute inset-0">
@@ -162,6 +180,8 @@ export default function Home() {
           </p>
         </div>
       </section>
+
+      <Reviews reviews={reviews} />
 
       {/* CTA band */}
       <section className="bg-surface border-t border-line">

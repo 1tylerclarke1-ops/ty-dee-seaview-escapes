@@ -12,12 +12,15 @@ export const MAX_GUESTS = 6;
 // From 1 November onwards on-site park facilities are closed.
 export const PARK_CLOSURE_DATE = "2026-11-01";
 
+export const SITE_ORIGIN = "https://ty-dee-stays.base44.app";
+
 export const NAV_LINKS = [
   { label: "Home", path: "/" },
   { label: "The Caravan", path: "/caravan" },
   { label: "Prices & Availability", path: "/prices" },
   { label: "The Area", path: "/area" },
   { label: "Dog Friendly", path: "/dogs" },
+  { label: "Guides", path: "/guides" },
   { label: "Terms & Conditions", path: "/terms" },
   { label: "Contact", path: "/contact" },
 ];

@@ -8,6 +8,7 @@ import EmailTemplatesEditor from "@/components/admin/EmailTemplatesEditor";
 import BookingsManager from "@/components/admin/BookingsManager";
 import GapsView from "@/components/admin/GapsView";
 import ContactsManager from "@/components/admin/ContactsManager";
+import ReviewsManager from "@/components/admin/ReviewsManager";
 
 export default function Admin() {
   const [authed, setAuthed] = useState(false);
@@ -35,6 +36,10 @@ export default function Admin() {
           <div className="mb-12">
             <h2 className="text-2xl text-white mb-6">Gaps view · next 30 days</h2>
             <GapsView />
+          </div>
+          <div className="mb-12">
+            <h2 className="text-2xl text-white mb-6">Reviews</h2>
+            <ReviewsManager />
           </div>
           <div className="mb-12">
             <h2 className="text-2xl text-white mb-6">Guest list</h2>

@@ -1,0 +1,65 @@
+{
+  "name": "Review",
+  "type": "object",
+  "properties": {
+    "guest_name": {
+      "type": "string",
+      "title": "Guest name"
+    },
+    "month_stayed": {
+      "type": "string",
+      "title": "Month stayed (display, e.g. October 2026)"
+    },
+    "rating": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5,
+      "title": "Rating (1-5)"
+    },
+    "text": {
+      "type": "string",
+      "title": "Review text"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false,
+      "title": "Verified (linked to a real booking)"
+    },
+    "published": {
+      "type": "boolean",
+      "default": false,
+      "title": "Published (owner-controlled)"
+    },
+    "booking_id": {
+      "type": "string",
+      "title": "Booking id"
+    }
+  },
+  "required": [
+    "guest_name",
+    "rating",
+    "text"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

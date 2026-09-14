@@ -41,6 +41,10 @@
       "default": "enquiry",
       "title": "Status"
     },
+    "source": {
+      "type": "string",
+      "title": "Acquisition source (UTM / how-heard)"
+    },
     "gross_revenue": {
       "type": "number",
       "default": 0,

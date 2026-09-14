@@ -24,6 +24,7 @@ export const TEMPLATE_TYPES = [
 export const MERGE_FIELDS = [
   "name", "arrival_date", "departure_date", "nights", "season",
   "offer_description", "offer_link", "unsubscribe_link", "consent_link",
+  "review_link",
 ];
 
 export const DEFAULT_TEMPLATES = [
@@ -117,7 +118,7 @@ No more than one email a month. To stop these, click:
 Thank you for staying with us — we hope you loved the view as much as we do.
 
 If you have a spare minute, a short review helps us no end:
-[Paste your review link here in the editor]
+{{review_link}}
 
 And may we email you occasionally about last-minute availability? No more than once a month, only when a stay opens up. Say yes here:
 {{consent_link}}
