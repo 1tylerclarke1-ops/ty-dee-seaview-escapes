@@ -1,8 +1,8 @@
 import PageHero from "@/components/PageHero";
 import { Image } from "@/components/ui/image";
 
-const HARBOUR = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/6075b6bad_generated_79fadba4.png";
-const DECKING = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/07cdba17a_generated_64dc4e54.png";
+const HARBOUR = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/e32785bb9_DeckingandView2.jpg";
+const DECKING = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/0ccdb513c_DeckingandView3.jpg";
 
 const PLACES = [
   {

@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 import { ArrowDown, Waves, BedDouble, Wifi, PawPrint, Car, Eye } from "lucide-react";
 import { BUSINESS } from "@/lib/siteConfig";
 
-const HERO_IMG = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/6966367d4_generated_ce6aca08.png";
-const DECKING_IMG = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/07cdba17a_generated_64dc4e54.png";
+const HERO_IMG = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/eba602fdb_View.jpg";
+const DECKING_IMG = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/939b9df1f_Decking.jpg";
 
 const FEATURES = [
   { icon: BedDouble, label: "Sleeps six", note: "2 bedrooms + sofa bed" },
