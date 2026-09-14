@@ -5,6 +5,8 @@ import PitchFeeTracker from "@/components/admin/PitchFeeTracker";
 import FacilitiesSettingsEditor from "@/components/admin/FacilitiesSettingsEditor";
 import CancellationPolicyEditor from "@/components/admin/CancellationPolicyEditor";
 import BookingsManager from "@/components/admin/BookingsManager";
+import GapsView from "@/components/admin/GapsView";
+import ContactsManager from "@/components/admin/ContactsManager";
 
 export default function Admin() {
   const [authed, setAuthed] = useState(false);
@@ -29,6 +31,14 @@ export default function Admin() {
           <p className="text-sm text-white/50">Owner dashboard</p>
           <h1 className="text-4xl md:text-5xl text-white mt-2">{BUSINESS.name}</h1>
           <div className="border-t border-white/10 mt-8 mb-10" />
+          <div className="mb-12">
+            <h2 className="text-2xl text-white mb-6">Gaps view · next 30 days</h2>
+            <GapsView />
+          </div>
+          <div className="mb-12">
+            <h2 className="text-2xl text-white mb-6">Guest list</h2>
+            <ContactsManager />
+          </div>
           <div className="mb-12">
             <h2 className="text-2xl text-white mb-6">Park facilities settings</h2>
             <FacilitiesSettingsEditor />

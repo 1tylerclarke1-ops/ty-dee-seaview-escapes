@@ -1,0 +1,115 @@
+{
+  "name": "Offer",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "extra_night",
+        "free_dog",
+        "late_checkout",
+        "percentage",
+        "fixed_amount"
+      ],
+      "title": "Offer type"
+    },
+    "value": {
+      "type": "number",
+      "title": "Value (percent, pounds, or null)"
+    },
+    "arrival_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Arrival date"
+    },
+    "nights": {
+      "type": "number",
+      "title": "Nights"
+    },
+    "applies_to_stays": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Applies to stays (arrival:length keys)"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date",
+      "title": "Valid until"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "private",
+        "public"
+      ],
+      "default": "private",
+      "title": "Visibility"
+    },
+    "reason": {
+      "type": "string",
+      "title": "Reason"
+    },
+    "redeemed": {
+      "type": "boolean",
+      "default": false,
+      "title": "Redeemed"
+    },
+    "booking_id": {
+      "type": "string",
+      "title": "Booking id"
+    },
+    "token": {
+      "type": "string",
+      "title": "Single-use token"
+    },
+    "sent_to_segment": {
+      "type": "string",
+      "title": "Sent to segment"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Sent at"
+    },
+    "open_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Open count"
+    },
+    "click_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Click count"
+    }
+  },
+  "required": [
+    "type",
+    "arrival_date",
+    "nights",
+    "token"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

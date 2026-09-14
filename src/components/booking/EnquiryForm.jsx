@@ -23,6 +23,8 @@ export default function EnquiryForm({
   setTerms,
   facilitiesAck,
   setFacilitiesAck,
+  marketing,
+  setMarketing,
   affected,
   canSubmit,
   submitting,
@@ -64,6 +66,13 @@ export default function EnquiryForm({
           </span>
         </label>
       )}
+
+      <label className="flex items-start gap-3 mt-4 cursor-pointer min-h-[44px]">
+        <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="w-5 h-5 mt-1 accent-sea shrink-0" />
+        <span className="text-sm text-ink-soft">
+          Email me occasional last-minute availability and offers. No more than once a month.
+        </span>
+      </label>
 
       {error && <p className="text-sm text-destructive mt-4">{error}</p>}
 

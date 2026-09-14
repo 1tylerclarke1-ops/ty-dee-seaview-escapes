@@ -1,0 +1,45 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 6 * * 6",
+      "one_time_date": null,
+      "timezone": "Europe/London",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Saturdays 06:00 \u2014 expires stale holds and emails the owner the gaps view for the next 30 days. Does not apply discounts; every offer is a manual decision.",
+  "name": "Weekly gaps review",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "weekly_gaps_review",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_job": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "weeklyGapsJob",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Run weekly gaps job",
+            "description": "Expire holds, email the gaps view"
+          }
+        }
+      }
+    ]
+  }
+}

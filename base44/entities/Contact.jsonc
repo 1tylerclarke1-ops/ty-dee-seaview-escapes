@@ -1,0 +1,128 @@
+{
+  "name": "Contact",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Name"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "title": "Email"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "past_guest",
+        "enquiry",
+        "manual",
+        "website"
+      ],
+      "default": "enquiry",
+      "title": "Source"
+    },
+    "first_seen": {
+      "type": "string",
+      "format": "date",
+      "title": "First seen"
+    },
+    "last_stayed": {
+      "type": "string",
+      "format": "date",
+      "title": "Last stayed"
+    },
+    "stays_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Stays count"
+    },
+    "total_spent": {
+      "type": "number",
+      "default": 0,
+      "title": "Total spent"
+    },
+    "has_dog": {
+      "type": "boolean",
+      "default": false,
+      "title": "Has dog"
+    },
+    "dog_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Dog count"
+    },
+    "party_size_typical": {
+      "type": "number",
+      "title": "Typical party size"
+    },
+    "months_stayed": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "title": "Months stayed"
+    },
+    "marketing_consent": {
+      "type": "boolean",
+      "default": false,
+      "title": "Marketing consent"
+    },
+    "consent_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Consent date"
+    },
+    "consent_source": {
+      "type": "string",
+      "title": "Consent source"
+    },
+    "unsubscribed": {
+      "type": "boolean",
+      "default": false,
+      "title": "Unsubscribed"
+    },
+    "unsubscribe_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Unsubscribe date"
+    },
+    "unsubscribe_token": {
+      "type": "string",
+      "title": "Unsubscribe token"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "email"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -19,6 +19,7 @@ export default function BookingPanel({ arrival, length, affected }) {
   const [details, setDetails] = useState({ name: "", email: "", phone: "", address: "", message: "" });
   const [terms, setTerms] = useState(false);
   const [facilitiesAck, setFacilitiesAck] = useState(false);
+  const [marketing, setMarketing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -57,6 +58,13 @@ export default function BookingPanel({ arrival, length, affected }) {
         setError(res.data.errors?.[0] || "These dates aren't available.");
       } else {
         setConfirmed(true);
+        // Record the contact + marketing consent (best-effort, never blocks the
+        // confirmation). Consent is opt-in only — an unticked box stays false.
+        base44.functions.invoke("captureEnquiry", {
+          name: details.name, email: details.email, phone: details.phone,
+          marketing_consent: marketing, consent_source: "checkout",
+          party_size: guests, dogs, arrival_date: format(arrival, "yyyy-MM-dd"), nights: length,
+        }).catch(() => {});
       }
     } catch (e) {
       setError("Could not check these dates. Please try again.");
@@ -117,6 +125,8 @@ export default function BookingPanel({ arrival, length, affected }) {
                 setTerms={setTerms}
                 facilitiesAck={facilitiesAck}
                 setFacilitiesAck={setFacilitiesAck}
+                marketing={marketing}
+                setMarketing={setMarketing}
                 affected={affected}
                 canSubmit={canSubmit}
                 submitting={submitting}

@@ -14,6 +14,8 @@ import Area from '@/pages/Area';
 import Terms from '@/pages/Terms';
 import Contact from '@/pages/Contact';
 import Admin from '@/pages/Admin';
+import OfferLanding from '@/pages/OfferLanding';
+import Unsubscribe from '@/pages/Unsubscribe';
 
 function RedirectToPrices() {
   const { search } = useLocation();
@@ -54,6 +56,8 @@ const AuthenticatedApp = () => {
         <Route path="/book" element={<RedirectToPrices />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/offer/:token" element={<OfferLanding />} />
+        <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
         <Route path="/admin" element={<Admin />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
