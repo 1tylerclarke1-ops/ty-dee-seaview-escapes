@@ -95,8 +95,9 @@ export default function Dogs() {
       {/* Dog waste */}
       <Section title="Dog waste, sorted">
         <p>
-          There's a bin right beside the van for dog waste — you can see it on the park map, next to pitch
-          157. No carrying a full bag back across the park.
+          There's no dog waste bin right beside the van, but a little further down the road are the
+          onsite big bin facilities — easy to drop a bag in on your way back from the dog walking
+          field, which sits opposite the van.
         </p>
       </Section>
 
@@ -123,7 +124,7 @@ export default function Dogs() {
           <li>Up to {maxDogs} dogs, any size — £{dogFee} per dog per stay, added to your booking.</li>
           <li>Please don't leave dogs unattended in the caravan.</li>
           <li>Dogs on beds or soft furnishings only with a throw underneath.</li>
-          <li>Pick up on the park and on the path — there's a bin right beside the van.</li>
+          <li>Pick up on the park and on the path — use the onsite big bins a little down the road, on your way back from the dog walking field opposite the van.</li>
           <li>A short lead through the cliff-top fields, for the livestock's sake.</li>
         </ul>
       </Section>
