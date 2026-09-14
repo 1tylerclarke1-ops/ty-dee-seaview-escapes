@@ -17,6 +17,11 @@ export const PRICING_SETTINGS = {
   price_rounding: 5,
   short_break_supplement: 35,
   booking_window_months: 14,
+  dog_fee: 25,
+  dog_fee_per_dog: true,
+  max_dogs: 2,
+  deposit_percentage: 25,
+  balance_due_weeks_before: 6,
   seasons: [
     { name: "Autumn",             start_date: "2026-10-05", end_date: "2026-10-22", nightly_rate:  80, weekend_modifier: 19 },
     { name: "October half-term",   start_date: "2026-10-23", end_date: "2026-11-02", nightly_rate:  95, weekend_modifier: 16 },
@@ -84,9 +89,26 @@ export function isWithinBookingWindow(date) {
   return isBefore(date, windowEnd) || isEqual(date, windowEnd);
 }
 
+// Dog supplement — charged once per stay (per dog when dog_fee_per_dog is
+// true, flat otherwise). Capped at max_dogs.
+export function calcDogFee(dogs) {
+  const count = Math.min(dogs || 0, PRICING_SETTINGS.max_dogs);
+  if (!count) return 0;
+  return PRICING_SETTINGS.dog_fee_per_dog
+    ? PRICING_SETTINGS.dog_fee * count
+    : PRICING_SETTINGS.dog_fee;
+}
+
+// Balance due date — N weeks before arrival.
+export function balanceDueDate(arrival) {
+  const weeks = PRICING_SETTINGS.balance_due_weeks_before ?? 6;
+  return addDays(arrival, -weeks * 7);
+}
+
 // Full price breakdown for a stay. All nights are priced at the arrival
-// season's rates (a stay belongs to one season).
-export function calculatePrice(arrival, nights) {
+// season's rates (a stay belongs to one season). The dog supplement is added
+// once per stay and included in the deposit.
+export function calculatePrice(arrival, nights, dogs = 0) {
   const season = seasonForDate(arrival);
   if (!season) return null;
   const wknd = weekendNightlyRate(season);
@@ -109,14 +131,24 @@ export function calculatePrice(arrival, nights) {
   if (weekdayCount) groups.push({ rate: wd, count: weekdayCount, type: "weekday" });
   const shortBreakSupplement =
     nights < 7 ? PRICING_SETTINGS.short_break_supplement : 0;
+  const dogFee = calcDogFee(dogs);
+  const total = nightsSubtotal + shortBreakSupplement + dogFee;
+  const deposit = Math.round(
+    (total * (PRICING_SETTINGS.deposit_percentage ?? 25)) / 100
+  );
+  const balance = total - deposit;
   return {
     season,
     nights,
     groups,
     nightsSubtotal,
     shortBreakSupplement,
+    dogFee,
+    dogs: Math.min(dogs || 0, PRICING_SETTINGS.max_dogs),
     accommodationSubtotal: nightsSubtotal + shortBreakSupplement,
-    total: nightsSubtotal + shortBreakSupplement,
+    total,
+    deposit,
+    balance,
     weekendNightly: wknd,
     weekdayNightly: wd,
   };
@@ -135,6 +167,10 @@ export function firstArrivalInSeason(season, dayOfWeek) {
 
 // Format a number as pounds sterling, e.g. £1,070.
 export const gbp = (n) => `£${n.toLocaleString("en-GB")}`;
+
+// Format with pence, e.g. £70.00 — for the itemised breakdown.
+export const gbpMoney = (n) =>
+  n.toLocaleString("en-GB", { style: "currency", currency: "GBP" });
 
 // ── Booking rules ─────────────────────────────────────────────────────────
 // Data-driven stay lengths per arrival day. rule_type "fixed_or_multiples"

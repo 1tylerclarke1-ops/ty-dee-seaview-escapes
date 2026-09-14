@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { format, addDays } from "date-fns";
+import { format } from "date-fns";
 import { Image } from "@/components/ui/image";
 import StayCalendar from "@/components/StayCalendar";
 import FacilitiesStatusPanel from "@/components/FacilitiesStatusPanel";
 import FacilitiesMarker from "@/components/FacilitiesMarker";
-import { calculatePrice, gbp, SEASON_START, SEASON_END, allowedLengthsForArrival } from "@/lib/pricing";
+import BookingPanel from "@/components/booking/BookingPanel";
+import { SEASON_START, SEASON_END, allowedLengthsForArrival } from "@/lib/pricing";
 import { useFacilitiesSettings, stayFacilitiesStatus } from "@/lib/facilities";
 
 const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
@@ -18,8 +18,6 @@ export default function PricesAvailability() {
   const allowedLengths = arrival ? allowedLengthsForArrival(arrival) : [];
   const facStatus = arrival && length ? stayFacilitiesStatus(arrival, length, settings) : null;
   const affected = facStatus && facStatus.state !== "open";
-  const departure = arrival && length ? addDays(arrival, length) : null;
-  const breakdown = arrival && length ? calculatePrice(arrival, length) : null;
 
   const handleSelectArrival = (d) => {
     setArrival(d);
@@ -52,8 +50,8 @@ export default function PricesAvailability() {
         <FacilitiesStatusPanel settings={settings} />
       </section>
 
-      {/* Calendar */}
-      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-32">
+      {/* Calendar + selection */}
+      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-10 md:pb-16">
         <div className="grid md:grid-cols-12 gap-8 md:gap-12">
           <div className="md:col-span-8">
             <div className="bg-surface border border-line p-6 md:p-10">
@@ -94,39 +92,22 @@ export default function PricesAvailability() {
                           </button>
                         ))}
                       </div>
-                      {length && breakdown && (
-                        <div className="mt-5">
-                          <div className="flex items-baseline justify-between">
-                            <span className="text-xs tracking-wide uppercase text-muted-foreground">Total</span>
-                            <span className="text-2xl text-ink tnum">{gbp(breakdown.total)}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1 tnum">
-                            {length} nights · departing {format(departure, "EEE d MMM yyyy")}
-                          </p>
+                      {affected && (
+                        <div className="mt-4">
+                          <FacilitiesMarker status={facStatus} />
                         </div>
                       )}
-                      {affected && <FacilitiesMarker status={facStatus} />}
-                      <Link
-                        to={`/book?arrival=${format(arrival, "yyyy-MM-dd")}&nights=${length}`}
-                        className="mt-6 flex items-center justify-center bg-sea text-white px-6 py-4 text-sm font-medium hover:bg-sea-deep transition-colors min-h-[44px]"
-                      >
-                        Continue to Book →
-                      </Link>
                     </>
                   )}
                 </div>
               )}
-
-              <div className="hairline mt-8" />
-              <div className="mt-5 space-y-2 text-xs text-muted-foreground">
-                <p className="flex items-center gap-3"><span className="w-4 h-4 bg-surface border border-sea inline-block" /> Available arrival</p>
-                <p className="flex items-center gap-3"><span className="w-4 h-4 bg-offseason inline-block" /> Your stay</p>
-                <p className="flex items-center gap-3"><span className="w-4 h-4 bg-offseason inline-block opacity-50" /> Out of season</p>
-              </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Inline booking panel — guests, dogs, live breakdown, details */}
+      <BookingPanel arrival={arrival} length={length} affected={affected} />
     </div>
   );
 }

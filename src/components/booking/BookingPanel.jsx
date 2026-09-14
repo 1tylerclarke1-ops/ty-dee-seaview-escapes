@@ -1,0 +1,135 @@
+import { useState, useEffect, useRef } from "react";
+import { addDays, format } from "date-fns";
+import { base44 } from "@/api/base44Client";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MAX_GUESTS } from "@/lib/siteConfig";
+import { PRICING_SETTINGS, calculatePrice, gbpMoney } from "@/lib/pricing";
+import Stepper from "@/components/booking/Stepper";
+import PriceBreakdown from "@/components/booking/PriceBreakdown";
+import EnquiryForm from "@/components/booking/EnquiryForm";
+import StickyTotalBar from "@/components/booking/StickyTotalBar";
+
+// The inline booking panel — revealed under the selection once dates and a
+// stay length are chosen. Guests and dogs steppers, live breakdown, short
+// details form, and a mobile sticky total bar. No page navigation.
+export default function BookingPanel({ arrival, length, affected }) {
+  const isMobile = useIsMobile();
+  const [guests, setGuests] = useState(2);
+  const [dogs, setDogs] = useState(0);
+  const [details, setDetails] = useState({ name: "", email: "", phone: "", address: "", message: "" });
+  const [terms, setTerms] = useState(false);
+  const [facilitiesAck, setFacilitiesAck] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [confirmed, setConfirmed] = useState(false);
+  const [sticky, setSticky] = useState(false);
+  const breakdownRef = useRef(null);
+
+  const breakdown = arrival && length ? calculatePrice(arrival, length, dogs) : null;
+  const canSubmit = !!(details.name && details.email && terms && (!affected || facilitiesAck));
+
+  useEffect(() => {
+    setConfirmed(false);
+    setError(null);
+  }, [arrival, length]);
+
+  useEffect(() => {
+    if (!isMobile || !breakdownRef.current) return;
+    const el = breakdownRef.current;
+    const obs = new IntersectionObserver(
+      ([entry]) => setSticky(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [isMobile, arrival, length, dogs]);
+
+  const handleSubmit = async () => {
+    if (!canSubmit || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await base44.functions.invoke("validateBooking", {
+        arrival_date: format(arrival, "yyyy-MM-dd"),
+        nights: length,
+      });
+      if (res.data && !res.data.valid) {
+        setError(res.data.errors?.[0] || "These dates aren't available.");
+      } else {
+        setConfirmed(true);
+      }
+    } catch (e) {
+      setError("Could not check these dates. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!arrival || !length || !breakdown) return null;
+
+  if (confirmed) {
+    return (
+      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-32">
+        <div className="bg-surface border border-line p-8 md:p-12 text-center">
+          <p className="text-sm text-sea tracking-wide uppercase">Request received</p>
+          <h2 className="text-3xl text-ink mt-3">
+            Thank you, {details.name.split(" ")[0] || "we'll be in touch"}
+          </h2>
+          <p className="mt-4 text-ink-soft max-w-lg mx-auto">
+            We've received your request for {length} nights, arriving {format(arrival, "EEE d MMM yyyy")}. We'll be in touch to confirm availability and arrange your {gbpMoney(breakdown.deposit)} deposit.
+          </p>
+          <button
+            type="button"
+            onClick={() => setConfirmed(false)}
+            className="mt-8 inline-flex items-center justify-center bg-ink text-white px-6 py-3 text-sm font-medium hover:bg-ink-soft transition-colors min-h-[44px]"
+          >
+            Make another request
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <>
+      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-32">
+        <div className={`bg-surface border border-line p-6 md:p-10 ${isMobile && sticky ? "pb-24" : ""}`}>
+          <div className="grid md:grid-cols-2 gap-10 md:gap-16">
+            <div>
+              <p className="text-sm text-muted-foreground mb-6">Your stay</p>
+              <div className="space-y-6 max-w-xs">
+                <Stepper label="Guests" value={guests} min={1} max={MAX_GUESTS} onChange={setGuests} />
+                <div>
+                  <Stepper label="Dogs" value={dogs} min={0} max={PRICING_SETTINGS.max_dogs} onChange={setDogs} />
+                  <p className="mt-2 text-xs text-muted-foreground">By prior arrangement — we'll confirm when we accept your booking.</p>
+                </div>
+              </div>
+              <div ref={breakdownRef} className="mt-8">
+                <PriceBreakdown breakdown={breakdown} arrival={arrival} />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-6">Your details</p>
+              <EnquiryForm
+                details={details}
+                setDetails={setDetails}
+                terms={terms}
+                setTerms={setTerms}
+                facilitiesAck={facilitiesAck}
+                setFacilitiesAck={setFacilitiesAck}
+                affected={affected}
+                canSubmit={canSubmit}
+                submitting={submitting}
+                onSubmit={handleSubmit}
+                error={error}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+      {isMobile && sticky && (
+        <StickyTotalBar total={breakdown.total} canSubmit={canSubmit} submitting={submitting} onSubmit={handleSubmit} />
+      )}
+    </>
+  );
+}
