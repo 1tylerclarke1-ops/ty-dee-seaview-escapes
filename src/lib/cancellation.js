@@ -98,6 +98,59 @@ export function cancellationDateBands(arrivalIso, policy) {
   return bands;
 }
 
+// Checkout-facing cancellation position for a given arrival and amount. Drops
+// tiers whose refund window has already passed, leads with the guest's current
+// position, and returns each remaining band with its real "from" date and the
+// pounds it is worth. Refunds are calculated on the amount paid.
+export function cancellationDisplay(arrivalIso, total, policy, todayIsoValue) {
+  const today = todayIsoValue || todayIso();
+  let days = daysBetween(today, arrivalIso);
+  if (days < 0) days = 0;
+  const p = normalizePolicy(policy);
+  const tiers = p.tiers; // sorted desc by days_before_arrival
+  let currentIdx = -1;
+  for (let i = 0; i < tiers.length; i++) {
+    if (days >= tiers[i].days_before_arrival) {
+      currentIdx = i;
+      break;
+    }
+  }
+  const inNoRefund = currentIdx === -1;
+  const currentTier = inNoRefund
+    ? { days_before_arrival: 0, refund_percent: 0 }
+    : tiers[currentIdx];
+  const pastFullRefund = currentIdx !== 0;
+  const paid = Math.max(0, Number(total) || 0);
+  const poundsFor = (pct) => Math.round((pct / 100) * paid);
+  const bands = [];
+  if (inNoRefund) {
+    bands.push({ kind: "now", percent: 0, pounds: 0 });
+  } else {
+    bands.push({
+      kind: "now",
+      percent: currentTier.refund_percent,
+      pounds: poundsFor(currentTier.refund_percent),
+    });
+    for (let i = currentIdx + 1; i < tiers.length; i++) {
+      const fromDate = addDaysIso(arrivalIso, -tiers[i - 1].days_before_arrival);
+      bands.push({
+        kind: "from",
+        date: fromDate,
+        percent: tiers[i].refund_percent,
+        pounds: poundsFor(tiers[i].refund_percent),
+      });
+    }
+    const lastTier = tiers[tiers.length - 1];
+    bands.push({
+      kind: "from",
+      date: addDaysIso(arrivalIso, -lastTier.days_before_arrival),
+      percent: 0,
+      pounds: 0,
+    });
+  }
+  return { days, inNoRefund, pastFullRefund, currentTier, bands };
+}
+
 export function tierDisplayRows(policy) {
   const p = normalizePolicy(policy);
   const rows = p.tiers.map((t, i) => {

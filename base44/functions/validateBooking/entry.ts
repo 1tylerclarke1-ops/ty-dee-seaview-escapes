@@ -3,6 +3,7 @@
 // rules disallow (e.g. a 3- or 4-night stay in Peak summer), regardless of
 // what the browser submitted.
 import { allowedLengthsForArrival, seasonForDate } from "../../shared/bookingRules.ts";
+import { calculatePrice, balanceDueIso, isPayableInFullIso } from "../../shared/pricing.ts";
 
 export default async function (req) {
   try {
@@ -50,11 +51,23 @@ export default async function (req) {
           }.`,
         ];
 
+    const breakdown = calculatePrice(arrival, n, 0);
+    const payment_schedule = breakdown
+      ? {
+          total: breakdown.total,
+          deposit: breakdown.deposit,
+          balance: breakdown.balance,
+          balance_due_date: balanceDueIso(arrival_date),
+          payable_in_full: isPayableInFullIso(arrival_date),
+        }
+      : null;
+
     return Response.json({
       valid,
       errors,
       season: season.name,
       allowed_lengths: allowed,
+      payment_schedule,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

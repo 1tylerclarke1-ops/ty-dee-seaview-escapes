@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MAX_GUESTS } from "@/lib/siteConfig";
 import { PRICING_SETTINGS, calculatePrice, gbpMoney } from "@/lib/pricing";
+import { useCancellationPolicy, cancellationDisplay } from "@/lib/cancellation";
 import Stepper from "@/components/booking/Stepper";
 import PriceBreakdown from "@/components/booking/PriceBreakdown";
 import EnquiryForm from "@/components/booking/EnquiryForm";
@@ -19,6 +20,7 @@ export default function BookingPanel({ arrival, length, affected }) {
   const [details, setDetails] = useState({ name: "", email: "", phone: "", address: "", message: "" });
   const [terms, setTerms] = useState(false);
   const [facilitiesAck, setFacilitiesAck] = useState(false);
+  const [cancelAck, setCancelAck] = useState(false);
   const [marketing, setMarketing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -36,7 +38,19 @@ export default function BookingPanel({ arrival, length, affected }) {
   }, []);
 
   const breakdown = arrival && length ? calculatePrice(arrival, length, dogs) : null;
-  const canSubmit = !!(details.name && details.email && terms && (!affected || facilitiesAck));
+  const { settings: cancelPolicy } = useCancellationPolicy();
+  const arrivalIso = arrival ? format(arrival, "yyyy-MM-dd") : null;
+  const cancelInfo =
+    arrivalIso && breakdown ? cancellationDisplay(arrivalIso, breakdown.total, cancelPolicy) : null;
+  const pastFullRefund = !!cancelInfo?.pastFullRefund;
+  const cancelPercent = cancelInfo?.currentTier?.refund_percent ?? 0;
+  const canSubmit = !!(
+    details.name &&
+    details.email &&
+    terms &&
+    (!affected || facilitiesAck) &&
+    (!pastFullRefund || cancelAck)
+  );
 
   useEffect(() => {
     setConfirmed(false);
@@ -78,6 +92,8 @@ export default function BookingPanel({ arrival, length, affected }) {
           party_size: guests, dogs, arrival_date: format(arrival, "yyyy-MM-dd"), nights: length,
           how_heard: details.how_heard, utm_source: u.utm_source, utm_medium: u.utm_medium, utm_campaign: u.utm_campaign,
           acquisition_source,
+          cancellation_acknowledged: pastFullRefund && cancelAck,
+          cancellation_acknowledged_at: pastFullRefund && cancelAck ? new Date().toISOString() : null,
         }).catch(() => {});
       }
     } catch (e) {
@@ -142,6 +158,10 @@ export default function BookingPanel({ arrival, length, affected }) {
                 marketing={marketing}
                 setMarketing={setMarketing}
                 affected={affected}
+                pastFullRefund={pastFullRefund}
+                cancelPercent={cancelPercent}
+                cancelAck={cancelAck}
+                setCancelAck={setCancelAck}
                 canSubmit={canSubmit}
                 submitting={submitting}
                 onSubmit={handleSubmit}

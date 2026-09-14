@@ -21,7 +21,7 @@ export const PRICING_SETTINGS = {
   dog_fee_per_dog: true,
   max_dogs: 2,
   deposit_percentage: 25,
-  balance_due_weeks_before: 6,
+  balance_due_days_before_arrival: 60,
   seasons: [
     { name: "Autumn",             start_date: "2026-10-05", end_date: "2026-10-22", nightly_rate:  80, weekend_modifier: 19 },
     { name: "October half-term",   start_date: "2026-10-23", end_date: "2026-11-02", nightly_rate:  95, weekend_modifier: 16 },
@@ -99,10 +99,17 @@ export function calcDogFee(dogs) {
     : PRICING_SETTINGS.dog_fee;
 }
 
-// Balance due date — N weeks before arrival.
+// Balance due date — N days before arrival.
 export function balanceDueDate(arrival) {
-  const weeks = PRICING_SETTINGS.balance_due_weeks_before ?? 6;
-  return addDays(arrival, -weeks * 7);
+  return addDays(arrival, -(PRICING_SETTINGS.balance_due_days_before_arrival ?? 60));
+}
+
+// True when the balance due date is today or earlier: the stay is payable in
+// full at booking, with no deposit/balance split.
+export function isPayableInFull(arrival, today = new Date()) {
+  const due = balanceDueDate(arrival);
+  const t = new Date(today);
+  return isEqual(due, t) || isBefore(due, t);
 }
 
 // Full price breakdown for a stay. All nights are priced at the arrival

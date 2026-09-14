@@ -46,6 +46,11 @@ export default async function (req) {
       data.consent_date = new Date().toISOString();
       data.consent_source = body.consent_source || "checkout";
     }
+    if (body.cancellation_acknowledged) {
+      data.cancellation_acknowledged = true;
+      data.cancellation_acknowledged_at =
+        body.cancellation_acknowledged_at || new Date().toISOString();
+    }
 
     if (ex) {
       await base44.asServiceRole.entities.Contact.update(ex.id, data);

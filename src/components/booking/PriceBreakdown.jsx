@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { gbpMoney, balanceDueDate } from "@/lib/pricing";
+import { gbpMoney, balanceDueDate, isPayableInFull, PRICING_SETTINGS } from "@/lib/pricing";
 import CancellationSummary from "@/components/booking/CancellationSummary";
 
 // Itemised, live price breakdown. Updates as guests and dogs change.
@@ -18,6 +18,7 @@ export default function PriceBreakdown({ breakdown, arrival }) {
   }
 
   const balanceDue = balanceDueDate(arrival);
+  const payableInFull = isPayableInFull(arrival);
 
   return (
     <div>
@@ -34,17 +35,29 @@ export default function PriceBreakdown({ breakdown, arrival }) {
         <span className="text-xs tracking-wide uppercase text-muted-foreground">Total</span>
         <span className="text-2xl text-ink tnum">{gbpMoney(breakdown.total)}</span>
       </div>
-      <div className="mt-3 space-y-1.5">
-        <div className="flex items-baseline justify-between">
-          <span className="text-sm text-ink-soft">Deposit due today</span>
-          <span className="text-sm text-ink tnum">{gbpMoney(breakdown.deposit)}</span>
+      {payableInFull ? (
+        <div className="mt-3">
+          <div className="flex items-baseline justify-between">
+            <span className="text-sm text-ink-soft">Full payment due today</span>
+            <span className="text-sm text-ink tnum">{gbpMoney(breakdown.total)}</span>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Bookings within {PRICING_SETTINGS.balance_due_days_before_arrival} days of arrival are payable in full.
+          </p>
         </div>
-        <div className="flex items-baseline justify-between">
-          <span className="text-sm text-ink-soft">Balance due {format(balanceDue, "d MMM yyyy")}</span>
-          <span className="text-sm text-ink tnum">{gbpMoney(breakdown.balance)}</span>
+      ) : (
+        <div className="mt-3 space-y-1.5">
+          <div className="flex items-baseline justify-between">
+            <span className="text-sm text-ink-soft">Deposit due today</span>
+            <span className="text-sm text-ink tnum">{gbpMoney(breakdown.deposit)}</span>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-sm text-ink-soft">Balance due {format(balanceDue, "d MMM yyyy")}</span>
+            <span className="text-sm text-ink tnum">{gbpMoney(breakdown.balance)}</span>
+          </div>
         </div>
-      </div>
-      <CancellationSummary arrival={arrival} />
+      )}
+      <CancellationSummary arrival={arrival} total={breakdown.total} />
     </div>
   );
 }

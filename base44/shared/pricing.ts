@@ -12,6 +12,7 @@ export const PRICING_SETTINGS = {
   dog_fee_per_dog: true,
   max_dogs: 2,
   deposit_percentage: 25,
+  balance_due_days_before_arrival: 60,
 };
 
 export function roundTo(value, increment) {
@@ -38,6 +39,26 @@ function addDaysUTC(d, n) {
   const x = new Date(d);
   x.setUTCDate(x.getUTCDate() + n);
   return x;
+}
+
+// Balance due date — N days before arrival (UTC date).
+export function balanceDueDate(arrival) {
+  return addDaysUTC(arrival, -(PRICING_SETTINGS.balance_due_days_before_arrival ?? 60));
+}
+
+// Balance due date as an ISO yyyy-mm-dd string.
+export function balanceDueIso(arrivalIso) {
+  const d = new Date(arrivalIso + "T00:00:00Z");
+  return addDaysUTC(d, -(PRICING_SETTINGS.balance_due_days_before_arrival ?? 60))
+    .toISOString()
+    .slice(0, 10);
+}
+
+// True when the balance due date is today or earlier: the stay is payable in
+// full at booking, with no deposit/balance split.
+export function isPayableInFullIso(arrivalIso, todayIsoValue) {
+  const today = todayIsoValue || new Date().toISOString().slice(0, 10);
+  return balanceDueIso(arrivalIso) <= today;
 }
 
 // Full price breakdown for a stay. All nights priced at the arrival season's

@@ -112,6 +112,16 @@
       "default": 0,
       "title": "Referral credits earned (\u00a3)"
     },
+    "cancellation_acknowledged": {
+      "type": "boolean",
+      "default": false,
+      "title": "Cancellation acknowledgement (past full-refund window)"
+    },
+    "cancellation_acknowledged_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Cancellation acknowledged at"
+    },
     "notes": {
       "type": "string",
       "title": "Notes"
