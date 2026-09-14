@@ -112,4 +112,17 @@
     text-transform: uppercase;
     color: #4A5D66;
   }
+  .tydee-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .tydee-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .tydee-scroll::-webkit-scrollbar-thumb {
+    background: rgba(74, 93, 102, 0.3);
+    border-radius: 3px;
+  }
+  .tydee-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(74, 93, 102, 0.5);
+  }
 }

@@ -26,8 +26,8 @@ export default function ProximityExplorer() {
       </div>
 
       {/* Proximity list */}
-      <div className="md:col-span-5">
-        <div className="border-t border-cornish-slate/20">
+      <div className="md:col-span-5 flex flex-col">
+        <div className="border-t border-cornish-slate/20 max-h-[420px] md:max-h-[600px] overflow-y-auto tydee-scroll">
           {SPOTS.map((spot) => {
             const isActive = active && active.id === spot.id;
             return (
@@ -64,7 +64,7 @@ export default function ProximityExplorer() {
           })}
         </div>
         <p className="font-mono text-[0.6rem] tracking-[0.1em] text-cornish-slate/60 mt-4">
-          Distances are approximate, by road. Tap any spot to centre the map.
+          Distances are approximate, by road. Scroll for spots further afield — tap any to centre the map.
         </p>
       </div>
     </div>
