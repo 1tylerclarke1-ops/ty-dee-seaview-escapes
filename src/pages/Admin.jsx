@@ -4,6 +4,7 @@ import { BUSINESS } from "@/lib/siteConfig";
 import PitchFeeTracker from "@/components/admin/PitchFeeTracker";
 import FacilitiesSettingsEditor from "@/components/admin/FacilitiesSettingsEditor";
 import CancellationPolicyEditor from "@/components/admin/CancellationPolicyEditor";
+import EmailTemplatesEditor from "@/components/admin/EmailTemplatesEditor";
 import BookingsManager from "@/components/admin/BookingsManager";
 import GapsView from "@/components/admin/GapsView";
 import ContactsManager from "@/components/admin/ContactsManager";
@@ -46,6 +47,10 @@ export default function Admin() {
           <div className="mb-12">
             <h2 className="text-2xl text-white mb-6">Cancellation policy</h2>
             <CancellationPolicyEditor />
+          </div>
+          <div className="mb-12">
+            <h2 className="text-2xl text-white mb-6">Email templates</h2>
+            <EmailTemplatesEditor />
           </div>
           <div className="mb-12">
             <h2 className="text-2xl text-white mb-6">Bookings</h2>

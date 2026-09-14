@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { gbpMoney } from "@/lib/pricing";
 import { SEGMENTS, segmentLabel } from "@/lib/segments";
+import { OFFER_TEMPLATE_TYPES } from "@/lib/emailTemplatesClient";
 
 const TYPE_LABELS = {
   extra_night: "Extra night (value)",
@@ -23,6 +24,7 @@ export default function OfferComposer({ stay, onClose, onSent }) {
   const [value, setValue] = useState(stay.suggested_max || 10);
   const [visibility] = useState(stay.suggested_visibility || "private");
   const [segment, setSegment] = useState(SEGMENTS[0].id);
+  const [templateType, setTemplateType] = useState("late_availability");
   const [reason, setReason] = useState("");
   const [preview, setPreview] = useState(null);
   const [offerId, setOfferId] = useState(null);
@@ -59,7 +61,7 @@ export default function OfferComposer({ stay, onClose, onSent }) {
       const d = res.data || res;
       if (!d.offer_id) { setError(d.error || "Offer could not be created."); return; }
       setOfferId(d.offer_id);
-      const ep = await base44.functions.invoke("sendOfferEmail", { offer_id: d.offer_id, segment, preview_only: true });
+      const ep = await base44.functions.invoke("sendOfferEmail", { offer_id: d.offer_id, segment, template_type: templateType, preview_only: true });
       setEmailPreview(ep.data || ep);
       setStep("review");
     } catch (e) {
@@ -73,7 +75,7 @@ export default function OfferComposer({ stay, onClose, onSent }) {
     setSending(true);
     setError(null);
     try {
-      await base44.functions.invoke("sendOfferEmail", { offer_id: offerId, segment });
+      await base44.functions.invoke("sendOfferEmail", { offer_id: offerId, segment, template_type: templateType });
       onSent();
     } catch (e) {
       setError("Send failed. Emailing non-registered addresses needs a connected custom domain on a paid plan.");
@@ -119,6 +121,13 @@ export default function OfferComposer({ stay, onClose, onSent }) {
               <label className="text-xs tracking-wide uppercase text-muted-foreground block mb-2">Send to segment</label>
               <select value={segment} onChange={(e) => setSegment(e.target.value)} className="w-full border-b border-line py-2 bg-transparent text-ink focus:outline-none focus:border-sea min-h-[44px]">
                 {SEGMENTS.map((s) => (<option key={s.id} value={s.id}>{s.label}</option>))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs tracking-wide uppercase text-muted-foreground block mb-2">Email tone</label>
+              <select value={templateType} onChange={(e) => setTemplateType(e.target.value)} className="w-full border-b border-line py-2 bg-transparent text-ink focus:outline-none focus:border-sea min-h-[44px]">
+                {OFFER_TEMPLATE_TYPES.map((t) => (<option key={t.id} value={t.id}>{t.label}</option>))}
               </select>
             </div>
 

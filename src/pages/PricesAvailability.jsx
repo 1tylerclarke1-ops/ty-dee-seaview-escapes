@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Image } from "@/components/ui/image";
+import { base44 } from "@/api/base44Client";
 import StayCalendar from "@/components/StayCalendar";
 import FacilitiesStatusPanel from "@/components/FacilitiesStatusPanel";
 import FacilitiesMarker from "@/components/FacilitiesMarker";
 import BookingPanel from "@/components/booking/BookingPanel";
-import { SEASON_START, SEASON_END, allowedLengthsForArrival } from "@/lib/pricing";
+import PublicOfferMarker from "@/components/PublicOfferMarker";
+import { SEASON_START, SEASON_END, allowedLengthsForArrival, calculatePrice } from "@/lib/pricing";
 import { useFacilitiesSettings, stayFacilitiesStatus } from "@/lib/facilities";
 
 const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
@@ -14,10 +16,22 @@ const BANNER = `${BASE}/eba602fdb_View.jpg`;
 export default function PricesAvailability() {
   const [arrival, setArrival] = useState(null);
   const [length, setLength] = useState(null);
+  const [publicOffers, setPublicOffers] = useState([]);
   const { settings } = useFacilitiesSettings();
   const allowedLengths = arrival ? allowedLengthsForArrival(arrival) : [];
   const facStatus = arrival && length ? stayFacilitiesStatus(arrival, length, settings) : null;
   const affected = facStatus && facStatus.state !== "open";
+
+  useEffect(() => {
+    base44.functions
+      .invoke("getPublicOffers", {})
+      .then((res) => setPublicOffers((res.data || res).offers || []))
+      .catch(() => setPublicOffers([]));
+  }, []);
+
+  const arrivalStr = arrival ? format(arrival, "yyyy-MM-dd") : null;
+  const publicOffer = publicOffers.find((o) => o.arrival_date === arrivalStr && o.nights === length) || null;
+  const originalTotal = arrival && length ? (calculatePrice(arrival, length)?.total ?? null) : null;
 
   const handleSelectArrival = (d) => {
     setArrival(d);
@@ -92,6 +106,9 @@ export default function PricesAvailability() {
                           </button>
                         ))}
                       </div>
+                      {publicOffer && originalTotal != null && (
+                        <PublicOfferMarker offer={publicOffer} originalTotal={originalTotal} />
+                      )}
                       {affected && (
                         <div className="mt-4">
                           <FacilitiesMarker status={facStatus} />

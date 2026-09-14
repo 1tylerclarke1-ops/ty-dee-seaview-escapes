@@ -102,6 +102,11 @@
       "type": "string",
       "format": "date-time",
       "title": "Facilities acknowledged at"
+    },
+    "post_stay_sent": {
+      "type": "boolean",
+      "default": false,
+      "title": "Post-stay email sent"
     }
   },
   "required": [

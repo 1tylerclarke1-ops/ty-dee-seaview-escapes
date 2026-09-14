@@ -1,0 +1,62 @@
+{
+  "name": "EmailTemplate",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "late_availability",
+        "cancellation",
+        "weather",
+        "returning_guest",
+        "post_stay"
+      ],
+      "title": "Template type"
+    },
+    "name": {
+      "type": "string",
+      "title": "Display name"
+    },
+    "subject": {
+      "type": "string",
+      "title": "Subject line"
+    },
+    "body": {
+      "type": "string",
+      "title": "Body (merge fields in {{double_braces}})"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": true,
+      "title": "Seeded default"
+    }
+  },
+  "required": [
+    "type",
+    "name",
+    "subject",
+    "body"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

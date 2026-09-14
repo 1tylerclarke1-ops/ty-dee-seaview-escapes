@@ -11,6 +11,8 @@ import Home from '@/pages/Home';
 import Caravan from '@/pages/Caravan';
 import PricesAvailability from '@/pages/PricesAvailability';
 import Area from '@/pages/Area';
+import Dogs from '@/pages/Dogs';
+import Consent from '@/pages/Consent';
 import Terms from '@/pages/Terms';
 import Contact from '@/pages/Contact';
 import Admin from '@/pages/Admin';
@@ -53,6 +55,8 @@ const AuthenticatedApp = () => {
         <Route path="/caravan" element={<Caravan />} />
         <Route path="/prices" element={<PricesAvailability />} />
         <Route path="/area" element={<Area />} />
+        <Route path="/dogs" element={<Dogs />} />
+        <Route path="/consent/:token" element={<Consent />} />
         <Route path="/book" element={<RedirectToPrices />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/contact" element={<Contact />} />

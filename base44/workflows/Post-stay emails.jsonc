@@ -1,0 +1,45 @@
+{
+  "description": "Daily 09:00 \u2014 sends the post-stay thank-you / review / opt-in email to guests who departed two days ago. This is where the marketing list grows.",
+  "name": "Post-stay emails",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 9 * * *",
+      "one_time_date": null,
+      "timezone": "Europe/London",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "post_stay_emails",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_job": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendPostStayEmails",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send post-stay emails",
+            "description": "Thank-you + review + opt-in, two days after departure"
+          }
+        }
+      }
+    ]
+  }
+}
