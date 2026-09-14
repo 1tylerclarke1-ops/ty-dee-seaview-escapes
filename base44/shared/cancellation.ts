@@ -13,6 +13,8 @@ export const DEFAULT_CANCELLATION_POLICY = {
   ],
   season_overrides: [],
   deposit_refundable: true,
+  cooling_off_hours: 48,
+  cooling_off_min_hours_before_arrival: 24,
 };
 
 const MONTHS = [
@@ -56,11 +58,70 @@ export function normalizePolicy(record: any) {
     tiers = DEFAULT_CANCELLATION_POLICY.tiers.map((t) => ({ ...t }));
   }
   tiers.sort((a, b) => b.days_before_arrival - a.days_before_arrival);
+  const coolingOffHours = Number(base.cooling_off_hours);
+  const coolingOffMin = Number(base.cooling_off_min_hours_before_arrival);
   return {
     tiers,
     season_overrides: Array.isArray(base.season_overrides) ? base.season_overrides : [],
     deposit_refundable: base.deposit_refundable !== false,
+    cooling_off_hours: coolingOffHours > 0 ? coolingOffHours : 48,
+    cooling_off_min_hours_before_arrival: coolingOffMin > 0 ? coolingOffMin : 24,
   };
+}
+
+const HOUR_MS = 3600000;
+const DAY_MS = 86400000;
+const SEVEN_DAYS_MS = 7 * DAY_MS;
+
+// Arrival as an epoch ms. Arrival is a date-only ISO; check-in is treated as
+// the start of the arrival day (00:00 UTC) — we hold no check-in time.
+export function arrivalMs(arrivalIso: string): number {
+  return new Date(arrivalIso + "T00:00:00Z").getTime();
+}
+
+// Cooling-off expiry (epoch ms) for a booking made at bookedAtMs. The window
+// runs to bookedAt + cooling_off_hours, but is capped at arrival minus
+// cooling_off_min_hours_before_arrival and never extends past arrival. The
+// cap always applies; it only shortens the window when arrival is close (the
+// "7-day exception"). Never before the booking time itself.
+export function computeCoolingOffExpiry(bookedAtMs: number, arrivalIso: string, policy: any): number {
+  const p = normalizePolicy(policy);
+  const arr = arrivalMs(arrivalIso);
+  const fromBooking = bookedAtMs + p.cooling_off_hours * HOUR_MS;
+  const cap = arr - p.cooling_off_min_hours_before_arrival * HOUR_MS;
+  let expiry = Math.min(fromBooking, cap);
+  if (expiry > arr) expiry = arr;
+  if (expiry < bookedAtMs) expiry = bookedAtMs;
+  return expiry;
+}
+
+// Whether the shorter "24 hours before you arrive" wording applies: arrival
+// fewer than 7 days from the booking time.
+export function coolingOffSevenDayException(bookedAtMs: number, arrivalIso: string): boolean {
+  return arrivalMs(arrivalIso) - bookedAtMs < SEVEN_DAYS_MS;
+}
+
+// Human-readable cooling-off close, in Europe/London, for the confirmation
+// email: "16 September 2026 at 2:30 pm".
+export function formatCoolingOffExpiry(expiryMs: number): string {
+  try {
+    const d = new Date(expiryMs);
+    const date = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(d);
+    const time = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(d);
+    return `${date} at ${time}`;
+  } catch {
+    return new Date(expiryMs).toISOString().replace("T", " ").slice(0, 16);
+  }
 }
 
 // First matching tier top-down, or a 0% catch-all.
@@ -155,6 +216,8 @@ export function buildPolicyText(policy: any): string {
   const topDays = p.tiers.length ? p.tiers[0].days_before_arrival : 60;
   return [
     "Cancellation policy",
+    "",
+    "Cooling-off \u2014 cancel within " + p.cooling_off_hours + " hours of booking for a full refund of everything paid, regardless of the tiers below. If your arrival is fewer than 7 days away, this runs until " + p.cooling_off_min_hours_before_arrival + " hours before you arrive.",
     "",
     ...tierLines,
     "",

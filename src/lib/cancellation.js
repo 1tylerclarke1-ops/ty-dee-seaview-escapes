@@ -14,6 +14,8 @@ export const DEFAULT_CANCELLATION_POLICY = {
   ],
   season_overrides: [],
   deposit_refundable: true,
+  cooling_off_hours: 48,
+  cooling_off_min_hours_before_arrival: 24,
 };
 
 const MONTHS = [
@@ -55,10 +57,14 @@ export function normalizePolicy(record) {
     tiers = DEFAULT_CANCELLATION_POLICY.tiers.map((t) => ({ ...t }));
   }
   tiers.sort((a, b) => b.days_before_arrival - a.days_before_arrival);
+  const coolingOffHours = Number(base.cooling_off_hours);
+  const coolingOffMin = Number(base.cooling_off_min_hours_before_arrival);
   return {
     tiers,
     season_overrides: Array.isArray(base.season_overrides) ? base.season_overrides : [],
     deposit_refundable: base.deposit_refundable !== false,
+    cooling_off_hours: coolingOffHours > 0 ? coolingOffHours : 48,
+    cooling_off_min_hours_before_arrival: coolingOffMin > 0 ? coolingOffMin : 24,
   };
 }
 
@@ -103,10 +109,19 @@ export function cancellationDateBands(arrivalIso, policy) {
 // position, and returns each remaining band with its real "from" date and the
 // pounds it is worth. Refunds are calculated on the amount paid.
 export function cancellationDisplay(arrivalIso, total, policy, todayIsoValue) {
-  const today = todayIsoValue || todayIso();
-  let days = daysBetween(today, arrivalIso);
-  if (days < 0) days = 0;
+  const nowMs = todayIsoValue ? new Date(todayIsoValue + "T00:00:00Z").getTime() : Date.now();
   const p = normalizePolicy(policy);
+  const expiryMs = computeCoolingOffExpiry(nowMs, arrivalIso, p);
+  const coolingOffActive = nowMs < expiryMs;
+  const sevenDayException = coolingOffSevenDayException(nowMs, arrivalIso);
+  // Tier positioning is relative to the cooling-off close, so the first band
+  // starts AFTER the full-refund window — never "Cancel now: 75%" while a
+  // full refund is still on the table today.
+  const refIso = coolingOffActive
+    ? new Date(expiryMs).toISOString().slice(0, 10)
+    : (todayIsoValue || todayIso());
+  let days = daysBetween(refIso, arrivalIso);
+  if (days < 0) days = 0;
   const tiers = p.tiers; // sorted desc by days_before_arrival
   let currentIdx = -1;
   for (let i = 0; i < tiers.length; i++) {
@@ -124,10 +139,16 @@ export function cancellationDisplay(arrivalIso, total, policy, todayIsoValue) {
   const poundsFor = (pct) => Math.round((pct / 100) * paid);
   const bands = [];
   if (inNoRefund) {
-    bands.push({ kind: "now", percent: 0, pounds: 0 });
+    bands.push({
+      kind: coolingOffActive ? "from" : "now",
+      date: coolingOffActive ? refIso : null,
+      percent: 0,
+      pounds: 0,
+    });
   } else {
     bands.push({
-      kind: "now",
+      kind: coolingOffActive ? "from" : "now",
+      date: coolingOffActive ? refIso : null,
       percent: currentTier.refund_percent,
       pounds: poundsFor(currentTier.refund_percent),
     });
@@ -148,7 +169,20 @@ export function cancellationDisplay(arrivalIso, total, policy, todayIsoValue) {
       pounds: 0,
     });
   }
-  return { days, inNoRefund, pastFullRefund, currentTier, bands };
+  return {
+    days,
+    inNoRefund,
+    pastFullRefund,
+    currentTier,
+    bands,
+    coolingOff: {
+      active: coolingOffActive,
+      expiryMs,
+      expiryIso: new Date(expiryMs).toISOString(),
+      expiryDateIso: new Date(expiryMs).toISOString().slice(0, 10),
+      sevenDayException,
+    },
+  };
 }
 
 export function tierDisplayRows(policy) {
@@ -199,6 +233,8 @@ export function buildPolicyText(policy) {
   const topDays = p.tiers.length ? p.tiers[0].days_before_arrival : 60;
   return [
     "Cancellation policy",
+    "",
+    "Cooling-off \u2014 cancel within " + p.cooling_off_hours + " hours of booking for a full refund of everything paid, regardless of the tiers below. If your arrival is fewer than 7 days away, this runs until " + p.cooling_off_min_hours_before_arrival + " hours before you arrive.",
     "",
     ...tierLines,
     "",
