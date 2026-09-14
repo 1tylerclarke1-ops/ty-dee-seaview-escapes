@@ -29,8 +29,8 @@ export default function Navigation() {
       >
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-20 flex items-center justify-between">
           <Link to="/" className="inline-flex items-baseline gap-3">
-            <span className={`text-2xl md:text-3xl leading-none ${solid ? "text-ink" : "text-white"}`} style={{ fontFamily: "var(--font-display)" }}>
-              Ty Dee
+            <span className={`text-lg md:text-2xl leading-none whitespace-nowrap ${solid ? "text-ink" : "text-white"}`} style={{ fontFamily: "var(--font-display)" }}>
+              Ty Dee Seaview Escapes
             </span>
             <span className={`hidden md:inline text-[0.7rem] tracking-wide ${solid ? "text-muted-foreground" : "text-white/70"}`}>
               Polperro, Cornwall
@@ -53,7 +53,7 @@ export default function Navigation() {
       {open && (
         <div className="fixed inset-0 z-[1200] bg-ink flex flex-col">
           <div className="h-20 flex items-center justify-between px-6 md:px-10 max-w-[1400px] mx-auto w-full">
-            <span className="text-2xl md:text-3xl text-white" style={{ fontFamily: "var(--font-display)" }}>Ty Dee</span>
+            <span className="text-lg md:text-3xl text-white whitespace-nowrap" style={{ fontFamily: "var(--font-display)" }}>Ty Dee Seaview Escapes</span>
             <button
               onClick={() => setOpen(false)}
               aria-label="Close menu"

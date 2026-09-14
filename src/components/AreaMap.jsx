@@ -9,7 +9,7 @@ export const CARAVAN = [50.3398, -4.5145];
 export const SPOTS = [
   {
     id: "caravan",
-    name: "Ty Dee · Polperro Holiday Park",
+    name: "Ty Dee Seaview Escapes · Polperro Holiday Park",
     category: "Your base",
     coords: [50.3398, -4.5145],
     drive: "—",
