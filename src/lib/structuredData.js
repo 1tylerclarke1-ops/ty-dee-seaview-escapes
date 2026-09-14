@@ -12,7 +12,7 @@ export function lodgingSchema(reviews = []) {
     "@id": `${SITE_ORIGIN}/#lodging`,
     name: BUSINESS.name,
     description:
-      "A privately owned static caravan at Polperro Holiday Park, Cornwall. Sleeps six with sea views and private decking. Direct booking with the owner, October to April.",
+      "A privately owned static caravan at Polperro Holiday Park, Cornwall. Sleeps six with sea views and private decking. Direct booking with the owner, all year round.",
     url: SITE_ORIGIN,
     image: `${SITE_ORIGIN}/og.jpg`,
     telephone: BUSINESS.phone,

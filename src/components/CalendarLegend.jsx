@@ -43,7 +43,7 @@ const ITEMS = [
     ),
   },
   {
-    label: "Outside season",
+    label: "Outside booking window",
     swatch: (
       <Swatch className="border border-line opacity-50">
         <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />

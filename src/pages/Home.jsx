@@ -47,7 +47,7 @@ export default function Home() {
     <div>
       <Seo
         title="Ty Dee Seaview Escapes — Sea-view caravan at Polperro, Cornwall"
-        description="A privately owned static caravan at Polperro Holiday Park, Cornwall. Sleeps six, sea views, private decking, dog-friendly. Direct booking with the owner, October to April."
+        description="A privately owned static caravan at Polperro Holiday Park, Cornwall. Sleeps six, sea views, private decking, dog-friendly. Direct booking with the owner, all year round."
         canonical={`${SITE_ORIGIN}/`}
         jsonLd={lodgingSchema(reviews)}
       />
@@ -68,7 +68,7 @@ export default function Home() {
         <div className="relative h-full flex flex-col items-center justify-end md:justify-center text-center px-6 pb-16 md:pb-0">
           <h1 className="text-white text-5xl md:text-7xl leading-[1.02]">Ty Dee Seaview Escapes</h1>
           <p className="mt-5 text-lg md:text-2xl text-white/90 max-w-xl">
-            A sea-view caravan for six at Polperro — October to April, when the coast belongs to you.
+            A sea-view caravan for six at Polperro, Cornwall. Short breaks and weeks, all year round.
           </p>
           <Link
             to="/prices"
@@ -186,8 +186,8 @@ export default function Home() {
       {/* CTA band */}
       <section className="bg-surface border-t border-line">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-20 md:py-28 text-center">
-          <p className="text-sm text-muted-foreground">Season 2026 / 27</p>
-          <h2 className="mt-3 text-3xl md:text-5xl text-ink">5 October 2026 — 27 April 2027</h2>
+          <p className="text-sm text-muted-foreground">Availability</p>
+          <h2 className="mt-3 text-3xl md:text-5xl text-ink">Book up to 12 months ahead</h2>
           <p className="mt-5 text-ink-soft max-w-xl mx-auto">
             Two ways to stay: three nights arriving Friday, or four nights arriving Monday. The rest of the calendar is the sea's.
           </p>

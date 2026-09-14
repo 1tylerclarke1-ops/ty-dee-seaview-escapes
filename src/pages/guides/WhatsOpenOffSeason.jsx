@@ -39,7 +39,7 @@ export default function WhatsOpenOffSeason() {
       <p>
         For anything the village can't manage, <strong>Looe</strong> is the working town next door and it runs
         year-round: a Co-op and a Lidl, pharmacies, a post office, a fishmonger on the quay, and a string of
-        cafés and chippies that don't close for the season. If you're self-catering for a week, do the big shop
+        cafés and chippies that don't close for winter. If you're self-catering for a week, do the big shop
         in Looe on the way in.
       </p>
 

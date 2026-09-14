@@ -31,7 +31,7 @@ export default function GuidesIndex() {
     <div>
       <Seo
         title="Guides — Ty Dee Seaview Escapes"
-        description="Honest, first-person guides to staying at Polperro off-season: dog-friendly Cornwall, winter in the village, coast path walks, and what's really open."
+        description="Honest, first-person guides to staying at Polperro in the quieter months: dog-friendly Cornwall, winter in the village, coast path walks, and what's really open."
         canonical={`${SITE_ORIGIN}/guides`}
       />
       <PageHero

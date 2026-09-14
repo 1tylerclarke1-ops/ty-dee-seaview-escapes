@@ -18,7 +18,7 @@ export default function Area() {
       />
       <PageHero
         title="The Area"
-        subtitle="Polperro, Looe, the coast path and a string of hidden coves — and a quieter, lovelier side of Cornwall once the season turns."
+        subtitle="Polperro, Looe, the coast path and a string of hidden coves — and a quieter, lovelier side of Cornwall once the crowds thin out."
       />
 
       {/* Embedded map centred on Polperro Holiday Park */}

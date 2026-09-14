@@ -5,7 +5,7 @@ export default function DogFriendlyCornwall() {
     <GuideArticle
       title="Dog-friendly Cornwall, from Polperro"
       subtitle="Where to walk, swim and eat with your dog on the south Cornish coast — without the summer dog bans."
-      description="A first-person guide to dog-friendly beaches, coast path walks and dog-welcome pubs around Polperro and Looe in Cornwall, October to April."
+      description="A first-person guide to dog-friendly beaches, coast path walks and dog-welcome pubs around Polperro and Looe in Cornwall."
       path="/guides/dog-friendly-cornwall"
     >
       <p>
@@ -20,7 +20,7 @@ export default function DogFriendlyCornwall() {
         <strong>Talland Bay</strong> is our default. It's a ten-minute walk down the coast path from the park —
         two small shingle coves, a slipway, and usually nobody there. From 1 May to 30 September the main beach
         has a dog restriction, so in summer we use the eastern cove (the ban applies to the western slipway
-        beach). From October it's all yours again, and that's exactly when we run the season.
+        beach). From October it's all yours again, and that's exactly when the caravan is at its quietest.
       </p>
       <p>
         <strong>Whitsand Bay</strong>, a short drive west, is three miles of sand with the dog ban lifted on 1

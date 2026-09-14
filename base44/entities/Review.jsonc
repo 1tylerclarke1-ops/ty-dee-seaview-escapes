@@ -8,7 +8,7 @@
     },
     "month_stayed": {
       "type": "string",
-      "title": "Month stayed (display, e.g. October 2026)"
+      "title": "Month stayed (display, e.g. October)"
     },
     "rating": {
       "type": "number",

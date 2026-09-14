@@ -10,7 +10,7 @@ const STATIC_SECTIONS = [
     title: "The booking",
     body: [
       "Ty Dee Seaview Escapes is a privately owned static caravan at Polperro Holiday Park, Cornwall, available for direct booking with the owner.",
-      "The booking season runs from 5 October 2026 to 27 April 2027. No stays are available outside this period.",
+      "Stays are available year-round, and you can book up to twelve months ahead.",
       "Only two stay lengths are offered: three nights arriving on a Friday, or four nights arriving on a Monday. No other arrival days or durations are available.",
       "Maximum occupancy is six guests. This includes children and infants.",
     ],
@@ -105,7 +105,7 @@ export default function Terms() {
       />
       <PageHero
         title="Terms & Conditions"
-        subtitle="Clear, fair, and built around the two-stay, one-season model that keeps Ty Dee simple."
+        subtitle="Clear, fair, and built around the two-stay model that keeps Ty Dee simple."
       />
       <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-32">
         <div className="grid md:grid-cols-12 gap-10 md:gap-12">

@@ -5,13 +5,13 @@ export default function PolperroInWinter() {
     <GuideArticle
       title="Polperro in winter"
       subtitle="Why the quiet months are the best ones here — stormy seas, empty harbours, and a village that still has its lights on."
-      description="A first-person guide to Polperro, Cornwall in the off-season — winter walks, storm-watching from the decking, which pubs and cafés stay open, and why the crowds are the only thing you'll miss."
+      description="A first-person guide to Polperro, Cornwall in the quieter months — winter walks, storm-watching from the decking, which pubs and cafés stay open, and why the crowds are the only thing you'll miss."
       path="/guides/polperro-in-winter"
     >
       <p>
         Polperro in July is a postcard. Polperro in November is the real place. The day-trippers have gone home,
         the harbour is quiet enough to hear the boats knocking, and the coast path is yours for the asking. We
-        run Ty Dee from October to April precisely because this is when the village remembers what it is — a
+        love Ty Dee in the quieter months precisely because this is when the village remembers what it is — a
         fishing cove, not a theme park.
       </p>
 
@@ -26,7 +26,7 @@ export default function PolperroInWinter() {
       <h2>The village, still open</h2>
       <p>
         Polperro shrinks in winter but it doesn't shut. The <strong>Three Pilchards</strong> and the
-        <strong> Ship Inn</strong> keep their fires lit and their kitchens running through the off-season —
+        <strong> Ship Inn</strong> keep their fires lit and their kitchens running through the winter —
         check their opening days before you come, because they're not seven-day places in January, but on the
         nights they're open you'll eat well and you won't queue. The <strong>Polperro Heritage Museum</strong>
         opens limited hours; the Smugglers' shops close and reopen at Easter.

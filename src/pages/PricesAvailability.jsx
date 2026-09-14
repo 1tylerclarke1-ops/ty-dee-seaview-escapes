@@ -9,7 +9,7 @@ import BookingPanel from "@/components/booking/BookingPanel";
 import PublicOfferMarker from "@/components/PublicOfferMarker";
 import Seo from "@/components/Seo";
 import { SITE_ORIGIN } from "@/lib/structuredData";
-import { SEASON_START, SEASON_END, allowedLengthsForArrival, calculatePrice } from "@/lib/pricing";
+import { allowedLengthsForArrival, calculatePrice } from "@/lib/pricing";
 import { useFacilitiesSettings, stayFacilitiesStatus } from "@/lib/facilities";
 
 const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
@@ -45,7 +45,7 @@ export default function PricesAvailability() {
     <div>
       <Seo
         title="Prices & Availability — Ty Dee Seaview Escapes, Polperro"
-        description="Live availability and seasonal pricing for a sea-view caravan at Polperro, Cornwall. Three-night Friday or four-night Monday stays, October to April. Book direct."
+        description="Live availability and pricing for a sea-view caravan at Polperro, Cornwall. Three-night Friday or four-night Monday stays. Book direct, up to twelve months ahead."
         canonical={`${SITE_ORIGIN}/prices`}
       />
       {/* Narrow banner strip — no more than 220px */}
@@ -61,7 +61,7 @@ export default function PricesAvailability() {
         <div className="relative h-full flex flex-col justify-end max-w-[1400px] mx-auto w-full px-6 md:px-10 pb-8">
           <h1 className="text-white text-4xl md:text-5xl">Prices & Availability</h1>
           <p className="mt-2 text-white/80 max-w-xl text-sm md:text-base">
-            Two stay lengths, a full twelve-month season. Friday arrivals are three nights; Monday arrivals four. Every other date is the sea's.
+            Two stay lengths, all year round. Friday arrivals are three nights; Monday arrivals four. Every other date is the sea's.
           </p>
         </div>
       </section>
@@ -77,7 +77,7 @@ export default function PricesAvailability() {
           <div className="md:col-span-8">
             <div className="bg-surface border border-line p-6 md:p-10">
               <p className="text-sm text-muted-foreground mb-6">
-                Stay-block calendar · {SEASON_START} → {SEASON_END}
+                Stay-block calendar · book up to 12 months ahead
               </p>
               <StayCalendar selectedArrival={arrival} selectedLength={length} onSelect={handleSelectArrival} />
             </div>

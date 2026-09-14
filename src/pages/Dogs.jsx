@@ -6,7 +6,7 @@ import { SITE_ORIGIN } from "@/lib/structuredData";
 
 const DOG_HERO = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/ecc14f14e_generated_image.png";
 
-// Dog-friendly landing page — the strongest off-season differentiator. Two
+// Dog-friendly landing page — the strongest quieter-months differentiator. Two
 // dogs of any size is unusual on a holiday park. SEO targets: "dog friendly
 // caravan Cornwall", "two dogs holiday let Cornwall", "dog friendly Polperro".
 export default function Dogs() {
@@ -41,8 +41,8 @@ export default function Dogs() {
           <p className="text-lg md:text-xl text-ink-soft leading-relaxed">
             Most holiday parks take one small dog, or none. We take two dogs of any size —
             and we mean it. A lurcher and a Labrador, two setters, a rescue and its companion.
-            It is the thing we are asked for most often, and the reason so many of our off-season
-            weeks fill with dog owners walking the coast path in the quiet months.
+            It is the thing we are asked for most often, and the reason so many of our quieter
+            weeks fill with dog owners walking the coast path.
           </p>
         </div>
       </section>
@@ -67,7 +67,7 @@ export default function Dogs() {
           bounds most years.
         </p>
         <p className="mt-4">
-          In the off-season (October to March) almost every beach in Cornwall is open to dogs, which
+          From October to March, almost every beach in Cornwall is open to dogs, which
           is exactly when our caravan is at its quietest and best value. That is no coincidence.
         </p>
       </Section>
