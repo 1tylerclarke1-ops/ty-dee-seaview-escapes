@@ -5,6 +5,11 @@ import {
   addDaysIso,
   DEFAULT_FACILITIES_SETTINGS,
 } from "../../shared/facilities.ts";
+import {
+  normalizePolicy,
+  buildPolicyText,
+  DEFAULT_CANCELLATION_POLICY,
+} from "../../shared/cancellation.ts";
 
 // Builds (and optionally sends) the booking confirmation email. For any
 // facilities-affected stay it states plainly that the park's on-site
@@ -63,6 +68,11 @@ export default async function (req) {
       lines.push(``);
       lines.push(`When the park is open, on-site facilities include: ${settings.facilities_list}`);
     }
+    const policyRows = await base44.asServiceRole.entities.CancellationPolicy.list();
+    const policy = policyRows && policyRows.length ? normalizePolicy(policyRows[0]) : DEFAULT_CANCELLATION_POLICY;
+    const policyText = booking.cancellation_policy_text || buildPolicyText(policy);
+    lines.push(``);
+    lines.push(policyText);
     lines.push(``);
     lines.push(`Ty Dee Seaview Escapes — Polperro, Cornwall`);
     const emailText = lines.join("\n");

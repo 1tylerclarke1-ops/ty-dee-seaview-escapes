@@ -1,8 +1,9 @@
 import PageHero from "@/components/PageHero";
 import { PARK_CLOSURE_DATE } from "@/lib/siteConfig";
 import { format, parseISO } from "date-fns";
+import { useCancellationPolicy, tierDisplayRows } from "@/lib/cancellation";
 
-const SECTIONS = [
+const STATIC_SECTIONS = [
   {
     title: "The booking",
     body: [
@@ -28,13 +29,6 @@ const SECTIONS = [
     ],
   },
   {
-    title: "Payment & cancellation",
-    body: [
-      "Full booking terms, deposit requirements and cancellation policy will be confirmed with the booking engine. No payment is taken until the booking engine and payment step are live.",
-      "Until then, enquiries made through this site are expressions of interest and create no obligation.",
-    ],
-  },
-  {
     title: "Your responsibilities",
     body: [
       "Guests are responsible for leaving the caravan clean and tidy, with all rubbish removed to the park bins.",
@@ -51,7 +45,55 @@ const SECTIONS = [
   },
 ];
 
+function CancellationSection({ policy, index }) {
+  const rows = tierDisplayRows(policy);
+  const topDays = rows.length ? policy.tiers[0]?.days_before_arrival : 60;
+  return (
+    <div>
+      <p className="text-sm text-sea tnum">{String(index + 1).padStart(2, "0")}</p>
+      <h2 className="text-3xl md:text-4xl text-ink mt-2">Cancellation policy</h2>
+      <div className="hairline mt-5" />
+
+      <table className="w-full mt-6 text-sm">
+        <thead>
+          <tr className="text-left text-xs tracking-wide uppercase text-muted-foreground border-b border-line">
+            <th className="py-3 pr-4 font-normal">Days before arrival</th>
+            <th className="py-3 font-normal text-right">Refund</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="border-b border-line/60">
+              <td className="py-3 pr-4 text-ink-soft tnum">{r.label}</td>
+              <td className="py-3 text-ink tnum text-right">
+                {r.percent === 0 ? "No refund" : r.percent === 100 ? "100% — full refund" : `${r.percent}%`}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="mt-6 space-y-4 text-ink-soft">
+        <p>The refund percentage applies to the total paid at the time you cancel — including the deposit, the short break supplement and the dog fee. Refunds are returned to the original payment method within 10 working days.</p>
+        <p>
+          <span className="text-ink">Changes to your dates.</span> One date change may be requested more than {topDays} days before arrival, subject to availability and any price difference. Inside {topDays} days a change is treated as a cancellation under the tiers above.
+        </p>
+        <p>Late arrival or early departure — no refund or reduction.</p>
+        <p>
+          <span className="text-ink">If we cancel.</span> In the unlikely event we cannot honour your booking, you receive a full refund of everything paid. Our liability is limited to that refund.
+        </p>
+        <p>
+          <span className="text-ink">Travel insurance.</span> We strongly recommend it.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function Terms() {
+  const { settings: policy } = useCancellationPolicy();
+  const sections = [...STATIC_SECTIONS, { title: "Cancellation policy", kind: "cancellation" }];
+
   return (
     <div>
       <PageHero
@@ -62,7 +104,7 @@ export default function Terms() {
         <div className="grid md:grid-cols-12 gap-10 md:gap-12">
           <div className="md:col-span-4">
             <div className="sticky top-28 space-y-3">
-              {SECTIONS.map((s, i) => (
+              {sections.map((s, i) => (
                 <a
                   key={s.title}
                   href={`#sec-${i}`}
@@ -74,16 +116,22 @@ export default function Terms() {
             </div>
           </div>
           <div className="md:col-span-8 space-y-14">
-            {SECTIONS.map((s, i) => (
+            {sections.map((s, i) => (
               <div key={s.title} id={`sec-${i}`}>
-                <p className="text-sm text-sea tnum">{String(i + 1).padStart(2, "0")}</p>
-                <h2 className="text-3xl md:text-4xl text-ink mt-2">{s.title}</h2>
-                <div className="hairline mt-5" />
-                <div className="mt-5 space-y-4 text-ink-soft">
-                  {s.body.map((p, j) => (
-                    <p key={j}>{p}</p>
-                  ))}
-                </div>
+                {s.kind === "cancellation" ? (
+                  <CancellationSection policy={policy} index={i} />
+                ) : (
+                  <>
+                    <p className="text-sm text-sea tnum">{String(i + 1).padStart(2, "0")}</p>
+                    <h2 className="text-3xl md:text-4xl text-ink mt-2">{s.title}</h2>
+                    <div className="hairline mt-5" />
+                    <div className="mt-5 space-y-4 text-ink-soft">
+                      {s.body.map((p, j) => (
+                        <p key={j}>{p}</p>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
