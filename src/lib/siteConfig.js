@@ -1,8 +1,9 @@
 // Central booking rules — shared by Prices & Availability and Book pages.
 // The booking engine itself is not built yet; these constants define the hard rules.
 
-export const SEASON_START = "2026-10-05"; // 5 October 2026
-export const SEASON_END = "2027-04-27"; // 27 April 2027
+// Season window is derived from the pricing seasons (src/lib/pricing.js),
+// the single source of truth. Re-exported here so existing imports work.
+export { SEASON_START, SEASON_END } from "@/lib/pricing";
 
 // JS getDay(): 0 = Sunday, 1 = Monday, 5 = Friday
 export const STAYS = [

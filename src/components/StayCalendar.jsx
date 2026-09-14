@@ -13,6 +13,7 @@ import {
   endOfWeek,
 } from "date-fns";
 import { STAYS, SEASON_START, SEASON_END, PARK_CLOSURE_DATE, MAX_GUESTS } from "@/lib/siteConfig";
+import { isWithinBookingWindow } from "@/lib/pricing";
 
 const WEEK_STARTS_ON = 1; // Monday
 
@@ -36,6 +37,7 @@ function isParkClosedPeriod(date) {
 // Returns the stay config if this date is a valid arrival day within season
 function stayForArrival(date) {
   if (!inSeason(date)) return null;
+  if (!isWithinBookingWindow(date)) return null;
   return STAYS.find((s) => s.arrivalDay === date.getDay()) || null;
 }
 

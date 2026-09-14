@@ -3,18 +3,23 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { Image } from "@/components/ui/image";
 import StayCalendar, { stayForArrival, isParkClosedPeriod } from "@/components/StayCalendar";
-import { SEASON_START, SEASON_END } from "@/lib/siteConfig";
+import { PRICING_SETTINGS, calculatePrice, firstArrivalInSeason, gbp, SEASON_START, SEASON_END } from "@/lib/pricing";
 
 const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
 const BANNER = `${BASE}/eba602fdb_View.jpg`;
 
-// Placeholder rate tiers (per stay) — to be confirmed by owner.
-const RATES = [
-  { period: "October 2026", fri: 240, mon: 300 },
-  { period: "November 2026 – February 2027", fri: 180, mon: 230, note: "Park facilities closed" },
-  { period: "March 2027", fri: 260, mon: 320 },
-  { period: "April 2027", fri: 300, mon: 380 },
-];
+// Rate card — one row per pricing season. Totals come from the pricing
+// engine (src/lib/pricing.js): 3nt Fri arrival, 4nt Mon arrival, 7nt Fri arrival.
+const RATES = PRICING_SETTINGS.seasons.map((season) => {
+  const fri = firstArrivalInSeason(season, 5);
+  const mon = firstArrivalInSeason(season, 1);
+  return {
+    name: season.name,
+    three: fri ? calculatePrice(fri, 3)?.total : null,
+    four: mon ? calculatePrice(mon, 4)?.total : null,
+    seven: fri ? calculatePrice(fri, 7)?.total : null,
+  };
+});
 
 export default function PricesAvailability() {
   const [arrival, setArrival] = useState(null);
@@ -36,7 +41,7 @@ export default function PricesAvailability() {
         <div className="relative h-full flex flex-col justify-end max-w-[1400px] mx-auto w-full px-6 md:px-10 pb-8">
           <h1 className="text-white text-4xl md:text-5xl">Prices & Availability</h1>
           <p className="mt-2 text-white/80 max-w-xl text-sm md:text-base">
-            Two stay lengths, one season. Friday arrivals are three nights; Monday arrivals are four. Every other date is the sea's.
+            Two stay lengths, a full twelve-month season. Friday arrivals are three nights; Monday arrivals are four. Every other date is the sea's.
           </p>
         </div>
       </section>
@@ -47,23 +52,24 @@ export default function PricesAvailability() {
           <p className="text-sm text-muted-foreground mb-6">Rate card · per stay</p>
           <div className="border-t border-line">
             <div className="grid grid-cols-12 py-3 border-b border-line text-xs tracking-wide uppercase text-muted-foreground">
-              <div className="col-span-6">Period</div>
-              <div className="col-span-3 text-right">3 nights · Fri</div>
-              <div className="col-span-3 text-right">4 nights · Mon</div>
+              <div className="col-span-5">Season</div>
+              <div className="col-span-2 text-right">3 nights</div>
+              <div className="col-span-2 text-right">4 nights</div>
+              <div className="col-span-3 text-right">7 nights</div>
             </div>
             {RATES.map((r) => (
-              <div key={r.period} className="grid grid-cols-12 py-4 border-b border-line items-baseline">
-                <div className="col-span-6">
-                  <span className="text-lg text-ink">{r.period}</span>
-                  {r.note && <span className="block text-xs text-signal mt-1">{r.note}</span>}
+              <div key={r.name} className="grid grid-cols-12 py-4 border-b border-line items-baseline">
+                <div className="col-span-5">
+                  <span className="text-base text-ink">{r.name}</span>
                 </div>
-                <div className="col-span-3 text-right tnum text-ink">£{r.fri}</div>
-                <div className="col-span-3 text-right tnum text-ink">£{r.mon}</div>
+                <div className="col-span-2 text-right tnum text-ink">{r.three ? gbp(r.three) : "—"}</div>
+                <div className="col-span-2 text-right tnum text-ink">{r.four ? gbp(r.four) : "—"}</div>
+                <div className="col-span-3 text-right tnum text-ink">{r.seven ? gbp(r.seven) : "—"}</div>
               </div>
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-5">
-            Rates are indicative pending final confirmation. No agency fees — booked direct with the owner.
+            Per-stay totals include the £35 short break supplement on 3- and 4-night stays. No agency fees — booked direct with the owner.
           </p>
         </div>
       </section>

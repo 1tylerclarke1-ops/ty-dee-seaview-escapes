@@ -3,25 +3,12 @@ import { format, addDays, parseISO } from "date-fns";
 import { Image } from "@/components/ui/image";
 import StayCalendar, { stayForArrival, isParkClosedPeriod } from "@/components/StayCalendar";
 import { MAX_GUESTS, PARK_CLOSURE_DATE } from "@/lib/siteConfig";
+import { calculatePrice, gbp } from "@/lib/pricing";
 
 const BASE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f397";
 const BANNER = `${BASE}/5f987f181_Coverpicture.jpg`;
 
-const RATES_BY_MONTH = {
-  9: { fri: 240, mon: 300 }, // Oct 2026
-  10: { fri: 180, mon: 230 }, // Nov
-  11: { fri: 180, mon: 230 }, // Dec
-  0: { fri: 180, mon: 230 }, // Jan 2027
-  1: { fri: 180, mon: 230 }, // Feb
-  2: { fri: 260, mon: 320 }, // Mar
-  3: { fri: 300, mon: 380 }, // Apr
-};
-
-function priceFor(arrival, stay) {
-  const m = arrival.getMonth();
-  const tier = RATES_BY_MONTH[m] || { fri: 240, mon: 300 };
-  return stay.id === "fri" ? tier.fri : tier.mon;
-}
+// Pricing is now driven by src/lib/pricing.js (seasons + nightly rates).
 
 export default function Book() {
   const [arrival, setArrival] = useState(null);
@@ -33,7 +20,7 @@ export default function Book() {
   const stay = arrival ? stayForArrival(arrival) : null;
   const winter = arrival && isParkClosedPeriod(arrival);
   const departure = arrival && stay ? addDays(arrival, stay.nights) : null;
-  const price = arrival && stay ? priceFor(arrival, stay) : 0;
+  const breakdown = arrival && stay ? calculatePrice(arrival, stay.nights) : null;
 
   const canProceed = arrival && stay && guests <= MAX_GUESTS && details.name && details.email && (!winter || acknowledged);
 
@@ -122,9 +109,30 @@ export default function Book() {
                   <Row label="Guests" value={`${guests}`} />
                   <Row label="Dog" value={details.dogs ? "Yes" : "No"} />
                   <div className="hairline" />
+                  {breakdown && (
+                    <div className="space-y-2">
+                      {breakdown.groups.map((g, i) => (
+                        <div key={i} className="flex items-baseline justify-between">
+                          <span className="text-sm text-ink-soft tnum">
+                            {breakdown.groups.length > 1
+                              ? `${g.count} × £${g.rate} ${g.type}`
+                              : `${g.count} × £${g.rate} per night`}
+                          </span>
+                          <span className="text-sm text-ink tnum">{gbp(g.count * g.rate)}</span>
+                        </div>
+                      ))}
+                      {breakdown.shortBreakSupplement > 0 && (
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-sm text-ink-soft">Short break supplement</span>
+                          <span className="text-sm text-ink tnum">{gbp(breakdown.shortBreakSupplement)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="hairline mt-4" />
                   <div className="flex items-baseline justify-between">
                     <span className="text-xs tracking-wide uppercase text-muted-foreground">Total</span>
-                    <span className="text-4xl text-ink tnum">£{price}</span>
+                    <span className="text-3xl text-ink tnum">{breakdown ? gbp(breakdown.total) : "—"}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">Price shown before commitment. No payment taken yet.</p>
 
@@ -183,7 +191,7 @@ export default function Book() {
               <Row label="Arrival" value={arrival && format(arrival, "EEE d MMM yyyy")} />
               <Row label="Departure" value={departure && format(departure, "EEE d MMM yyyy")} />
               <Row label="Guests" value={`${guests}`} />
-              <Row label="Total" value={`£${price}`} />
+              <Row label="Total" value={breakdown ? gbp(breakdown.total) : "—"} />
             </div>
             <p className="mt-6 text-sm text-ink-soft">
               The booking engine and secure payment step are being finalised. Your details have been prepared — you'll be able to complete payment shortly.
