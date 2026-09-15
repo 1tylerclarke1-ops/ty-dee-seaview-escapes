@@ -1,7 +1,12 @@
 import { Link } from "react-router-dom";
 import { NAV_LINKS, BUSINESS } from "@/lib/siteConfig";
+import { useAuth } from "@/lib/AuthContext";
+import { base44 } from "@/api/base44Client";
 
 export default function Footer() {
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = isAuthenticated && user?.role === "admin";
+
   return (
     <footer className="bg-ink text-base">
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-16 md:py-24">
@@ -44,7 +49,22 @@ export default function Footer() {
         <div className="hairline mt-14 border-white/10" />
         <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <p className="text-xs text-white/40">© {new Date().getFullYear()} {BUSINESS.name}</p>
-          <p className="text-xs text-white/40">Direct booking · No agency · No commission</p>
+          <div className="flex items-center gap-4">
+            <p className="text-xs text-white/40">Direct booking · No agency · No commission</p>
+            {isAdmin ? (
+              <Link to="/admin" className="text-xs text-white/40 hover:text-sea transition-colors">
+                Dashboard
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => base44.auth.redirectToLogin("/admin")}
+                className="text-xs text-white/40 hover:text-sea transition-colors"
+              >
+                Admin
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </footer>

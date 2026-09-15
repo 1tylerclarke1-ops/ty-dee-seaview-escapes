@@ -30,6 +30,7 @@ import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import OAuthConsent from '@/pages/OAuthConsent';
+import WhoAmI from '@/pages/WhoAmI';
 
 function RedirectToPrices() {
   const { search } = useLocation();
@@ -87,6 +88,7 @@ const AuthenticatedApp = () => {
         <Route path="/guides/coast-path-walks" element={<CoastPathWalks />} />
         <Route path="/guides/whats-open-off-season" element={<WhatsOpenOffSeason />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/admin/whoami" element={<WhoAmI />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

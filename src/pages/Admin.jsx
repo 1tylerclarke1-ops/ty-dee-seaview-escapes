@@ -1,4 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { BUSINESS } from "@/lib/siteConfig";
 import { useNoIndex } from "@/components/NoIndex";
@@ -23,25 +25,66 @@ export default function Admin() {
   const { user, isAuthenticated, isLoadingAuth, authChecked, navigateToLogin } = useAuth();
   useNoIndex();
 
-  // Signed out → platform login, with /admin preserved as the return destination.
-  useEffect(() => {
-    if (authChecked && !isAuthenticated) {
-      navigateToLogin();
-    }
-  }, [authChecked, isAuthenticated, navigateToLogin]);
+  // AuthContext only resolves a session when a bearer token is present — a
+  // public app never calls me() for anonymous visitors, so a cookie-only
+  // platform session (SSO) reads as signed-out and would loop into login.
+  // Probe for one before redirecting, so a signed-in owner is not bounced.
+  const [cookieUser, setCookieUser] = useState(null);
+  const [probe, setProbe] = useState("idle"); // idle | probing | done
 
-  // Session still resolving, or a login redirect in flight — show nothing.
-  if (isLoadingAuth || !authChecked || !isAuthenticated) {
+  useEffect(() => {
+    if (!authChecked || isAuthenticated || probe !== "idle") return;
+    setProbe("probing");
+    base44.auth
+      .me()
+      .then((u) => {
+        setCookieUser(u);
+        setProbe("done");
+      })
+      .catch(() => {
+        setProbe("done");
+        navigateToLogin();
+      });
+  }, [authChecked, isAuthenticated, probe, navigateToLogin]);
+
+  const effectiveUser = user || cookieUser;
+  const isAuthed = isAuthenticated || !!cookieUser;
+
+  if (isLoadingAuth || !authChecked || probe === "probing" || (!isAuthed && probe !== "done")) {
     return <Spinner />;
   }
 
-  // Signed in but not an admin — reveal nothing about what is behind the gate.
-  if (user?.role !== "admin") {
+  // No session at all — login redirect is in flight.
+  if (!isAuthed) {
+    return <Spinner />;
+  }
+
+  // Signed in but not an admin — do not strand them, but reveal nothing else.
+  if (effectiveUser?.role !== "admin") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-ink text-white px-6">
         <div className="max-w-sm text-center">
           <h1 className="text-3xl text-white">Not authorised</h1>
-          <p className="mt-3 text-white/60">You do not have access to this area.</p>
+          <p className="mt-3 text-white/60">
+            This account does not have admin access.
+          </p>
+          {effectiveUser?.email && (
+            <p className="mt-2 text-sm text-white/40">
+              Signed in as {effectiveUser.email}
+            </p>
+          )}
+          <div className="mt-8 flex items-center justify-center gap-6">
+            <button
+              type="button"
+              onClick={() => base44.auth.logout("/")}
+              className="text-sm text-white/70 hover:text-white underline"
+            >
+              Sign out
+            </button>
+            <Link to="/" className="text-sm text-sea hover:underline">
+              Back to the site
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -50,7 +93,16 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-ink text-white px-6 md:px-10 py-12 md:py-16">
       <div className="max-w-[1100px] mx-auto">
-        <p className="text-sm text-white/50">Owner dashboard</p>
+        <div className="flex items-baseline justify-between gap-4 mb-2">
+          <p className="text-sm text-white/50">Owner dashboard</p>
+          <button
+            type="button"
+            onClick={() => base44.auth.logout("/")}
+            className="text-xs text-white/40 hover:text-white/70"
+          >
+            Sign out
+          </button>
+        </div>
         <h1 className="text-4xl md:text-5xl text-white mt-2">{BUSINESS.name}</h1>
         <div className="border-t border-white/10 mt-8 mb-10" />
         <div className="mb-12">

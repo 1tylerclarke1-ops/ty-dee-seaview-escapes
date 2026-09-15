@@ -9,7 +9,11 @@
 // //evil.com when assigned to location.href — an open redirect. So require the
 // resolved path to be exactly one leading slash (no "//" prefix, no backslash).
 export function safeReturnTo() {
-  const raw = new URLSearchParams(window.location.search).get("returnTo");
+  const params = new URLSearchParams(window.location.search);
+  // The SDK's redirectToLogin() passes the return destination as `from_url`;
+  // the in-app auth pages and OAuth consent flow use `returnTo`. Honour both
+  // so login resumes on the page the user actually came from (e.g. /admin).
+  const raw = params.get("returnTo") || params.get("from_url");
   if (!raw) return "/";
   try {
     const url = new URL(raw, window.location.origin);
