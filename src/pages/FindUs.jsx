@@ -14,7 +14,7 @@ const MAP_IMAGE = "https://media.base44.com/images/public/6a8c357fbddaa3182705f3
 const MAP_CREDIT = "Park map © Polperro Holiday Park";
 // Pitch 157 marker — estimated from the park map. Verify against the printed
 // map and adjust markerPos if the marker sits off pitch 157.
-const MARKER_POS = { top: 44, left: 66 };
+const MARKER_POS = { top: 47, left: 69 };
 
 const PARK_COORDS = { lat: 50.34, lng: -4.548 };
 const EMBED_SRC = `https://www.google.com/maps?q=${PARK_COORDS.lat},${PARK_COORDS.lng}&z=15&output=embed`;
