@@ -66,8 +66,8 @@ export default function Home() {
         <div className="absolute inset-0 scrim-bottom" />
         <div className="absolute inset-0 grain" />
         <div className="relative h-full flex flex-col items-center justify-end md:justify-center text-center px-6 pb-16 md:pb-0">
-          <h1 className="text-white text-5xl md:text-7xl leading-[1.02]">Ty Dee Seaview Escapes</h1>
-          <p className="mt-5 text-lg md:text-2xl text-white/90 max-w-xl">
+          <h1 className="hero-text-shadow text-white text-5xl md:text-7xl leading-[1.02]">Ty Dee Seaview Escapes</h1>
+          <p className="hero-text-shadow mt-5 text-lg md:text-2xl text-white/90 max-w-xl">
             A sea-view caravan for six between Looe and Polperro, Cornwall. Short breaks and weeks, all year round.
           </p>
           <Link
