@@ -15,6 +15,12 @@ export default function GuideArticle({ title, subtitle, description, path, child
       />
       <PageHero title={title} subtitle={subtitle} />
       <article className="px-6 md:px-10 max-w-[760px] mx-auto py-16 md:py-24">
+        <Link
+          to="/guides"
+          className="inline-flex items-center gap-2 text-sm text-sea hover:text-sea-deep transition-colors -mt-6 mb-10"
+        >
+          <span aria-hidden="true">←</span> Back to guides
+        </Link>
         <div className="prose-tydee">{children}</div>
         <div className="mt-16 border-t border-line pt-10">
           <p className="text-ink-soft">Staying with us is the easiest way to see it for yourself.</p>
