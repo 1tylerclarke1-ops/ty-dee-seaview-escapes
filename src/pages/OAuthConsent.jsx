@@ -3,6 +3,7 @@ import { appParams } from "@/lib/app-params";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import { useNoIndex } from "@/components/NoIndex";
 
 // App-side OAuth consent page for the app's MCP server. The platform redirects
 // AI clients here (see base44/mcp/config.json `consent_path`) with an opaque
@@ -12,6 +13,7 @@ import AuthLayout from "@/components/AuthLayout";
 // Do not change the fetch calls, headers, or the `ctx` handle handling — styling
 // and copy are safe to edit.
 export default function OAuthConsent() {
+  useNoIndex();
   const ctx = new URLSearchParams(window.location.search).get("ctx");
   const [info, setInfo] = useState(null);
   const [checking, setChecking] = useState(true);
