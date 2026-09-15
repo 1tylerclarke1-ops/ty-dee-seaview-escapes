@@ -17,7 +17,6 @@ export default function Navigation() {
 
   useEffect(() => { setOpen(false); }, [location.pathname]);
 
-  const showAdmin = new URLSearchParams(window.location.search).has("admin");
   const solid = scrolled || location.pathname !== "/";
 
   return (
@@ -80,12 +79,6 @@ export default function Navigation() {
                 </Link>
               );
             })}
-            {showAdmin && (
-              <Link to="/admin" className="group flex items-baseline gap-6 py-2 md:py-3 border-b border-white/10">
-                <span className="text-[0.7rem] tnum text-white/40 w-8">08</span>
-                <span className="text-4xl md:text-6xl lg:text-7xl text-white/40 group-hover:text-sea transition-colors">Admin</span>
-              </Link>
-            )}
           </nav>
 
           <div className="px-6 md:px-10 max-w-[1400px] mx-auto w-full pb-10">
