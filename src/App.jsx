@@ -26,9 +26,6 @@ import PolperroInWinter from '@/pages/guides/PolperroInWinter';
 import CoastPathWalks from '@/pages/guides/CoastPathWalks';
 import WhatsOpenOffSeason from '@/pages/guides/WhatsOpenOffSeason';
 import Login from '@/pages/Login';
-import Register from '@/pages/Register';
-import ForgotPassword from '@/pages/ForgotPassword';
-import ResetPassword from '@/pages/ResetPassword';
 import OAuthConsent from '@/pages/OAuthConsent';
 
 function RedirectToPrices() {
@@ -63,9 +60,6 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/oauth-consent" element={<OAuthConsent />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />

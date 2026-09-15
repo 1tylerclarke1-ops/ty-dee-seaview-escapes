@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import PageNotFound from "@/lib/PageNotFound";
 import { useAuth } from "@/lib/AuthContext";
 import { BUSINESS } from "@/lib/siteConfig";
 import { useNoIndex } from "@/components/NoIndex";
@@ -59,35 +59,10 @@ export default function Admin() {
     return <Spinner />;
   }
 
-  // Signed in but not an admin — do not strand them, but reveal nothing else.
+  // Signed in but not an admin — fail closed as a plain 404, identical to any
+  // unknown route. Do not confirm an admin area exists.
   if (effectiveUser?.role !== "admin") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-ink text-white px-6">
-        <div className="max-w-sm text-center">
-          <h1 className="text-3xl text-white">Not authorised</h1>
-          <p className="mt-3 text-white/60">
-            This account does not have admin access.
-          </p>
-          {effectiveUser?.email && (
-            <p className="mt-2 text-sm text-white/40">
-              Signed in as {effectiveUser.email}
-            </p>
-          )}
-          <div className="mt-8 flex items-center justify-center gap-6">
-            <button
-              type="button"
-              onClick={() => base44.auth.logout("/")}
-              className="text-sm text-white/70 hover:text-white underline"
-            >
-              Sign out
-            </button>
-            <Link to="/" className="text-sm text-sea hover:underline">
-              Back to the site
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    return <PageNotFound />;
   }
 
   return (
