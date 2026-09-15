@@ -106,7 +106,7 @@ export default function Dogs() {
         <div className="hairline pt-10 md:pt-14">
           <h2 className="text-2xl md:text-3xl text-ink max-w-2xl">What to bring</h2>
           <ul className="mt-5 space-y-3 text-ink-soft max-w-2xl">
-            <li>Two dog bowls (food and water)</li>
+            <li>Dog bowls (food and water)</li>
             <li>A dog towel for sandy or wet paws</li>
             <li>A washable throw for the sofa, so they can be with you in the evening</li>
             <li>Poo bags, in case you run out</li>
