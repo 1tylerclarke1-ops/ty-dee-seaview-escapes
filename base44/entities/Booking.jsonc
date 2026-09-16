@@ -52,6 +52,10 @@
       "default": "enquiry",
       "title": "Status"
     },
+    "cancel_token": {
+      "type": "string",
+      "title": "Long single-use token for the guest's manage/cancel link"
+    },
     "payment_provider": {
       "type": "string",
       "default": "stripe",

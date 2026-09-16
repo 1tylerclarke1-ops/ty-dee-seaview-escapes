@@ -61,11 +61,12 @@ export default async function (req) {
     const payableInFull = isPayableInFullIso(booking.arrival_date);
 
     const base = appBaseUrl();
-    let subject, text, recipient, template, flagField;
+    let subject, text, html, recipient, template, flagField;
     if (target === "owner") {
       const o = buildOwnerAlertEmail({ booking, breakdown, payableInFull });
       subject = o.subject;
       text = o.text;
+      html = null;
       recipient = ownerEmail();
       template = "booking_confirmation_owner";
       flagField = "owner_alert_sent";
@@ -75,6 +76,7 @@ export default async function (req) {
       });
       subject = g.subject;
       text = g.text;
+      html = g.html;
       recipient = booking.guest_email;
       template = "booking_confirmation_guest";
       flagField = "confirmation_email_sent";
@@ -95,7 +97,7 @@ export default async function (req) {
       }
       try {
         sendResult = await base44.asServiceRole.integrations.Core.SendEmail({
-          to: recipient, subject, text,
+          to: recipient, subject, text, ...(html ? { html } : {}),
         });
         sent = true;
         await logEmailAttempt(base44, {

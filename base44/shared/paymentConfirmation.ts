@@ -206,7 +206,7 @@ async function sendConfirmationEmails(base44, booking, breakdown, payableInFull)
   const facRows = await base44.asServiceRole.entities.FacilitiesSettings.list();
   const settings = (facRows && facRows[0]) || DEFAULT_FACILITIES_SETTINGS;
 
-  const { subject, text: body } = buildGuestConfirmationEmail({
+  const { subject, text: body, html: guestHtml } = buildGuestConfirmationEmail({
     booking, breakdown, payableInFull, settings,
     coolingOffIso, appBaseUrl: appBaseUrl(),
   });
@@ -217,7 +217,7 @@ async function sendConfirmationEmails(base44, booking, breakdown, payableInFull)
   if (booking.guest_email) {
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
-        to: booking.guest_email, subject, text: body,
+        to: booking.guest_email, subject, text: body, html: guestHtml,
       });
       guestOk = true;
     } catch (e) {

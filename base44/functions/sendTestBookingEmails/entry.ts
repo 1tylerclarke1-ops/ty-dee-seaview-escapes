@@ -8,12 +8,14 @@
 // that this consumes ~2 of the per-recipient daily email cap (~3-4).
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { calculatePrice, isPayableInFullIso, balanceDueIso } from "../../shared/pricing.ts";
+import { allowedLengthsForArrival, seasonForDate } from "../../shared/bookingRules.ts";
 import {
   normalizePolicy,
   DEFAULT_CANCELLATION_POLICY,
   computeCoolingOffExpiry,
 } from "../../shared/cancellation.ts";
 import { DEFAULT_FACILITIES_SETTINGS } from "../../shared/facilities.ts";
+import { bookingCancelToken } from "../../shared/contacts.ts";
 import { logEmailAttempt } from "../../shared/emailLog.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
 import { buildGuestConfirmationEmail, buildOwnerDigestEmail } from "../../shared/bookingEmail.ts";
@@ -40,8 +42,23 @@ export default async function (req) {
       return Response.json({ error: "A valid recipient email is required" }, { status: 400 });
     }
 
-    // Live pricing engine — real season, real totals.
+    // Enforce the real booking rules — refuse an invalid arrival/length
+    // combination (e.g. a Monday arrival only allows 4 nights or multiples of
+    // 7), so a test email never renders a stay that could never be booked.
     const arrivalDate = new Date(arrival_date + "T00:00:00Z");
+    if (!seasonForDate(arrivalDate)) {
+      return Response.json({ error: "Arrival date is outside the booking season." }, { status: 400 });
+    }
+    const allowed = allowedLengthsForArrival(arrivalDate);
+    if (!allowed.length) {
+      return Response.json({ error: `No stays are available arriving on ${arrival_date}.` }, { status: 400 });
+    }
+    if (!allowed.includes(nights)) {
+      return Response.json({
+        error: `A ${nights}-night stay is not available on ${arrival_date}. Allowed: ${allowed.join(", ")} night${allowed.length === 1 ? "" : "s"}.`,
+      }, { status: 400 });
+    }
+
     const breakdown = calculatePrice(arrivalDate, nights, dog_count);
     if (!breakdown) {
       return Response.json({ error: "Could not price that stay — check the arrival date is within the booking season" }, { status: 400 });
@@ -79,6 +96,7 @@ export default async function (req) {
       created_date: now.toISOString(),
       cooling_off_expires_at: coolingOffIso,
       facilities_acknowledged: true,
+      cancel_token: bookingCancelToken(),
     };
 
     // Real guest confirmation template.
@@ -99,13 +117,13 @@ export default async function (req) {
     // Send both to the entered address (immediately — no digest wait).
     let guestOk = false, guestError = null;
     try {
-      await base44.asServiceRole.integrations.Core.SendEmail({ to: recipient, subject: guestSubject, text: guest.text });
+      await base44.asServiceRole.integrations.Core.SendEmail({ to: recipient, subject: guestSubject, text: guest.text, html: guest.html });
       guestOk = true;
     } catch (e) { guestError = e?.message || String(e); }
 
     let ownerOk = false, ownerError = null;
     try {
-      await base44.asServiceRole.integrations.Core.SendEmail({ to: recipient, subject: ownerSubject, text: owner.text });
+      await base44.asServiceRole.integrations.Core.SendEmail({ to: recipient, subject: ownerSubject, text: owner.text, html: owner.html });
       ownerOk = true;
     } catch (e) { ownerError = e?.message || String(e); }
 

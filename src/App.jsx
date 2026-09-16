@@ -30,6 +30,7 @@ import Login from '@/pages/Login';
 import OAuthConsent from '@/pages/OAuthConsent';
 import PaymentReturn from '@/pages/booking/PaymentReturn';
 import PaymentCancelled from '@/pages/booking/PaymentCancelled';
+import ManageBooking from '@/pages/booking/ManageBooking';
 
 function RedirectToPrices() {
   const { search } = useLocation();
@@ -81,6 +82,7 @@ const AuthenticatedApp = () => {
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/booking/return" element={<PaymentReturn />} />
         <Route path="/booking/cancelled" element={<PaymentCancelled />} />
+        <Route path="/booking/:token" element={<ManageBooking />} />
         <Route path="/guides" element={<GuidesIndex />} />
         <Route path="/guides/dog-friendly-cornwall" element={<DogFriendlyCornwall />} />
         <Route path="/guides/polperro-in-winter" element={<PolperroInWinter />} />

@@ -19,6 +19,7 @@ import {
 } from "../../shared/cancellation.ts";
 import { stayFacilitiesStatus, DEFAULT_FACILITIES_SETTINGS } from "../../shared/facilities.ts";
 import { addDaysIso } from "../../shared/cancellation.ts";
+import { bookingCancelToken } from "../../shared/contacts.ts";
 import { appOrigin } from "../../shared/origin.ts";
 
 const HOLD_MINUTES = 30;
@@ -115,6 +116,7 @@ export default async function (req) {
       cancellation_policy_text: policyText,
       cooling_off_expires_at: new Date(coolingOffExpiryMs).toISOString(),
       hold_expires_at: holdExpiresAt,
+      cancel_token: bookingCancelToken(),
     });
 
     // --- Create the Stripe Checkout Session ---

@@ -1,12 +1,21 @@
-// The single guest/owner confirmation email template. Both the payment-time
-// confirmation (paymentConfirmation.ts) and the admin resend
-// (sendBookingConfirmation) call buildGuestConfirmationEmail, so a resend is
-// indistinguishable from the original and the two paths can never drift.
+// The guest/owner email templates. Every email is sent as multipart — an HTML
+// part (hyperlinked words, figures set apart, a prominent primary button) and
+// a plain-text fallback for deliverability. No raw URLs ever appear as text in
+// the HTML; the plain-text fallback necessarily shows them (there is no other
+// way to link in plain text).
 //
-// Dates are formatted for guests (full day/month names); the cooling-off
-// deadline is rounded DOWN to the hour so a guest never overruns the real
-// deadline. The owner alert address comes from the OWNER_EMAIL secret
-// (Settings → Environment variables), falling back to the owner's personal inbox.
+// The guest confirmation carries two links:
+//   • "Manage or cancel your booking" → the booking's tokenised manage page
+//     (/booking/<cancel_token>) — the primary call-to-action, shown as a
+//     clearly visible button, never buried in a paragraph.
+//   • "our cancellation policy" → /terms — an inline hyperlinked phrase.
+//
+// buildGuestConfirmationEmail is called at payment time (paymentConfirmation)
+// and on admin resend (sendBookingConfirmation), so a resend is
+// indistinguishable from the original. buildOwnerDigestEmail is shared by the
+// daily digest job and the admin test tool. Dates are formatted for guests
+// (full day/month names); the cooling-off deadline is rounded DOWN to the
+// hour so a guest never overruns the real deadline.
 
 import { secrets } from "base44:runtime";
 import { balanceDueIso } from "./pricing.ts";
@@ -16,12 +25,20 @@ import {
   addDaysIso,
   DEFAULT_FACILITIES_SETTINGS,
 } from "./facilities.ts";
+import {
+  escapeHtml,
+  emailShell,
+  figureBox,
+  boxLabel,
+  figRow,
+  buttonLink,
+  inlineLink,
+  para,
+} from "./emailHtml.ts";
 
 // Owner alert destination — single source of truth across every sender.
 // No fallback: a missing OWNER_EMAIL is a configuration error, not a silent
-// default. Returns null when unset so callers skip the send and flag it,
-// rather than quietly mailing a wrong address. Set it in Settings →
-// Environment variables.
+// default. Returns null when unset so callers skip the send and flag it.
 export function ownerEmail() {
   const fromSecret = secrets.get("OWNER_EMAIL");
   if (fromSecret && fromSecret.trim()) return fromSecret.trim();
@@ -62,22 +79,29 @@ export function formatCoolingOffHour(iso) {
   return `${hour}${dayPeriod} on ${weekday} ${day} ${month} ${year}`;
 }
 
+function gbp(n) {
+  return `£${Number(n || 0).toFixed(2)}`;
+}
+
 // The guest confirmation email — sent at payment time AND on admin resend.
 // `breakdown` is the pricing engine output; `payableInFull` decides deposit vs
 // full; `settings` is the FacilitiesSettings row; `coolingOffIso` is the
-// cooling-off expiry; `appBaseUrl` is the site origin (for the policy link).
+// cooling-off expiry; `appBaseUrl` is the site origin (for the links).
 export function buildGuestConfirmationEmail({ booking, breakdown, payableInFull, settings, coolingOffIso, appBaseUrl }) {
   const arrivalLong = formatGuestDate(booking.arrival_date);
   const balanceDueLong = formatGuestDate(balanceDueIso(booking.arrival_date));
   const amountPaid = payableInFull ? breakdown.total : breakdown.deposit;
   const coolingOffHour = coolingOffIso ? formatCoolingOffHour(coolingOffIso) : "";
+  const manageUrl = booking.cancel_token ? `${appBaseUrl}/booking/${booking.cancel_token}` : null;
+  const policyUrl = `${appBaseUrl}/terms`;
 
   const subject = `Your stay at Ty Dee Seaview Escapes is confirmed — arriving ${arrivalLong}`;
 
+  // --- Plain-text fallback (URLs shown — unavoidable in plain text) ---
   const lines = [
     `Hello ${booking.guest_name || ""},`,
     ``,
-    `Your booking is confirmed and your payment of £${amountPaid.toFixed(2)} has been received.`,
+    `Your booking is confirmed and your payment of ${gbp(amountPaid)} has been received.`,
     ``,
     `Arriving ${arrivalLong}, ${booking.nights} night(s), ${booking.guests || ""} guest(s).`,
     ``,
@@ -85,17 +109,16 @@ export function buildGuestConfirmationEmail({ booking, breakdown, payableInFull,
   if (payableInFull) {
     lines.push(`You've paid the full balance — there's nothing further to pay.`);
   } else {
-    lines.push(`You've paid your deposit. The balance of £${breakdown.balance.toFixed(2)} is due by ${balanceDueLong} — we'll be in touch nearer the time.`);
+    lines.push(`You've paid your deposit. The balance of ${gbp(breakdown.balance)} is due by ${balanceDueLong} — we'll be in touch nearer the time.`);
   }
   lines.push(``);
   if (coolingOffHour) {
     lines.push(`Change your mind? You have a full refund until ${coolingOffHour} — cancel before then and everything you've paid comes back.`);
+    lines.push(``);
   }
 
-  // Facilities note (only when the stay is affected by the winter closure).
   const facStatus = stayFacilitiesStatus(booking.arrival_date, booking.nights, settings || DEFAULT_FACILITIES_SETTINGS);
   if (facStatus.state !== "open") {
-    lines.push(``);
     if (facStatus.state === "closed") {
       lines.push(settings?.facilities_winter_note || `The park's on-site facilities are closed for these dates. Your booking is for the accommodation only.`);
     } else if (facStatus.direction === "opening") {
@@ -103,33 +126,86 @@ export function buildGuestConfirmationEmail({ booking, breakdown, payableInFull,
     } else {
       lines.push(`The park's on-site facilities are open to ${formatFacilitiesDate(addDaysIso(facStatus.boundaryDate, -1))} and closed from ${formatFacilitiesDate(facStatus.boundaryDate)} — your booking is for the accommodation only from then.`);
     }
+    lines.push(``);
   }
 
-  // Shortened policy: one summary line + a link to the full terms on the site.
-  lines.push(``);
-  lines.push(`Full refund until ${balanceDueLong}, then 75%, 50% and none as your arrival approaches. Read the full cancellation policy: ${appBaseUrl}/terms`);
+  if (manageUrl) {
+    lines.push(`Manage or cancel your booking: ${manageUrl}`);
+  }
+  lines.push(`Our cancellation policy: ${policyUrl}`);
   lines.push(``);
   lines.push(`Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
+  const text = lines.join("\n");
 
-  return { subject, text: lines.join("\n") };
+  // --- HTML part (hyperlinked words, figures set apart, prominent button) ---
+  const stayRows = [
+    boxLabel("Your stay"),
+    figRow("Arriving", arrivalLong),
+    figRow("Length", `${booking.nights} night(s)`),
+    figRow("Guests", `${booking.guests || 0}`),
+  ];
+  if (booking.dog_count) {
+    stayRows.push(figRow("Dogs", `${booking.dog_count}`));
+  }
+
+  const payRows = [
+    boxLabel("Payment"),
+    figRow("Amount paid", gbp(amountPaid)),
+  ];
+  if (payableInFull) {
+    payRows.push(`<p style="margin:0;font-size:14px;line-height:1.5;color:${"#5E6E70"};">Paid in full — nothing further to pay.</p>`);
+  } else {
+    payRows.push(figRow("Balance due", `${gbp(breakdown.balance)} by ${balanceDueLong}`));
+  }
+
+  let body = "";
+  body += `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">Your stay is confirmed</h1>`;
+  body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes — Polperro, Looe, Cornwall</p>`;
+  body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
+  body += para(`Your booking is confirmed and your payment of <strong>${escapeHtml(gbp(amountPaid))}</strong> has been received. We're looking forward to welcoming you.`);
+  body += figureBox(stayRows.join(""));
+  body += figureBox(payRows.join(""));
+  if (coolingOffHour) {
+    body += para(`<strong>Change your mind?</strong> You have a full refund until ${escapeHtml(coolingOffHour)} — cancel before then and everything you've paid comes back.`);
+  }
+  if (facStatus.state !== "open") {
+    let facNote;
+    if (facStatus.state === "closed") {
+      facNote = settings?.facilities_winter_note || `The park's on-site facilities are closed for these dates. Your booking is for the accommodation only.`;
+    } else if (facStatus.direction === "opening") {
+      facNote = `The park's on-site facilities reopen on ${formatFacilitiesDate(facStatus.boundaryDate)} — your booking is for the accommodation only before then.`;
+    } else {
+      facNote = `The park's on-site facilities are open to ${formatFacilitiesDate(addDaysIso(facStatus.boundaryDate, -1))} and closed from ${formatFacilitiesDate(facStatus.boundaryDate)} — your booking is for the accommodation only from then.`;
+    }
+    body += para(escapeHtml(facNote));
+  }
+
+  // The primary call-to-action — a clearly visible button, not buried.
+  if (manageUrl) {
+    body += `<p style="margin:24px 0 12px;">${buttonLink(manageUrl, "Manage or cancel your booking")}</p>`;
+  }
+  body += para(`Read ${inlineLink(policyUrl, "our cancellation policy")}.`);
+  body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+
+  const html = emailShell({ title: subject, body });
+
+  return { subject, text, html };
 }
 
 // The owner "new booking" alert — sent at payment time AND on admin resend.
+// Owner-facing, no URLs — plain text only.
 export function buildOwnerAlertEmail({ booking, breakdown, payableInFull }) {
   const arrivalLong = formatGuestDate(booking.arrival_date);
   const amountPaid = payableInFull ? breakdown.total : breakdown.deposit;
   const subject = `New booking confirmed & paid — ${booking.guest_name}`;
-  const text = `${booking.guest_name} (${booking.guest_email || "no email"}) booked ${arrivalLong} for ${booking.nights} night(s), ${booking.guests} guest(s). Paid £${amountPaid.toFixed(2)}${payableInFull ? " (full)" : " (deposit)"}. Booking ref ${booking.id}.`;
+  const text = `${booking.guest_name} (${booking.guest_email || "no email"}) booked ${arrivalLong} for ${booking.nights} night(s), ${booking.guests} guest(s). Paid ${gbp(amountPaid)}${payableInFull ? " (full)" : " (deposit)"}. Booking ref ${booking.id}.`;
   return { subject, text };
 }
 
 // The daily owner digest email — one email listing every paid booking AND
 // every contact-form enquiry not yet digested. Built here (not inline in the
 // digest job) so the admin "send test emails" tool renders the exact same
-// owner email with a single synthetic booking, instead of a divergent copy.
-// `bookings` and `enquiries` are the already-filtered, sorted arrays.
-// `appBaseUrl` is passed in (not imported) so this module stays free of the
-// origin dependency.
+// owner email with a single synthetic booking.
 export function buildOwnerDigestEmail({ bookings, enquiries, appBaseUrl }) {
   const bCount = bookings.length;
   const eCount = enquiries.length;
@@ -153,7 +229,7 @@ export function buildOwnerDigestEmail({ bookings, enquiries, appBaseUrl }) {
       const payNote =
         b.status === "confirmed"
           ? "paid in full"
-          : `deposit paid; balance £${balanceDue.toFixed(2)} due`;
+          : `deposit paid; balance ${gbp(balanceDue)} due`;
       lines.push(
         `• ${b.guest_name} (${b.guest_email || "no email"}) — arriving ${arr}, ${b.nights} night(s), ${b.guests || 0} guest(s). ${payNote}. Ref ${b.id}.`
       );
@@ -174,7 +250,96 @@ export function buildOwnerDigestEmail({ bookings, enquiries, appBaseUrl }) {
   }
   lines.push(`View everything in admin: ${appBaseUrl}/admin`);
   lines.push(``, `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
-  return { subject, text: lines.join("\n") };
+  const text = lines.join("\n");
+
+  // HTML part — figures as a clean list, the admin link hyperlinked.
+  const adminUrl = `${appBaseUrl}/admin`;
+  let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">Daily digest</h1>`;
+  body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  if (bCount) {
+    body += para(`<strong>${bCount} new booking${bCount === 1 ? "" : "s"}</strong> confirmed since the last digest:`);
+    const items = bookings.map((b) => {
+      const arr = formatGuestDate(b.arrival_date);
+      const paid = Number(b.deposit_paid) || 0;
+      const total = Number(b.gross_revenue) || 0;
+      const balanceDue = Math.max(total - paid, 0);
+      const payNote = b.status === "confirmed" ? "paid in full" : `deposit paid; balance ${escapeHtml(gbp(balanceDue))} due`;
+      return `<li style="margin:0 0 10px;font-size:15px;line-height:1.5;">${escapeHtml(b.guest_name)} — arriving ${escapeHtml(arr)}, ${b.nights} night(s), ${b.guests || 0} guest(s). ${payNote}. Ref ${escapeHtml(b.id)}.</li>`;
+    }).join("");
+    body += `<ul style="margin:0 0 20px;padding-left:20px;font-size:15px;line-height:1.5;list-style:disc;">${items}</ul>`;
+  }
+  if (eCount) {
+    body += para(`<strong>${eCount} new enquiry${eCount === 1 ? "" : "ies"}</strong> from the contact form:`);
+    const items = enquiries.map((c) => {
+      const when = formatEnquiryWhen(c.last_enquiry_at);
+      const msg = escapeHtml(String(c.last_enquiry_message || "").slice(0, 240));
+      return `<li style="margin:0 0 10px;font-size:15px;line-height:1.5;">${escapeHtml(c.name || "(no name)")} — enquired ${escapeHtml(when)}: "${msg}"</li>`;
+    }).join("");
+    body += `<ul style="margin:0 0 20px;padding-left:20px;font-size:15px;line-height:1.5;list-style:disc;">${items}</ul>`;
+  }
+  body += para(`${inlineLink(adminUrl, "View everything in admin")}.`);
+  body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  const html = emailShell({ title: subject, body });
+
+  return { subject, text, html };
+}
+
+// Guest cancellation confirmation — sent when a guest (or admin) cancels.
+// `preview` is the refund preview (refund_due, retained, refund_percent,
+// refund_tier, cooling_off_expires_display). Shows exactly what was refunded
+// and what was retained, with the policy link hyperlinked.
+export function buildGuestCancellationEmail({ booking, preview, appBaseUrl }) {
+  const arrivalLong = formatGuestDate(booking.arrival_date);
+  const policyUrl = `${appBaseUrl}/terms`;
+  const subject = `Your booking has been cancelled — Ty Dee Seaview Escapes`;
+  const refundDue = Number(preview.refund_due) || 0;
+  const retained = Number(preview.retained) || 0;
+
+  const lines = [
+    `Hello ${booking.guest_name || ""},`,
+    ``,
+    `Your booking arriving ${arrivalLong} (${booking.nights} night(s)) has been cancelled as requested.`,
+    ``,
+  ];
+  if (refundDue > 0) {
+    lines.push(`A refund of ${gbp(refundDue)} (${preview.refund_percent}% of what you paid) will be returned to your original payment method within 10 working days.`);
+    if (retained > 0) {
+      lines.push(`Under the cancellation policy, ${gbp(retained)} is retained.`);
+    }
+  } else {
+    lines.push(`Under the cancellation policy, no refund is due for this cancellation.`);
+  }
+  lines.push(``, `Booking ref ${booking.id}.`, ``, `Our cancellation policy: ${policyUrl}`, ``, `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
+  const text = lines.join("\n");
+
+  let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">Your booking has been cancelled</h1>`;
+  body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
+  body += para(`Your booking arriving ${escapeHtml(arrivalLong)} (${booking.nights} night(s)) has been cancelled as requested.`);
+  const refundRows = [boxLabel("Refund")];
+  if (refundDue > 0) {
+    refundRows.push(figRow("Refunded", `${gbp(refundDue)} (${preview.refund_percent}%)`));
+    if (retained > 0) refundRows.push(figRow("Retained", gbp(retained)));
+    refundRows.push(`<p style="margin:6px 0 0;font-size:14px;line-height:1.5;color:#5E6E70;">Returned to your original payment method within 10 working days.</p>`);
+  } else {
+    refundRows.push(`<p style="margin:0;font-size:15px;line-height:1.5;">No refund is due under the cancellation policy.</p>`);
+  }
+  body += figureBox(refundRows.join(""));
+  body += para(`Booking ref ${escapeHtml(booking.id)}.`);
+  body += para(`Read ${inlineLink(policyUrl, "our cancellation policy")}.`);
+  body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  const html = emailShell({ title: subject, body });
+
+  return { subject, text, html };
+}
+
+// Owner cancellation alert — owner-facing, no URLs, plain text only.
+export function buildOwnerCancellationAlert({ booking, preview }) {
+  const arrivalLong = formatGuestDate(booking.arrival_date);
+  const refundDue = Number(preview.refund_due) || 0;
+  const subject = `Booking cancelled — ${booking.guest_name}`;
+  const text = `${booking.guest_name} (${booking.guest_email || "no email"}) cancelled their booking arriving ${arrivalLong}, ${booking.nights} night(s). Refund ${gbp(refundDue)} (${preview.refund_tier}). Ref ${booking.id}.`;
+  return { subject, text };
 }
 
 function formatEnquiryWhen(iso) {

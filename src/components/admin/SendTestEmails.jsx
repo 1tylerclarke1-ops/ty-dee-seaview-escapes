@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
+import { allowedLengthsForArrival } from "@/lib/pricing";
 
 // Admin-only "Send test emails" — renders the real guest confirmation and the
 // real owner digest for a synthetic booking priced from the live engine, and
@@ -11,7 +12,20 @@ export default function SendTestEmails() {
   const def = new Date();
   def.setDate(def.getDate() + 75);
   const [arrivalDate, setArrivalDate] = useState(def.toISOString().slice(0, 10));
-  const [nights, setNights] = useState(3);
+  const [nights, setNights] = useState(7);
+
+  // The test must respect the real booking rules — show the allowed stay
+  // lengths for the chosen arrival and clamp to a valid value, so the admin
+  // can never submit a combination that could never be booked (e.g. 3 nights
+  // on a Monday, which only allows 4 or multiples of 7).
+  const allowedLengths = useMemo(() => {
+    try {
+      return allowedLengthsForArrival(new Date(arrivalDate + "T00:00:00Z"));
+    } catch {
+      return [];
+    }
+  }, [arrivalDate]);
+  const nightsValid = allowedLengths.includes(Number(nights));
   const [recipient, setRecipient] = useState("");
   const [guestName, setGuestName] = useState("Test Guest");
   const [guests, setGuests] = useState(2);
@@ -81,7 +95,7 @@ export default function SendTestEmails() {
         <button
           type="button"
           onClick={send}
-          disabled={sending || !recipient}
+          disabled={sending || !recipient || !nightsValid}
           className="bg-white text-ink px-5 py-2.5 text-sm font-medium hover:bg-white/90 disabled:opacity-50 min-h-[44px]"
         >
           {sending ? "Sending…" : "Send test emails"}
@@ -89,8 +103,13 @@ export default function SendTestEmails() {
       </div>
 
       <p className="text-xs text-white/40 mt-2">
-        Tip: an arrival within ~60 days of today is payable in full; further out is a deposit booking. Change the arrival date to test both.
+        Allowed stays for this arrival: {allowedLengths.length ? `${allowedLengths.join(", ")} night${allowedLengths.length === 1 ? "" : "s"}` : "none (outside season)"}. An arrival within ~60 days of today is payable in full; further out is a deposit booking.
       </p>
+      {!nightsValid && allowedLengths.length > 0 && (
+        <p className="text-xs text-signal mt-2">
+          {nights} night{nights === 1 ? "" : "s"} isn't available on this arrival — pick one of {allowedLengths.join(", ")}.
+        </p>
+      )}
 
       {error && (
         <div className="mt-5 border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">

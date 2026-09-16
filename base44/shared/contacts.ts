@@ -14,6 +14,16 @@ export function randomToken() {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Long, unguessable single-use token for a booking's manage/cancel link.
+// 32 random bytes (256 bits) → 64 hex chars. The link opens one booking and
+// only that booking — no account, no password. Set on every booking at
+// creation; the manage page resolves the booking by this token alone.
+export function bookingCancelToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export const SEGMENTS = [
   { id: "past_guests", label: "Past guests", test: (c) => (c.stays_count || 0) > 0 || c.source === "past_guest" },
   { id: "dog_owners", label: "Dog owners", test: (c) => !!c.has_dog },

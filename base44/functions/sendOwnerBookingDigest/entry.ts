@@ -48,7 +48,7 @@ export default async function (req) {
       (a, b) => new Date(b.last_enquiry_at).getTime() - new Date(a.last_enquiry_at).getTime()
     );
 
-    const { subject, text } = buildOwnerDigestEmail({
+    const { subject, text, html } = buildOwnerDigestEmail({
       bookings: pendingBookings,
       enquiries: pendingEnquiries,
       appBaseUrl: appBaseUrl(),
@@ -65,6 +65,7 @@ export default async function (req) {
           to: owner,
           subject,
           text,
+          html,
         });
         ok = true;
       } catch (e) {
