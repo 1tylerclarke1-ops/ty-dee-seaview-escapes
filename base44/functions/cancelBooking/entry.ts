@@ -6,17 +6,18 @@ import {
   describeRefundTier,
   buildPolicyText,
   todayIso,
-  computeCoolingOffExpiry,
   formatCoolingOffExpiry,
 } from "../../shared/cancellation.ts";
+import { estimateStripeFee } from "../../shared/stripe.ts";
 
-// Cancel a booking under the tiered refund policy. confirm=false (default)
-// returns a preview — the tier that applies, days remaining, amount paid,
-// refund due and amount retained — with no side effects, so the owner can
-// review before committing. confirm=true requires an admin caller, applies
-// the refund to the booking record and returns the result. The refund is
-// always calculated on money actually received (deposit + balance paid), or
-// on an explicit amount_paid override from the owner.
+// Cancel a booking under the tiered refund policy. The refund amount is
+// calculated server-side only, on money actually received (deposit + balance),
+// and is never accepted from the client. confirm=false (default) returns a
+// preview — cooling-off status, tier, days remaining, total paid, refund due,
+// amount retained, the estimated Stripe fee and out-of-pocket cost — with no
+// side effects, so the owner reviews before committing. confirm=true requires
+// an admin caller, applies the refund to the booking record, and returns the
+// result. Never refunds silently.
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -24,7 +25,7 @@ export default async function (req) {
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json().catch(() => ({}));
-    const { booking_id, confirm, amount_paid } = body || {};
+    const { booking_id, confirm } = body || {};
     if (!booking_id) {
       return Response.json({ error: "booking_id required" }, { status: 400 });
     }
@@ -38,10 +39,8 @@ export default async function (req) {
     const policy = rows && rows.length ? normalizePolicy(rows[0]) : DEFAULT_CANCELLATION_POLICY;
 
     const today = todayIso();
-    const totalPaid =
-      typeof amount_paid === "number" && isFinite(amount_paid) && amount_paid >= 0
-        ? amount_paid
-        : (booking.deposit_paid || 0) + (booking.balance_paid || 0);
+    // Refund is always on money actually received — never from the client.
+    const totalPaid = (booking.deposit_paid || 0) + (booking.balance_paid || 0);
 
     // Cooling-off: a fixed window from the booking's creation time. If the
     // owner already stored cooling_off_expires_at, honour that frozen value;
@@ -50,28 +49,30 @@ export default async function (req) {
     const bookedAtMs = booking.created_date
       ? new Date(booking.created_date).getTime()
       : Date.now();
-    const coolingOffExpiryMs = booking.cooling_off_expires_at
+    const coolingOffExpiresAtMs = booking.cooling_off_expires_at
       ? new Date(booking.cooling_off_expires_at).getTime()
-      : computeCoolingOffExpiry(bookedAtMs, booking.arrival_date, policy);
-    const insideCoolingOff = Date.now() < coolingOffExpiryMs;
+      : null;
 
-    let refundPercent, refundDue, retained, refundTier, daysBeforeArrival;
-    if (insideCoolingOff) {
-      refundPercent = 100;
-      refundDue = totalPaid;
-      retained = 0;
-      refundTier = "100% (cooling-off)";
-    } else {
-      const calc = computeRefund(booking.arrival_date, totalPaid, policy, today);
-      refundPercent = calc.refundPercent;
-      refundDue = calc.refundDue;
-      retained = calc.retained;
-      refundTier = describeRefundTier(calc.tier, policy);
-      daysBeforeArrival = calc.daysBeforeArrival;
-    }
-    if (daysBeforeArrival === undefined) {
-      daysBeforeArrival = Math.max(0, Math.floor((new Date(booking.arrival_date + "T00:00:00Z").getTime() - new Date(today + "T00:00:00Z").getTime()) / 86400000));
-    }
+    const calc = computeRefund(booking.arrival_date, totalPaid, policy, today, {
+      bookedAtMs,
+      coolingOffExpiresAtMs,
+    });
+
+    const refundDue = calc.refundDue;
+    const retained = calc.retained;
+    const refundPercent = calc.refundPercent;
+    const refundTier = calc.insideCoolingOff
+      ? "100% (cooling-off)"
+      : describeRefundTier(calc.tier, policy);
+    const daysBeforeArrival = calc.daysBeforeArrival;
+    const insideCoolingOff = calc.insideCoolingOff;
+    const coolingOffExpiryMs = calc.coolingOffExpiryMs;
+
+    // Stripe does not return its processing fee on a refund. Estimate it on
+    // the original payment so the owner sees the true out-of-pocket cost.
+    const stripeFee = estimateStripeFee(totalPaid);
+    const outOfPocket = Math.max(0, refundDue + stripeFee - totalPaid);
+
     const policyText = booking.cancellation_policy_text || buildPolicyText(policy);
 
     const preview = {
@@ -79,14 +80,17 @@ export default async function (req) {
       arrival_date: booking.arrival_date,
       guest_name: booking.guest_name,
       days_before_arrival: daysBeforeArrival,
+      inside_cooling_off: insideCoolingOff,
+      cooling_off_expires_at: coolingOffExpiryMs ? new Date(coolingOffExpiryMs).toISOString() : null,
+      cooling_off_expires_display: coolingOffExpiryMs ? formatCoolingOffExpiry(coolingOffExpiryMs) : null,
       refund_percent: refundPercent,
       refund_tier: refundTier,
+      reason: calc.reason,
       total_paid: totalPaid,
       refund_due: refundDue,
-      retained: retained,
-      inside_cooling_off: insideCoolingOff,
-      cooling_off_expires_at: new Date(coolingOffExpiryMs).toISOString(),
-      cooling_off_expires_display: formatCoolingOffExpiry(coolingOffExpiryMs),
+      retained,
+      stripe_fee: stripeFee,
+      out_of_pocket: outOfPocket,
       policy_text: policyText,
     };
 
@@ -105,9 +109,8 @@ export default async function (req) {
       refund_date: today,
       refund_tier: refundTier,
       deposit_retained: retained,
-      balance_paid: totalPaid - (booking.deposit_paid || 0),
     };
-    if (!booking.cooling_off_expires_at) {
+    if (!booking.cooling_off_expires_at && coolingOffExpiryMs) {
       updateData.cooling_off_expires_at = new Date(coolingOffExpiryMs).toISOString();
     }
     const updated = await base44.asServiceRole.entities.Booking.update(booking_id, updateData);

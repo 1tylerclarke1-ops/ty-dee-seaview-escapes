@@ -47,3 +47,15 @@ export async function constructWebhookEvent(body, signature, secret) {
   const stripe = getStripe();
   return await stripe.webhooks.constructEventAsync(body, signature, secret);
 }
+
+// Estimated Stripe processing fee on a GBP charge. Stripe does not return this
+// fee on a refund, so the owner is out of pocket by it. UK domestic card rate
+// (1.5% + £0.20) — an estimate; the actual fee depends on the card's region.
+const STRIPE_UK_DOMESTIC_RATE = 0.015;
+const STRIPE_UK_DOMESTIC_FIXED_PENCE = 20;
+
+export function estimateStripeFee(amountPounds) {
+  const amount = Math.max(0, Number(amountPounds) || 0);
+  const feePence = Math.round(amount * 100 * STRIPE_UK_DOMESTIC_RATE + STRIPE_UK_DOMESTIC_FIXED_PENCE);
+  return feePence / 100;
+}

@@ -123,13 +123,44 @@ export function refundTierForDays(days, policy) {
   return { days_before_arrival: 0, refund_percent: 0 };
 }
 
-export function computeRefund(arrivalIso, totalPaid, policy, todayIsoValue) {
+// Refund due on money actually received. If a booking context is supplied
+// (bookedAtMs / coolingOffExpiresAtMs), the cooling-off window is honoured
+// first: while now is on or before cooling_off_expires_at, the refund is 100%
+// of totalPaid with reason "cooling_off", bypassing the tiers entirely. Without
+// a booking context only the tier bands apply (backward compatible). Past
+// arrival (days < 0) -> 0%.
+export function computeRefund(arrivalIso, totalPaid, policy, todayIsoValue, bookingCtx) {
   const today = todayIsoValue || todayIso();
+  const nowMs = (bookingCtx && bookingCtx.nowMs) || Date.now();
+  const paid = Math.max(0, Number(totalPaid) || 0);
+
+  let coolingOffExpiryMs = null;
+  let insideCoolingOff = false;
+  if (bookingCtx && (bookingCtx.coolingOffExpiresAtMs || bookingCtx.bookedAtMs)) {
+    coolingOffExpiryMs = bookingCtx.coolingOffExpiresAtMs
+      ? bookingCtx.coolingOffExpiresAtMs
+      : computeCoolingOffExpiry(bookingCtx.bookedAtMs, arrivalIso, policy);
+    insideCoolingOff = nowMs <= coolingOffExpiryMs;
+  }
+
+  if (insideCoolingOff) {
+    return {
+      daysBeforeArrival: Math.max(0, daysBetween(today, arrivalIso)),
+      tier: { days_before_arrival: 0, refund_percent: 100 },
+      refundPercent: 100,
+      totalPaid: paid,
+      refundDue: paid,
+      retained: 0,
+      reason: "cooling_off",
+      insideCoolingOff: true,
+      coolingOffExpiryMs,
+    };
+  }
+
   let days = daysBetween(today, arrivalIso);
   if (days < 0) days = 0;
   const tier = refundTierForDays(days, policy);
   const pct = tier.refund_percent || 0;
-  const paid = Math.max(0, Number(totalPaid) || 0);
   const refundDue = Math.round((pct / 100) * paid);
   return {
     daysBeforeArrival: days,
@@ -138,6 +169,9 @@ export function computeRefund(arrivalIso, totalPaid, policy, todayIsoValue) {
     totalPaid: paid,
     refundDue,
     retained: paid - refundDue,
+    reason: "tier",
+    insideCoolingOff: false,
+    coolingOffExpiryMs,
   };
 }
 
