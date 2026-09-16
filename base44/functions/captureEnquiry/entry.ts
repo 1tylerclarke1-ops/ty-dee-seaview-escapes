@@ -51,6 +51,13 @@ export default async function (req) {
       data.cancellation_acknowledged_at =
         body.cancellation_acknowledged_at || new Date().toISOString();
     }
+    // Free-text message from the public contact form (stored on the contact's
+    // notes so the owner reads it in admin). Checkout enquiries have no
+    // message, so this is a no-op there.
+    if (body.message) {
+      const noteLine = `[Contact form — ${new Date().toISOString().slice(0, 10)}]\n${body.message}`;
+      data.notes = ex?.notes ? `${ex.notes}\n\n${noteLine}` : noteLine;
+    }
 
     if (ex) {
       await base44.asServiceRole.entities.Contact.update(ex.id, data);
