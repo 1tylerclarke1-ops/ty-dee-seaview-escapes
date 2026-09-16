@@ -2,6 +2,7 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { computeGaps } from "../../shared/gaps.ts";
 import { formatLong, gbp, formatShort } from "../../shared/pricing.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
+import { ownerEmail } from "../../shared/bookingEmail.ts";
 
 // Weekly job (Saturdays 06:00). Reduced scope: it does NOT apply discounts.
 // It expires stale holds, then emails the owner the gaps view for the next
@@ -55,7 +56,7 @@ export default async function (req) {
     const body = lines.join("\n");
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
-        to: "stay@tydee.co.uk",
+        to: ownerEmail(),
         subject: `Weekly gaps review — ${formatShort(today)}`,
         body,
       });

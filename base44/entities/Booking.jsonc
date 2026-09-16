@@ -137,6 +137,11 @@
       "default": false,
       "title": "Confirmation email sent to guest"
     },
+    "owner_alert_sent": {
+      "type": "boolean",
+      "default": false,
+      "title": "Owner alert email sent"
+    },
     "notes": {
       "type": "string",
       "title": "Notes"

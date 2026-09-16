@@ -1,7 +1,8 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { filterSegment, segmentById } from "../../shared/contacts.ts";
 import { describeOffer } from "../../shared/offers.ts";
-import { seasonForDate, formatLong } from "../../shared/pricing.ts";
+import { seasonForDate } from "../../shared/pricing.ts";
+import { formatGuestDate } from "../../shared/bookingEmail.ts";
 import { renderTemplate, textToHtml, DEFAULT_TEMPLATES } from "../../shared/emailTemplates.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
 
@@ -51,8 +52,8 @@ export default async function (req) {
       const unsub = `${appBaseUrl()}/unsubscribe/${c.unsubscribe_token}`;
       const vars = {
         name: first,
-        arrival_date: formatLong(offer.arrival_date),
-        departure_date: departureStr ? formatLong(departureStr) : "",
+        arrival_date: formatGuestDate(offer.arrival_date),
+        departure_date: departureStr ? formatGuestDate(departureStr) : "",
         nights: offer.nights,
         season: season ? ` · ${season.name}` : "",
         offer_description: offer.visibility === "public" ? desc : `A private offer: ${desc}`,

@@ -19,6 +19,8 @@ export default function BookingsManager() {
   const [error, setError] = useState(null);
   const [resendingId, setResendingId] = useState(null);
   const [resendErrors, setResendErrors] = useState({});
+  const [resendingOwnerId, setResendingOwnerId] = useState(null);
+  const [resendOwnerErrors, setResendOwnerErrors] = useState({});
   const [logOpenId, setLogOpenId] = useState(null);
   const [logEntries, setLogEntries] = useState({});
   const [logLoading, setLogLoading] = useState(false);
@@ -41,6 +43,27 @@ export default function BookingsManager() {
       setResendErrors((m) => ({ [b.id]: data?.error || "Could not send." }));
     } finally {
       setResendingId(null);
+    }
+  };
+
+  const resendOwnerAlert = async (b) => {
+    setResendingOwnerId(b.id);
+    setResendOwnerErrors((m) => ({ ...m, [b.id]: null }));
+    try {
+      const res = await base44.functions.invoke("sendBookingConfirmation", { booking_id: b.id, send: true, target: "owner" });
+      const data = res.data || res;
+      if (data.sent) {
+        load();
+      } else {
+        setResendOwnerErrors((m) => ({
+          [b.id]: data.sendResult?.error || "Could not send owner alert.",
+        }));
+      }
+    } catch (e) {
+      const data = e?.data || e;
+      setResendOwnerErrors((m) => ({ [b.id]: data?.error || "Could not send." }));
+    } finally {
+      setResendingOwnerId(null);
     }
   };
 
@@ -154,6 +177,22 @@ export default function BookingsManager() {
                     {resendingId === b.id ? "Sending…" : "Resend confirmation"}
                   </button>
                   {resendErrors[b.id] && <span className="text-xs text-signal">{resendErrors[b.id]}</span>}
+                </>
+              )}
+              {b.owner_alert_sent ? (
+                <span className="text-xs text-white/40">Owner alert sent</span>
+              ) : (
+                <>
+                  <span className="text-xs text-signal">Owner alert not sent</span>
+                  <button
+                    type="button"
+                    onClick={() => resendOwnerAlert(b)}
+                    disabled={resendingOwnerId === b.id}
+                    className="text-xs text-sea hover:underline disabled:opacity-50"
+                  >
+                    {resendingOwnerId === b.id ? "Sending…" : "Resend owner alert"}
+                  </button>
+                  {resendOwnerErrors[b.id] && <span className="text-xs text-signal">{resendOwnerErrors[b.id]}</span>}
                 </>
               )}
               <button

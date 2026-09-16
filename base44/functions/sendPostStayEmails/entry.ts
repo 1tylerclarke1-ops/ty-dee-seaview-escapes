@@ -1,6 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { renderTemplate, textToHtml, DEFAULT_TEMPLATES } from "../../shared/emailTemplates.ts";
-import { seasonForDate, formatLong } from "../../shared/pricing.ts";
+import { seasonForDate } from "../../shared/pricing.ts";
+import { formatGuestDate } from "../../shared/bookingEmail.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
 
 // Daily job — finds confirmed/deposit_paid bookings that departed two days ago
@@ -54,8 +55,8 @@ export default async function (req) {
         const dep = b.departure_date;
         const vars = {
           name: (b.guest_name || "there").split(" ")[0],
-          arrival_date: formatLong(b.arrival_date),
-          departure_date: dep ? formatLong(dep) : "",
+          arrival_date: formatGuestDate(b.arrival_date),
+          departure_date: dep ? formatGuestDate(dep) : "",
           nights: b.nights || "",
           season: season ? ` · ${season.name}` : "",
           offer_description: "",

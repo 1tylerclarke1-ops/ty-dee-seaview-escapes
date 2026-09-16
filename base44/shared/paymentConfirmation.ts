@@ -23,8 +23,11 @@ import {
 import { normalizeEmail } from "./contacts.ts";
 import { logEmailAttempt } from "./emailLog.ts";
 import { appBaseUrl } from "./origin.ts";
-
-const OWNER_EMAIL = "stay@tydee.co.uk";
+import {
+  ownerEmail,
+  buildGuestConfirmationEmail,
+  buildOwnerAlertEmail,
+} from "./bookingEmail.ts";
 
 // Confirm a booking's payment from a verified Stripe Checkout Session.
 // `session` is the Stripe session object (already retrieved + verified by the
@@ -201,36 +204,15 @@ async function sendConfirmationEmails(base44, booking, breakdown, payableInFull)
   const coolingOffExpiryMs = booking.cooling_off_expires_at
     ? new Date(booking.cooling_off_expires_at).getTime()
     : computeCoolingOffExpiry(bookedAtMs, booking.arrival_date, policy);
-  const coolingOffDisplay = formatCoolingOffExpiry(coolingOffExpiryMs);
+  const coolingOffIso = new Date(coolingOffExpiryMs).toISOString();
 
   const facRows = await base44.asServiceRole.entities.FacilitiesSettings.list();
   const settings = (facRows && facRows[0]) || DEFAULT_FACILITIES_SETTINGS;
-  const facStatus = stayFacilitiesStatus(booking.arrival_date, booking.nights, settings);
 
-  const amountPaid = payableInFull ? breakdown.total : breakdown.deposit;
-  const subject = `Your stay at Ty Dee Seaview Escapes is confirmed — arriving ${booking.arrival_date}`;
-  const lines = [
-    `Hello ${booking.guest_name || ""},`,
-    ``,
-    `Your booking is confirmed and your payment of £${amountPaid.toFixed(2)} has been received.`,
-    ``,
-    `Arriving ${booking.arrival_date}, ${booking.nights} night(s), ${booking.guests || ""} guest(s).`,
-    ``,
-    payableInFull
-      ? `You've paid the full balance — there's nothing further to pay.`
-      : `You've paid your deposit. The balance of £${breakdown.balance.toFixed(2)} is due by ${balanceDueIso(booking.arrival_date)} — we'll be in touch nearer the time.`,
-    ``,
-    `Change your mind? You have a full refund until ${coolingOffDisplay} — cancel before then and everything you've paid comes back.`,
-  ];
-  if (facStatus.state !== "open") {
-    lines.push(``);
-    lines.push(settings.facilities_winter_note || `The park's on-site facilities are closed for these dates. Your booking is for the accommodation only.`);
-  }
-  lines.push(``);
-  lines.push(booking.cancellation_policy_text || buildPolicyText(policy));
-  lines.push(``);
-  lines.push(`Ty Dee Seaview Escapes — Polperro, Cornwall`);
-  const body = lines.join("\n");
+  const { subject, text: body } = buildGuestConfirmationEmail({
+    booking, breakdown, payableInFull, settings,
+    coolingOffIso, appBaseUrl: appBaseUrl(),
+  });
 
   // Guest confirmation — log the attempt, never block the confirmation.
   let guestOk = false;
@@ -251,28 +233,31 @@ async function sendConfirmationEmails(base44, booking, breakdown, payableInFull)
   }
 
   // Owner alert — logged separately.
-  const ownerSubject = `New booking confirmed & paid — ${booking.guest_name}`;
-  const ownerBody = `${booking.guest_name} (${booking.guest_email || "no email"}) booked ${booking.arrival_date} for ${booking.nights} night(s), ${booking.guests} guest(s). Paid £${amountPaid.toFixed(2)}${payableInFull ? " (full)" : " (deposit)"}. Booking ref ${booking.id}.`;
+  const owner = ownerEmail();
+  const { subject: ownerSubject, text: ownerBody } = buildOwnerAlertEmail({
+    booking, breakdown, payableInFull,
+  });
   let ownerOk = false;
   let ownerError = null;
   try {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      to: OWNER_EMAIL, subject: ownerSubject, text: ownerBody,
+      to: owner, subject: ownerSubject, text: ownerBody,
     });
     ownerOk = true;
   } catch (e) {
     ownerError = e?.message || String(e);
   }
   await logEmailAttempt(base44, {
-    booking_id: booking.id, recipient: OWNER_EMAIL,
+    booking_id: booking.id, recipient: owner,
     template: "booking_confirmation_owner", subject: ownerSubject, ok: ownerOk, error: ownerError,
   });
 
-  // Flag the booking so admin can see and resend if the guest email failed.
+  // Flag both emails so admin can see and resend if either failed.
   // Best-effort — never blocks.
   try {
     await base44.asServiceRole.entities.Booking.update(booking.id, {
       confirmation_email_sent: guestOk,
+      owner_alert_sent: ownerOk,
     });
   } catch {}
 }
@@ -327,9 +312,10 @@ async function sendOwnerAlert(base44, booking, headline, extra) {
   ].filter(Boolean).join("\n");
   let ok = false;
   let err = null;
+  const owner = ownerEmail();
   try {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      to: OWNER_EMAIL,
+      to: owner,
       subject: headline,
       text: body,
     });
@@ -338,7 +324,7 @@ async function sendOwnerAlert(base44, booking, headline, extra) {
     err = e?.message || String(e);
   }
   await logEmailAttempt(base44, {
-    booking_id: booking.id, recipient: OWNER_EMAIL,
+    booking_id: booking.id, recipient: owner,
     template: "owner_alert", subject: headline, ok, error: err,
   });
 }
