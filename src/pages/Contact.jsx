@@ -24,7 +24,7 @@ export default function Contact() {
         <div className="grid md:grid-cols-12 gap-10 md:gap-12">
           <div className="md:col-span-5">
             <p className="text-sm text-muted-foreground">Direct</p>
-            <a href={`mailto:${BUSINESS.email}`} className="block text-2xl md:text-3xl text-ink mt-3 hover:text-sea transition-colors">
+            <a href={`mailto:${BUSINESS.email}`} className="block text-2xl md:text-3xl text-ink mt-3 hover:text-sea transition-colors break-all">
               {BUSINESS.email}
             </a>
             <a href={`tel:${BUSINESS.phone.replace(/\s/g, "")}`} className="block text-base text-ink-soft mt-4 hover:text-sea transition-colors tnum">
