@@ -18,7 +18,11 @@ import { DEFAULT_FACILITIES_SETTINGS } from "./facilities.ts";
 import { normalizeEmail } from "./contacts.ts";
 import { logEmailAttempt } from "./emailLog.ts";
 import { appBaseUrl } from "./origin.ts";
-import { buildGuestConfirmationEmail } from "./bookingEmail.ts";
+import {
+  ownerEmail,
+  buildGuestConfirmationEmail,
+  buildOwnerAlertEmail,
+} from "./bookingEmail.ts";
 
 // Confirm a booking's payment from a verified Stripe Checkout Session.
 // `session` is the Stripe session object (already retrieved + verified by the
@@ -225,15 +229,23 @@ async function sendConfirmationEmails(base44, booking, breakdown, payableInFull)
     });
   }
 
-  // The owner is no longer emailed per-booking — a daily digest lists all new
-  // bookings in one email (sendOwnerBookingDigest), so the per-recipient cap
-  // can never throttle a real alert. The admin dashboard's "new bookings since
-  // you last looked" indicator is the primary record. Best-effort — never blocks.
+  // Flag the guest email so admin can see and resend if it failed.
+  // Best-effort — never blocks.
   try {
     await base44.asServiceRole.entities.Booking.update(booking.id, {
       confirmation_email_sent: guestOk,
     });
   } catch {}
+
+  // Imminent arrivals get an immediate owner email — a booking for a stay
+  // starting within 7 days can't wait for the daily digest (it could arrive
+  // after the guest). These are rare, so the per-recipient cap is not a risk.
+  // The booking is marked alerted on success so the daily digest skips it
+  // (no double-tell); a failed imminent alert stays unmarked and the digest
+  // retries it.
+  if (arrivalWithinDays(booking.arrival_date, 7)) {
+    await sendImminentOwnerAlert(base44, booking, breakdown, payableInFull);
+  }
 }
 
 async function sendApologyEmail(base44, booking, alternatives) {
@@ -273,4 +285,48 @@ async function sendApologyEmail(base44, booking, alternatives) {
     booking_id: booking.id, recipient: booking.guest_email,
     template: "apology_race_lost", subject: apologySubject, ok, error: err,
   });
+}
+
+// True when the stay arrives within `days` days from today (UTC, same-day
+// inclusive). Used to decide whether the owner needs a same-day alert rather
+// than waiting for the daily digest.
+function arrivalWithinDays(arrivalIso, days) {
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const a = new Date(arrivalIso + "T00:00:00Z").getTime();
+  const diffDays = (a - todayUtc) / 86400000;
+  return diffDays >= 0 && diffDays <= days;
+}
+
+// Immediate owner alert for an imminent arrival (within 7 days). Logged as
+// "owner_alert_imminent" so it's distinguishable from the daily digest in the
+// email log. On success, marks the booking alerted so the digest skips it.
+async function sendImminentOwnerAlert(base44, booking, breakdown, payableInFull) {
+  const { subject, text } = buildOwnerAlertEmail({ booking, breakdown, payableInFull });
+  const owner = ownerEmail();
+  let ok = false;
+  let err = null;
+  if (!owner) {
+    err = "OWNER_EMAIL secret is not configured";
+  } else {
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: owner, subject, text,
+      });
+      ok = true;
+    } catch (e) {
+      err = e?.message || String(e);
+    }
+  }
+  await logEmailAttempt(base44, {
+    booking_id: booking.id, recipient: owner || "(unset)",
+    template: "owner_alert_imminent", subject, ok, error: err,
+  });
+  if (ok) {
+    try {
+      await base44.asServiceRole.entities.Booking.update(booking.id, {
+        owner_alert_sent: true,
+      });
+    } catch {}
+  }
 }
