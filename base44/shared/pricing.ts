@@ -1,6 +1,8 @@
-// Server-side pricing mirror of src/lib/pricing.js. The platform keeps
-// base44/ (server) and src/ (client) separate, so this is duplicated — keep
-// both in sync when changing rates or rules. Used by the offer + gaps logic.
+// Canonical source of truth for stay pricing (server enforces these).
+// The platform keeps base44/ (server) and src/ (client) in separate module
+// trees, so src/lib/pricing.js mirrors this file. The mirror MUST match
+// exactly — enforced at build/dev time by scripts/checkPricingDrift.mjs,
+// which fails loudly on any mismatch. Used by the offer + gaps logic.
 import { SEASONS, seasonForDate } from "./bookingRules.ts";
 
 export { seasonForDate };

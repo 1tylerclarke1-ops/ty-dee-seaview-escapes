@@ -1,6 +1,9 @@
-// Server-side mirror of the booking rules in src/lib/pricing.js.
-// The platform keeps base44/ (server) and src/ (client) separate, so this
-// config is duplicated — keep both copies in sync when changing stay rules.
+// Canonical source of truth for stay rules (server enforces these).
+// The platform keeps base44/ (server) and src/ (client) in separate module
+// trees, so src/lib/pricing.js mirrors this file. The mirror MUST match
+// exactly — enforced at build/dev time by scripts/checkPricingDrift.mjs,
+// which fails loudly on any mismatch. Change a rule here first, then update
+// the client mirror to match.
 // JS getDay: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat.
 
 export const SEASONS = [
