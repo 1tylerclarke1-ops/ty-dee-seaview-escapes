@@ -1,0 +1,45 @@
+{
+  "description": "Daily 09:00 \u2014 sends the owner one digest email listing all new paid bookings since the last digest, replacing per-booking owner alerts so the per-recipient email cap can never throttle a real alert. The admin dashboard remains the primary, email-independent record.",
+  "name": "Owner booking digest",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 9 * * *",
+      "one_time_date": null,
+      "timezone": "Europe/London",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "owner_booking_digest",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_job": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendOwnerBookingDigest",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send owner digest",
+            "description": "One email listing all new paid bookings"
+          }
+        }
+      }
+    ]
+  }
+}

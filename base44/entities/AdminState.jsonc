@@ -1,0 +1,58 @@
+{
+  "name": "AdminState",
+  "type": "object",
+  "properties": {
+    "last_viewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last viewed at (admin marked bookings seen)"
+    },
+    "last_digest_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last digest sent at"
+    },
+    "last_digest_ok": {
+      "type": "boolean",
+      "default": false,
+      "title": "Last digest send ok"
+    },
+    "last_digest_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Last digest booking count"
+    },
+    "last_digest_had_bookings": {
+      "type": "boolean",
+      "default": false,
+      "title": "Last digest had bookings to send"
+    },
+    "last_digest_error": {
+      "type": "string",
+      "title": "Last digest error (if failed)"
+    }
+  },
+  "required": [],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

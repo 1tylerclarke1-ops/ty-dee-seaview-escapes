@@ -18,11 +18,7 @@ import { DEFAULT_FACILITIES_SETTINGS } from "./facilities.ts";
 import { normalizeEmail } from "./contacts.ts";
 import { logEmailAttempt } from "./emailLog.ts";
 import { appBaseUrl } from "./origin.ts";
-import {
-  ownerEmail,
-  buildGuestConfirmationEmail,
-  buildOwnerAlertEmail,
-} from "./bookingEmail.ts";
+import { buildGuestConfirmationEmail } from "./bookingEmail.ts";
 
 // Confirm a booking's payment from a verified Stripe Checkout Session.
 // `session` is the Stripe session object (already retrieved + verified by the
@@ -150,7 +146,9 @@ async function handleRaceLost(base44, booking, session) {
 
   const alternatives = await findAlternativeDates(base44, booking.arrival_date, booking.nights, 3);
   await sendApologyEmail(base44, booking, alternatives);
-  await sendOwnerAlert(base44, booking, "Dates taken during payment — auto-refunded", refundError);
+  // Owner no longer emailed per-event — the cancelled booking (with its
+  // auto-refund note) is visible in the admin dashboard, and the daily digest
+  // surfaces new bookings. Keeps owner email to one digest/day.
   return { race_lost: true, refundError };
 }
 
@@ -227,36 +225,13 @@ async function sendConfirmationEmails(base44, booking, breakdown, payableInFull)
     });
   }
 
-  // Owner alert — logged separately.
-  const owner = ownerEmail();
-  const { subject: ownerSubject, text: ownerBody } = buildOwnerAlertEmail({
-    booking, breakdown, payableInFull,
-  });
-  let ownerOk = false;
-  let ownerError = null;
-  if (!owner) {
-    ownerError = "OWNER_EMAIL secret is not configured";
-  } else {
-    try {
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: owner, subject: ownerSubject, text: ownerBody,
-      });
-      ownerOk = true;
-    } catch (e) {
-      ownerError = e?.message || String(e);
-    }
-  }
-  await logEmailAttempt(base44, {
-    booking_id: booking.id, recipient: owner || "(unset)",
-    template: "booking_confirmation_owner", subject: ownerSubject, ok: ownerOk, error: ownerError,
-  });
-
-  // Flag both emails so admin can see and resend if either failed.
-  // Best-effort — never blocks.
+  // The owner is no longer emailed per-booking — a daily digest lists all new
+  // bookings in one email (sendOwnerBookingDigest), so the per-recipient cap
+  // can never throttle a real alert. The admin dashboard's "new bookings since
+  // you last looked" indicator is the primary record. Best-effort — never blocks.
   try {
     await base44.asServiceRole.entities.Booking.update(booking.id, {
       confirmation_email_sent: guestOk,
-      owner_alert_sent: ownerOk,
     });
   } catch {}
 }
@@ -297,37 +272,5 @@ async function sendApologyEmail(base44, booking, alternatives) {
   await logEmailAttempt(base44, {
     booking_id: booking.id, recipient: booking.guest_email,
     template: "apology_race_lost", subject: apologySubject, ok, error: err,
-  });
-}
-
-async function sendOwnerAlert(base44, booking, headline, extra) {
-  const body = [
-    headline,
-    ``,
-    `Guest: ${booking.guest_name} (${booking.guest_email || "no email"})`,
-    `Dates: ${booking.arrival_date} for ${booking.nights} night(s)`,
-    `Booking ref: ${booking.id}`,
-    extra ? `Note: ${extra}` : "",
-  ].filter(Boolean).join("\n");
-  let ok = false;
-  let err = null;
-  const owner = ownerEmail();
-  if (!owner) {
-    err = "OWNER_EMAIL secret is not configured";
-  } else {
-    try {
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: owner,
-        subject: headline,
-        text: body,
-      });
-      ok = true;
-    } catch (e) {
-      err = e?.message || String(e);
-    }
-  }
-  await logEmailAttempt(base44, {
-    booking_id: booking.id, recipient: owner || "(unset)",
-    template: "owner_alert", subject: headline, ok, error: err,
   });
 }

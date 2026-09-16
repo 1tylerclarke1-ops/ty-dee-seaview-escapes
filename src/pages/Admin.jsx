@@ -14,6 +14,7 @@ import ContactsManager from "@/components/admin/ContactsManager";
 import ReviewsManager from "@/components/admin/ReviewsManager";
 import StripeConnectionPanel from "@/components/admin/StripeConnectionPanel";
 import ConfigBanner from "@/components/admin/ConfigBanner";
+import NewBookingsBanner from "@/components/admin/NewBookingsBanner";
 
 function Spinner() {
   return (
@@ -82,6 +83,7 @@ export default function Admin() {
         </div>
         <h1 className="text-4xl md:text-5xl text-white mt-2">{BUSINESS.name}</h1>
         <div className="border-t border-white/10 mt-8 mb-10" />
+        <NewBookingsBanner />
         <ConfigBanner />
         <div className="mb-12">
           <StripeConnectionPanel />
