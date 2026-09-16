@@ -46,7 +46,8 @@
         "held",
         "deposit_paid",
         "confirmed",
-        "cancelled"
+        "cancelled",
+        "expired"
       ],
       "default": "enquiry",
       "title": "Status"
@@ -82,6 +83,11 @@
       "type": "number",
       "default": 0,
       "title": "Gross revenue"
+    },
+    "damage_waiver": {
+      "type": "number",
+      "default": 25,
+      "title": "Damage waiver (snapshot at booking)"
     },
     "deposit_paid": {
       "type": "number",

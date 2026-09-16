@@ -16,6 +16,11 @@ export default function PriceBreakdown({ breakdown, arrival }) {
   if (breakdown.dogFee > 0) {
     rows.push({ label: `Dogs (${breakdown.dogs})`, value: gbpMoney(breakdown.dogFee) });
   }
+  rows.push({
+    label: "Damage waiver",
+    value: gbpMoney(breakdown.damageWaiver),
+    sub: "Covers accidental damage up to £250 — no deposit to pay and nothing to claim back.",
+  });
 
   const balanceDue = balanceDueDate(arrival);
   const payableInFull = isPayableInFull(arrival);
@@ -24,9 +29,12 @@ export default function PriceBreakdown({ breakdown, arrival }) {
     <div>
       <div className="space-y-2">
         {rows.map((r, i) => (
-          <div key={i} className="flex items-baseline justify-between">
-            <span className="text-sm text-ink-soft tnum">{r.label}</span>
-            <span className="text-sm text-ink tnum">{r.value}</span>
+          <div key={i}>
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm text-ink-soft tnum">{r.label}</span>
+              <span className="text-sm text-ink tnum">{r.value}</span>
+            </div>
+            {r.sub && <p className="text-xs text-muted-foreground mt-0.5">{r.sub}</p>}
           </div>
         ))}
       </div>
@@ -57,7 +65,7 @@ export default function PriceBreakdown({ breakdown, arrival }) {
           </div>
         </div>
       )}
-      <CancellationSummary arrival={arrival} total={breakdown.total} />
+      <CancellationSummary arrival={arrival} total={breakdown.total} waiver={breakdown.damageWaiver} />
     </div>
   );
 }

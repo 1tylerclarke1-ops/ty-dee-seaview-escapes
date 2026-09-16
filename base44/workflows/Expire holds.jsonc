@@ -1,0 +1,45 @@
+{
+  "name": "Expire holds",
+  "description": "Hourly housekeeping \u2014 marks abandoned checkouts (held past their 30-minute hold) as 'expired' (distinct from cancelled) and purges expired records older than 90 days. Does not release dates (the availability check skips expired holds in real time); no guest email.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 * * * *",
+      "one_time_date": null,
+      "timezone": "Europe/London",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "expire_holds",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "expire_holds": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "expireHolds",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Expire abandoned holds",
+            "description": "Mark expired + purge >90 days"
+          }
+        }
+      }
+    ]
+  }
+}

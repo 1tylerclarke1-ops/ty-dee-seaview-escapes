@@ -11,6 +11,7 @@ export const PRICING_SETTINGS = {
   dog_fee: 25,
   dog_fee_per_dog: true,
   max_dogs: 2,
+  damage_waiver: 25,
   deposit_percentage: 25,
   balance_due_days_before_arrival: 60,
 };
@@ -81,8 +82,10 @@ export function calculatePrice(arrival, nights, dogs = 0) {
       ? PRICING_SETTINGS.dog_fee * dogCount
       : PRICING_SETTINGS.dog_fee
     : 0;
-  const total = nightsSubtotal + shortBreakSupplement + dogFee;
-  const deposit = Math.round((total * PRICING_SETTINGS.deposit_percentage) / 100);
+  const damageWaiver = PRICING_SETTINGS.damage_waiver || 0;
+  const total = nightsSubtotal + shortBreakSupplement + dogFee + damageWaiver;
+  // Deposit rounds UP (ceil), never down — £82.50 → £83.
+  const deposit = Math.ceil((total * PRICING_SETTINGS.deposit_percentage) / 100);
   const balance = total - deposit;
   return {
     season,
@@ -90,6 +93,7 @@ export function calculatePrice(arrival, nights, dogs = 0) {
     nightsSubtotal,
     shortBreakSupplement,
     dogFee,
+    damageWaiver,
     total,
     deposit,
     balance,

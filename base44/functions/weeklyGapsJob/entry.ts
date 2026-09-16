@@ -13,19 +13,21 @@ export default async function (req) {
     const base44 = createClientFromRequest(req);
     const bookings = await base44.asServiceRole.entities.Booking.list("-arrival_date", 500);
 
-    // Expire stale holds: any booking still "held" past its arrival date.
-    const today = new Date().toISOString().slice(0, 10);
+    // Expire stale holds (weekly safety net — the hourly "Expire holds" workflow
+    // is the primary). An abandoned checkout is "expired", not "cancelled".
+    const now = Date.now();
     let expired = 0;
     for (const b of bookings || []) {
-      if (b.status === "held" && b.arrival_date && b.arrival_date < today) {
+      if (b.status === "held" && b.hold_expires_at && new Date(b.hold_expires_at).getTime() < now) {
         try {
-          await base44.asServiceRole.entities.Booking.update(b.id, { status: "cancelled" });
+          await base44.asServiceRole.entities.Booking.update(b.id, { status: "expired" });
           expired++;
         } catch { /* keep going */ }
       }
     }
 
-    const active = (bookings || []).filter((b) => b.status !== "cancelled");
+    const today = new Date().toISOString().slice(0, 10);
+    const active = (bookings || []).filter((b) => b.status !== "cancelled" && b.status !== "expired");
     const view = computeGaps(active, today, 30);
 
     const lines = [];

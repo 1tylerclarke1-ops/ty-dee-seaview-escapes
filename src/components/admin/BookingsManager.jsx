@@ -11,6 +11,7 @@ import { gbpMoney } from "@/lib/pricing";
 export default function BookingsManager() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showExpired, setShowExpired] = useState(false);
   const [reviewId, setReviewId] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -61,11 +62,25 @@ export default function BookingsManager() {
 
   if (loading) return <p className="text-sm text-white/50">Loading bookings…</p>;
 
+  const visible = showExpired ? bookings : bookings.filter((b) => b.status !== "expired");
+  const expiredCount = bookings.filter((b) => b.status === "expired").length;
+
   return (
     <div className="space-y-6">
-      {bookings.length === 0 && <p className="text-sm text-white/50">No bookings yet.</p>}
+      <div className="flex items-center justify-between">
+        <label className="text-sm text-white/60 flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showExpired}
+            onChange={(e) => setShowExpired(e.target.checked)}
+            className="accent-sea"
+          />
+          Show expired checkouts{expiredCount > 0 ? ` (${expiredCount})` : ""}
+        </label>
+      </div>
+      {visible.length === 0 && <p className="text-sm text-white/50">No bookings {showExpired ? "" : "active "}yet.</p>}
 
-      {bookings.map((b) => (
+      {visible.map((b) => (
         <div key={b.id} className="border border-white/10 p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <div>
@@ -85,6 +100,10 @@ export default function BookingsManager() {
           {b.status === "cancelled" ? (
             <div className="mt-4 pt-4 border-t border-white/10 text-sm text-white/60 tnum">
               Cancelled · refund due {gbpMoney(b.refund_due || 0)} · retained {gbpMoney(b.deposit_retained || 0)} · tier {b.refund_tier || "—"}
+            </div>
+          ) : b.status === "expired" ? (
+            <div className="mt-4 pt-4 border-t border-white/10 text-sm text-white/50">
+              Expired — checkout abandoned, no payment taken. Dates released.
             </div>
           ) : (
             <div className="mt-4">
