@@ -20,6 +20,7 @@ import Admin from '@/pages/Admin';
 import OfferLanding from '@/pages/OfferLanding';
 import Unsubscribe from '@/pages/Unsubscribe';
 import Review from '@/pages/Review';
+import Reviews from '@/pages/Reviews';
 import GuidesIndex from '@/pages/guides/GuidesIndex';
 import DogFriendlyCornwall from '@/pages/guides/DogFriendlyCornwall';
 import PolperroInWinter from '@/pages/guides/PolperroInWinter';
@@ -77,6 +78,7 @@ const AuthenticatedApp = () => {
         <Route path="/offer/:token" element={<OfferLanding />} />
         <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
         <Route path="/review/:bookingId" element={<Review />} />
+        <Route path="/reviews" element={<Reviews />} />
         <Route path="/booking/return" element={<PaymentReturn />} />
         <Route path="/booking/cancelled" element={<PaymentCancelled />} />
         <Route path="/guides" element={<GuidesIndex />} />
