@@ -7,6 +7,10 @@
 // the dates — availability only blocks deposit_paid/confirmed), emails both
 // the guest and the owner, and invalidates the token. Never refunds silently;
 // never accepts a refund amount from the client.
+//
+// Security: resolved by TOKEN ONLY (never booking id/email). Every
+// non-cancellable case (no match, cancelled, completed, not-yet-paid) returns
+// the SAME generic message — no response confirms a token existed.
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { addDaysIso, todayIso } from "../../shared/cancellation.ts";
 import { createRefund } from "../../shared/stripe.ts";
@@ -14,33 +18,43 @@ import { toMinorUnits } from "../../shared/money.ts";
 import { computeRefundPreview } from "../../shared/cancellationPreview.ts";
 import { logEmailAttempt } from "../../shared/emailLog.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
+import { rateLimit } from "../../shared/rateLimit.ts";
 import {
   ownerEmail,
   buildGuestCancellationEmail,
   buildOwnerCancellationAlert,
 } from "../../shared/bookingEmail.ts";
 
+// The single generic response for every non-cancellable case. Identical for
+// an invalid token, an expired token, a cancelled booking, a completed stay,
+// and a not-yet-paid booking — so no caller can learn whether a token existed.
+const GENERIC_404 = { error: "This booking can no longer be cancelled online." };
+
 export default async function (req) {
+  // Rate limit first. 10 cancel attempts/min per IP — a legit guest makes two
+  // (preview + confirm); this caps guessing without blocking real use.
+  if (!rateLimit(req, "cancelBookingByToken", 10, 60_000)) {
+    return Response.json({ error: "Too many requests. Please wait a minute and try again." }, { status: 429 });
+  }
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
     const token = String(body.token || "").trim();
     const confirm = body.confirm === true;
-    if (!token) return Response.json({ error: "Invalid link" }, { status: 400 });
 
-    const found = await base44.asServiceRole.entities.Booking.filter({ cancel_token: token });
+    // Resolve by TOKEN ONLY. No booking id or email is ever queried.
+    const found = token
+      ? await base44.asServiceRole.entities.Booking.filter({ cancel_token: token })
+      : [];
     const booking = found && found[0];
-    if (!booking) return Response.json({ error: "This booking can no longer be cancelled online." }, { status: 404 });
 
-    if (booking.status === "cancelled") {
-      return Response.json({ error: "This booking has already been cancelled." }, { status: 409 });
-    }
+    // Every non-cancellable case → same generic 404.
+    if (!booking) return Response.json(GENERIC_404, { status: 404 });
+    if (booking.status === "cancelled") return Response.json(GENERIC_404, { status: 404 });
     const departureIso = addDaysIso(booking.arrival_date, booking.nights);
-    if (departureIso <= todayIso()) {
-      return Response.json({ error: "This stay has already completed and can no longer be cancelled." }, { status: 409 });
-    }
+    if (departureIso <= todayIso()) return Response.json(GENERIC_404, { status: 404 });
     if (booking.status !== "deposit_paid" && booking.status !== "confirmed") {
-      return Response.json({ error: "This booking can no longer be cancelled online." }, { status: 409 });
+      return Response.json(GENERIC_404, { status: 404 });
     }
 
     const preview = await computeRefundPreview(base44, booking);

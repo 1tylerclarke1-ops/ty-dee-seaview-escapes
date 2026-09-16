@@ -95,17 +95,15 @@ export default function ManageBooking() {
 
   if (!data) return null;
 
+  if (data.state === "rate_limited") {
+    return (
+      <Wrap>
+        <InfoState title="Please wait a moment" body="You've made several requests in a short time. Wait a minute, then refresh this page to view your booking." />
+      </Wrap>
+    );
+  }
   if (data.state === "not_found") {
     return <Wrap><InfoState title="This link is no longer valid" body="Your booking may have been cancelled, the stay may have completed, or the link may have expired. If you need help, please contact us." /></Wrap>;
-  }
-  if (data.state === "cancelled") {
-    return <Wrap><InfoState title="This booking has been cancelled" body="A cancellation confirmation was emailed to you when the booking was cancelled. If you didn't receive it, or you need help, please contact us." /></Wrap>;
-  }
-  if (data.state === "completed") {
-    return <Wrap><InfoState title="This stay has completed" body="This booking can no longer be managed online. We hope you enjoyed your stay at Ty Dee Seaview Escapes." /></Wrap>;
-  }
-  if (data.state === "not_cancellable") {
-    return <Wrap><InfoState title="This booking can't be managed online" body="If you need to make changes or cancel, please contact us directly." /></Wrap>;
   }
 
   const b = data.booking;
