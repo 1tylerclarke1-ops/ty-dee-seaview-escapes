@@ -96,6 +96,10 @@ export async function createCheckoutSession({ amountPence, reference, metadata, 
     success_url: successUrl,
     cancel_url: cancelUrl,
     billing_address_collection: "auto",
+    // Disable Stripe's adaptive pricing so the guest is always charged in GBP.
+    // With it on, Stripe may convert to the card's local currency, which would
+    // break the server-side amount_total (GBP pence) verification below.
+    adaptive_pricing: { enabled: false },
   });
 }
 
