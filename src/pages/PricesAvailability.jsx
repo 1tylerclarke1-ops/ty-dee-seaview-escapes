@@ -7,6 +7,7 @@ import FacilitiesStatusPanel from "@/components/FacilitiesStatusPanel";
 import FacilitiesMarker from "@/components/FacilitiesMarker";
 import BookingPanel from "@/components/booking/BookingPanel";
 import PublicOfferMarker from "@/components/PublicOfferMarker";
+import RateCard from "@/components/RateCard";
 import Seo from "@/components/Seo";
 import { SITE_ORIGIN } from "@/lib/structuredData";
 import { allowedLengthsForArrival, calculatePrice } from "@/lib/pricing";
@@ -128,6 +129,11 @@ export default function PricesAvailability() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Rate card — per-season totals, reads the pricing engine directly */}
+      <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-10 md:pb-16">
+        <RateCard />
       </section>
 
       {/* Inline booking panel — guests, dogs, live breakdown, details */}
