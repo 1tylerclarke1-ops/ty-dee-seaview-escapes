@@ -1,5 +1,8 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { secrets } from "base44:runtime";
+import { PRICING_SETTINGS } from "../../shared/pricing.ts";
+import { SEASONS, BOOKING_RULES } from "../../shared/bookingRules.ts";
+import { pricingFingerprint } from "../../shared/pricingFingerprint.ts";
 
 // Admin-only: reports configuration health for the dashboard banner. Currently
 // checks OWNER_EMAIL (where booking alerts are sent). No fallback — an unset
@@ -16,6 +19,7 @@ export default async function (req) {
     return Response.json({
       owner_email_set: ownerSet,
       owner_email_preview: ownerSet ? maskEmail(ownerEmail.trim()) : null,
+      server_pricing_fingerprint: pricingFingerprint(PRICING_SETTINGS, SEASONS, BOOKING_RULES),
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

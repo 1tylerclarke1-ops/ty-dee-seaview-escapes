@@ -5,8 +5,9 @@
 // availability, then creates the booking as held with a 30-minute expiry and
 // the Stripe session. Deposit if arrival is >60 days away, full amount inside.
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
-import { allowedLengthsForArrival, seasonForDate } from "../../shared/bookingRules.ts";
-import { calculatePrice, isPayableInFullIso } from "../../shared/pricing.ts";
+import { allowedLengthsForArrival, seasonForDate, SEASONS, BOOKING_RULES } from "../../shared/bookingRules.ts";
+import { calculatePrice, isPayableInFullIso, PRICING_SETTINGS } from "../../shared/pricing.ts";
+import { pricingFingerprint } from "../../shared/pricingFingerprint.ts";
 import { toMinorUnits } from "../../shared/money.ts";
 import { createCheckoutSession as stripeCreateSession } from "../../shared/stripe.ts";
 import { isAvailable } from "../../shared/availability.ts";
@@ -31,11 +32,25 @@ export default async function (req) {
       name, email, phone, address, message,
       marketing_consent, facilities_acknowledged, cancellation_acknowledged,
       utm_source, utm_medium, utm_campaign, how_heard,
+      pricing_fingerprint,
     } = body || {};
 
     // --- Validation (server-side, never trusts the browser) ---
     if (!arrival_date || !nights || !name || !email) {
       return Response.json({ error: "Name, email, arrival date and stay length are required." }, { status: 400 });
+    }
+
+    // Pricing config drift guard — refuse the booking if the published site's
+    // pricing fingerprint doesn't match the server's, so a guest is never
+    // charged a price that differs from what the site displayed.
+    if (pricing_fingerprint) {
+      const serverFp = pricingFingerprint(PRICING_SETTINGS, SEASONS, BOOKING_RULES);
+      if (pricing_fingerprint !== serverFp) {
+        return Response.json(
+          { error: "Pricing on this page is out of date. Please refresh and try again.", drift: true },
+          { status: 200 }
+        );
+      }
     }
     const arrival = new Date(arrival_date + "T00:00:00Z");
     if (isNaN(arrival.getTime())) return Response.json({ error: "Invalid arrival date." }, { status: 400 });

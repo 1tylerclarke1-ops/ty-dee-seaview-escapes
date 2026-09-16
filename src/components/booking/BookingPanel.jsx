@@ -4,7 +4,8 @@ import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MAX_GUESTS } from "@/lib/siteConfig";
-import { PRICING_SETTINGS, calculatePrice, gbpMoney, isPayableInFull } from "@/lib/pricing";
+import { PRICING_SETTINGS, BOOKING_RULES, calculatePrice, gbpMoney, isPayableInFull } from "@/lib/pricing";
+import { pricingFingerprint } from "@/lib/pricingFingerprint";
 import { useCancellationPolicy, cancellationDisplay } from "@/lib/cancellation";
 import Stepper from "@/components/booking/Stepper";
 import PriceBreakdown from "@/components/booking/PriceBreakdown";
@@ -15,6 +16,11 @@ import StickyTotalBar from "@/components/booking/StickyTotalBar";
 // the server re-validates everything, creates a held booking, and returns a
 // Stripe Checkout URL the guest is redirected to. An enquiry path remains for
 // questions or unavailable dates, but is no longer the default.
+//
+// Pricing fingerprint sent with each booking request so the server can refuse
+// if the published site's pricing disagrees with the server's canonical rates.
+const PRICING_FINGERPRINT = pricingFingerprint(PRICING_SETTINGS, PRICING_SETTINGS.seasons, BOOKING_RULES);
+
 export default function BookingPanel({ arrival, length, affected }) {
   const isMobile = useIsMobile();
   const [guests, setGuests] = useState(2);
@@ -86,6 +92,7 @@ export default function BookingPanel({ arrival, length, affected }) {
       const res = await base44.functions.invoke("createCheckoutSession", {
         arrival_date: format(arrival, "yyyy-MM-dd"),
         nights: length,
+        pricing_fingerprint: PRICING_FINGERPRINT,
         guests,
         dog_count: dogs,
         name: details.name,
@@ -124,6 +131,7 @@ export default function BookingPanel({ arrival, length, affected }) {
       const res = await base44.functions.invoke("validateBooking", {
         arrival_date: format(arrival, "yyyy-MM-dd"),
         nights: length,
+        pricing_fingerprint: PRICING_FINGERPRINT,
       });
       if (res.data && !res.data.valid) {
         setError(res.data.errors?.[0] || "These dates aren't available.");

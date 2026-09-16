@@ -104,6 +104,18 @@ export function checkPricingDrift() {
       assert.deepStrictEqual(clientSettings[key], serverSettings[key]);
     });
   }
+
+  // 4. Runtime fingerprint function — must be byte-identical on client and
+  //    server so the runtime hash comparison is meaningful. The client sends
+  //    its fingerprint with each booking request; the server compares it with
+  //    its own and refuses the booking on mismatch.
+  const clientFpSrc = fs.readFileSync(path.join(root, "src/lib/pricingFingerprint.js"), "utf8");
+  const serverFpSrc = fs.readFileSync(path.join(root, "base44/shared/pricingFingerprint.ts"), "utf8");
+  const clientFp = extractBlock(clientFpSrc, "export function pricingFingerprint");
+  const serverFp = extractBlock(serverFpSrc, "export function pricingFingerprint");
+  check("pricingFingerprint — src/lib/pricingFingerprint.js ≠ base44/shared/pricingFingerprint.ts", () => {
+    assert.strictEqual(clientFp, serverFp);
+  });
 }
 
 // Allow `node scripts/checkPricingDrift.mjs` to run standalone.
