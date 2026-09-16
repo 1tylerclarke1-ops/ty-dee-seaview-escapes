@@ -122,3 +122,72 @@ export function buildOwnerAlertEmail({ booking, breakdown, payableInFull }) {
   const text = `${booking.guest_name} (${booking.guest_email || "no email"}) booked ${arrivalLong} for ${booking.nights} night(s), ${booking.guests} guest(s). Paid £${amountPaid.toFixed(2)}${payableInFull ? " (full)" : " (deposit)"}. Booking ref ${booking.id}.`;
   return { subject, text };
 }
+
+// The daily owner digest email — one email listing every paid booking AND
+// every contact-form enquiry not yet digested. Built here (not inline in the
+// digest job) so the admin "send test emails" tool renders the exact same
+// owner email with a single synthetic booking, instead of a divergent copy.
+// `bookings` and `enquiries` are the already-filtered, sorted arrays.
+// `appBaseUrl` is passed in (not imported) so this module stays free of the
+// origin dependency.
+export function buildOwnerDigestEmail({ bookings, enquiries, appBaseUrl }) {
+  const bCount = bookings.length;
+  const eCount = enquiries.length;
+  let subject;
+  if (bCount && eCount) {
+    subject = `${bCount} new booking${bCount === 1 ? "" : "s"} and ${eCount} new enquiry${eCount === 1 ? "" : "ies"} — daily digest`;
+  } else if (bCount) {
+    subject = `${bCount} new booking${bCount === 1 ? "" : "s"} — daily digest`;
+  } else {
+    subject = `${eCount} new enquiry${eCount === 1 ? "" : "ies"} — daily digest`;
+  }
+
+  const lines = [];
+  if (bCount) {
+    lines.push(`${bCount} new booking${bCount === 1 ? "" : "s"} confirmed since the last digest:`, ``);
+    for (const b of bookings) {
+      const arr = formatGuestDate(b.arrival_date);
+      const paid = Number(b.deposit_paid) || 0;
+      const total = Number(b.gross_revenue) || 0;
+      const balanceDue = Math.max(total - paid, 0);
+      const payNote =
+        b.status === "confirmed"
+          ? "paid in full"
+          : `deposit paid; balance £${balanceDue.toFixed(2)} due`;
+      lines.push(
+        `• ${b.guest_name} (${b.guest_email || "no email"}) — arriving ${arr}, ${b.nights} night(s), ${b.guests || 0} guest(s). ${payNote}. Ref ${b.id}.`
+      );
+    }
+    lines.push(``);
+  }
+  if (eCount) {
+    lines.push(`${eCount} new enquiry${eCount === 1 ? "" : "ies"} from the contact form:`, ``);
+    for (const c of enquiries) {
+      const when = formatEnquiryWhen(c.last_enquiry_at);
+      const msg = String(c.last_enquiry_message || "").slice(0, 240);
+      const phone = c.phone ? `, ${c.phone}` : "";
+      lines.push(
+        `• ${c.name || "(no name)"} (${c.email || "no email"}${phone}) — enquired ${when}: "${msg}"`
+      );
+    }
+    lines.push(``);
+  }
+  lines.push(`View everything in admin: ${appBaseUrl}/admin`);
+  lines.push(``, `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
+  return { subject, text: lines.join("\n") };
+}
+
+function formatEnquiryWhen(iso) {
+  try {
+    return new Date(iso).toLocaleString("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/London",
+    });
+  } catch {
+    return iso;
+  }
+}

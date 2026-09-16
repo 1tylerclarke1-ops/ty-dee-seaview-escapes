@@ -15,6 +15,7 @@ import ReviewsManager from "@/components/admin/ReviewsManager";
 import StripeConnectionPanel from "@/components/admin/StripeConnectionPanel";
 import ConfigBanner from "@/components/admin/ConfigBanner";
 import NewBookingsBanner from "@/components/admin/NewBookingsBanner";
+import SendTestEmails from "@/components/admin/SendTestEmails";
 
 function Spinner() {
   return (
@@ -111,6 +112,10 @@ export default function Admin() {
         <div className="mb-12">
           <h2 className="text-2xl text-white mb-6">Email templates</h2>
           <EmailTemplatesEditor />
+        </div>
+        <div className="mb-12">
+          <h2 className="text-2xl text-white mb-6">Send test emails</h2>
+          <SendTestEmails />
         </div>
         <div className="mb-12">
           <h2 className="text-2xl text-white mb-6">Bookings</h2>

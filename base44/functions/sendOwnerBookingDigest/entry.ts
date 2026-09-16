@@ -8,12 +8,16 @@
 // primary, email-independent records. Runs as a scheduled job (no user
 // context) via the service role.
 //
+// The email body is built by the shared buildOwnerDigestEmail — the same
+// function the admin "send test emails" tool uses, so a test renders the
+// real digest, not a copy.
+//
 // A failed/throttled digest is logged to EmailLog and flagged on AdminState so
 // the dashboard can show it; the bookings/enquiries themselves stay recorded
 // regardless.
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { logEmailAttempt } from "../../shared/emailLog.ts";
-import { ownerEmail, formatGuestDate } from "../../shared/bookingEmail.ts";
+import { ownerEmail, buildOwnerDigestEmail } from "../../shared/bookingEmail.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
 
 export default async function (req) {
@@ -44,50 +48,11 @@ export default async function (req) {
       (a, b) => new Date(b.last_enquiry_at).getTime() - new Date(a.last_enquiry_at).getTime()
     );
 
-    const bCount = pendingBookings.length;
-    const eCount = pendingEnquiries.length;
-    let subject;
-    if (bCount && eCount) {
-      subject = `${bCount} new booking${bCount === 1 ? "" : "s"} and ${eCount} new enquiry${eCount === 1 ? "" : "ies"} — daily digest`;
-    } else if (bCount) {
-      subject = `${bCount} new booking${bCount === 1 ? "" : "s"} — daily digest`;
-    } else {
-      subject = `${eCount} new enquiry${eCount === 1 ? "" : "ies"} — daily digest`;
-    }
-
-    const lines = [];
-    if (bCount) {
-      lines.push(`${bCount} new booking${bCount === 1 ? "" : "s"} confirmed since the last digest:`, ``);
-      for (const b of pendingBookings) {
-        const arr = formatGuestDate(b.arrival_date);
-        const paid = Number(b.deposit_paid) || 0;
-        const total = Number(b.gross_revenue) || 0;
-        const balanceDue = Math.max(total - paid, 0);
-        const payNote =
-          b.status === "confirmed"
-            ? "paid in full"
-            : `deposit paid; balance £${balanceDue.toFixed(2)} due`;
-        lines.push(
-          `• ${b.guest_name} (${b.guest_email || "no email"}) — arriving ${arr}, ${b.nights} night(s), ${b.guests || 0} guest(s). ${payNote}. Ref ${b.id}.`
-        );
-      }
-      lines.push(``);
-    }
-    if (eCount) {
-      lines.push(`${eCount} new enquiry${eCount === 1 ? "" : "ies"} from the contact form:`, ``);
-      for (const c of pendingEnquiries) {
-        const when = formatEnquiryWhen(c.last_enquiry_at);
-        const msg = String(c.last_enquiry_message || "").slice(0, 240);
-        const phone = c.phone ? `, ${c.phone}` : "";
-        lines.push(
-          `• ${c.name || "(no name)"} (${c.email || "no email"}${phone}) — enquired ${when}: "${msg}"`
-        );
-      }
-      lines.push(``);
-    }
-    lines.push(`View everything in admin: ${appBaseUrl()}/admin`);
-    lines.push(``, `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
-    const text = lines.join("\n");
+    const { subject, text } = buildOwnerDigestEmail({
+      bookings: pendingBookings,
+      enquiries: pendingEnquiries,
+      appBaseUrl: appBaseUrl(),
+    });
 
     let ok = false;
     let err = null;
@@ -136,25 +101,11 @@ export default async function (req) {
       } catch {}
     }
 
-    await recordDigest(base44, { ok, count: bCount + eCount, error: ok ? null : err, sent: true });
-    return Response.json({ ok: true, count: bCount + eCount, sent: true, emailOk: ok, error: err });
+    const count = pendingBookings.length + pendingEnquiries.length;
+    await recordDigest(base44, { ok, count, error: ok ? null : err, sent: true });
+    return Response.json({ ok: true, count, sent: true, emailOk: ok, error: err });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
-  }
-}
-
-function formatEnquiryWhen(iso) {
-  try {
-    return new Date(iso).toLocaleString("en-GB", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Europe/London",
-    });
-  } catch {
-    return iso;
   }
 }
 
