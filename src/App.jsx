@@ -27,6 +27,8 @@ import CoastPathWalks from '@/pages/guides/CoastPathWalks';
 import WhatsOpenOffSeason from '@/pages/guides/WhatsOpenOffSeason';
 import Login from '@/pages/Login';
 import OAuthConsent from '@/pages/OAuthConsent';
+import PaymentReturn from '@/pages/booking/PaymentReturn';
+import PaymentCancelled from '@/pages/booking/PaymentCancelled';
 
 function RedirectToPrices() {
   const { search } = useLocation();
@@ -75,6 +77,8 @@ const AuthenticatedApp = () => {
         <Route path="/offer/:token" element={<OfferLanding />} />
         <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
         <Route path="/review/:bookingId" element={<Review />} />
+        <Route path="/booking/return" element={<PaymentReturn />} />
+        <Route path="/booking/cancelled" element={<PaymentCancelled />} />
         <Route path="/guides" element={<GuidesIndex />} />
         <Route path="/guides/dog-friendly-cornwall" element={<DogFriendlyCornwall />} />
         <Route path="/guides/polperro-in-winter" element={<PolperroInWinter />} />

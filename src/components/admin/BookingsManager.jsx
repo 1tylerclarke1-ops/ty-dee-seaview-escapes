@@ -147,7 +147,9 @@ export default function BookingsManager() {
                       </p>
 
                       <p className="text-xs text-white/50 border border-white/10 p-3">
-                        Confirming records the refund calculation on the booking only — <strong className="text-white/80">no money is moved via Stripe yet</strong>. The actual Stripe refund will be wired when the payment flow is built.
+                        {preview.has_payment
+                          ? <>Confirming issues a <strong className="text-white/80">Stripe refund of {gbpMoney(preview.refund_due)}</strong> to the guest's card. The fee Stripe keeps is not returned.</>
+                          : <>No card payment on file — <strong className="text-white/80">recording the refund calculation only</strong>, no money is moved.</>}
                       </p>
                       <div className="flex items-center gap-4 pt-2">
                         <button
@@ -156,7 +158,7 @@ export default function BookingsManager() {
                           disabled={confirming}
                           className="bg-signal text-white px-5 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity min-h-[44px] disabled:opacity-50"
                         >
-                          {confirming ? "Recording…" : "Confirm — record refund"}
+                          {confirming ? "Cancelling…" : "Confirm cancellation"}
                         </button>
                         <button
                           type="button"

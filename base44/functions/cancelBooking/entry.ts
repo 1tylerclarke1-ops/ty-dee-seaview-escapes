@@ -8,7 +8,8 @@ import {
   todayIso,
   formatCoolingOffExpiry,
 } from "../../shared/cancellation.ts";
-import { estimateStripeFee } from "../../shared/stripe.ts";
+import { estimateStripeFee, createRefund } from "../../shared/stripe.ts";
+import { toMinorUnits } from "../../shared/money.ts";
 
 // Cancel a booking under the tiered refund policy. The refund amount is
 // calculated server-side only, on money actually received (deposit + balance),
@@ -98,6 +99,7 @@ export default async function (req) {
       fee_source: feeSource,
       net_retained: netRetained,
       out_of_pocket: outOfPocket,
+      has_payment: !!booking.stripe_payment_intent_id,
       policy_text: policyText,
     };
 
@@ -109,10 +111,25 @@ export default async function (req) {
       return Response.json({ error: "Admin required to cancel a booking" }, { status: 403 });
     }
 
+    // Issue a real Stripe refund if there is a card payment and money is due.
+    let refundPaid = 0;
+    let refundError = null;
+    if (refundDue > 0 && booking.stripe_payment_intent_id) {
+      try {
+        const refund = await createRefund({
+          paymentIntentId: booking.stripe_payment_intent_id,
+          amountPence: toMinorUnits(refundDue),
+        });
+        refundPaid = typeof refund.amount === "number" ? refund.amount / 100 : 0;
+      } catch (e) {
+        return Response.json({ ok: false, error: `Stripe refund failed: ${e.message}` }, { status: 502 });
+      }
+    }
+
     const updateData = {
       status: "cancelled",
       refund_due: refundDue,
-      refund_paid: 0,
+      refund_paid: refundPaid,
       refund_date: today,
       refund_tier: refundTier,
       deposit_retained: retained,
@@ -122,7 +139,7 @@ export default async function (req) {
     }
     const updated = await base44.asServiceRole.entities.Booking.update(booking_id, updateData);
 
-    return Response.json({ ok: true, confirm: true, ...preview, updated });
+    return Response.json({ ok: true, confirm: true, ...preview, refund_paid: refundPaid, refund_error: refundError, updated });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

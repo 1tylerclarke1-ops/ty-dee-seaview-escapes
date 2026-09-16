@@ -49,7 +49,9 @@ export default function PitchFeeTracker() {
   const gross = revenueBookings.reduce((s, b) => s + (b.gross_revenue || 0), 0);
   // Cleaning is charged once per booking, not per week.
   const cleaning = revenueBookings.length * cleaningCost;
-  const net = gross - cleaning;
+  // Stripe processing fees — stored on each booking at payment time.
+  const stripeFees = revenueBookings.reduce((s, b) => s + (b.stripe_fee || 0), 0);
+  const net = gross - cleaning - stripeFees;
   const depositsRetained = cancelled.reduce((s, b) => s + (b.deposit_retained || 0), 0);
   const bookedNet = net + depositsRetained;
   const netPct = target > 0 ? Math.min(100, (bookedNet / target) * 100) : 0;
@@ -83,6 +85,7 @@ export default function PitchFeeTracker() {
     if (mRevenue.length > 0) {
       const mGross = mRevenue.reduce((s, b) => s + (b.gross_revenue || 0), 0);
       const mCleaning = mRevenue.length * cleaningCost;
+      const mFees = mRevenue.reduce((s, b) => s + (b.stripe_fee || 0), 0);
       const mRetained = cancelled.filter(inMonth).reduce((s, b) => s + (b.deposit_retained || 0), 0);
       const mNights = mRevenue.reduce((s, b) => s + (b.nights || 0), 0);
       return {
@@ -90,7 +93,7 @@ export default function PitchFeeTracker() {
         status: "booked",
         gross: mGross,
         cleaning: mCleaning,
-        net: mGross - mCleaning + mRetained,
+        net: mGross - mCleaning - mFees + mRetained,
         nights: mNights,
         bookings: mRevenue.length,
         capacity: daysInSeason.length,
@@ -163,6 +166,7 @@ export default function PitchFeeTracker() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat label="Gross booked" value={gbp(gross)} />
         <Stat label="Cleaning" value={`−${gbp(cleaning)}`} />
+        <Stat label="Stripe fees" value={`−${gbp(stripeFees)}`} />
         <Stat label="Net (booked)" value={gbp(net)} />
         <Stat label="Deposits retained" value={gbp(depositsRetained)} />
         <Stat label="Nights booked" value={`${nightsBooked} / ${nightsAvailable}`} />

@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
+import { gbpMoney } from "@/lib/pricing";
 
 // Short details form: name, email, phone, address, optional message, terms
-// tick-box, and the facilities tick-box where it applies. One submit button.
+// tick-box, and the facilities tick-box where it applies. The primary action
+// is "Pay and confirm — £X" (Stripe checkout); a secondary enquiry path is
+// kept for questions or unavailable dates.
 function Field({ label, value, onChange, type = "text" }) {
   return (
     <div>
@@ -34,6 +37,9 @@ export default function EnquiryForm({
   canSubmit,
   submitting,
   onSubmit,
+  onEnquiry,
+  amountDue,
+  payableInFull,
   error,
 }) {
   const update = (k) => (v) => setDetails((d) => ({ ...d, [k]: v }));
@@ -117,7 +123,20 @@ export default function EnquiryForm({
           canSubmit && !submitting ? "bg-sea text-white hover:bg-sea-deep" : "bg-offseason text-muted-foreground cursor-not-allowed"
         }`}
       >
-        {submitting ? "Checking…" : "Request these dates"}
+        {submitting ? "Starting checkout…" : `Pay and confirm — ${gbpMoney(amountDue)}`}
+      </button>
+      <p className="mt-3 text-xs text-muted-foreground text-center">
+        {payableInFull
+          ? "You'll pay the full amount by card via Stripe."
+          : `You'll pay a ${gbpMoney(amountDue)} deposit now by card via Stripe; the balance is due before arrival.`}
+      </p>
+      <button
+        type="button"
+        onClick={onEnquiry}
+        disabled={!canSubmit || submitting}
+        className="mt-4 w-full text-sm text-muted-foreground hover:text-sea underline min-h-[44px] disabled:opacity-50"
+      >
+        Have a question? Send an enquiry instead
       </button>
     </form>
   );

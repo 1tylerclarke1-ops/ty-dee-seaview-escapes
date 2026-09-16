@@ -1,19 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MAX_GUESTS } from "@/lib/siteConfig";
-import { PRICING_SETTINGS, calculatePrice, gbpMoney } from "@/lib/pricing";
+import { PRICING_SETTINGS, calculatePrice, gbpMoney, isPayableInFull } from "@/lib/pricing";
 import { useCancellationPolicy, cancellationDisplay } from "@/lib/cancellation";
 import Stepper from "@/components/booking/Stepper";
 import PriceBreakdown from "@/components/booking/PriceBreakdown";
 import EnquiryForm from "@/components/booking/EnquiryForm";
 import StickyTotalBar from "@/components/booking/StickyTotalBar";
 
-// The inline booking panel — revealed under the selection once dates and a
-// stay length are chosen. Guests and dogs steppers, live breakdown, short
-// details form, and a mobile sticky total bar. No page navigation.
+// The inline booking panel. The default action is "Pay and confirm — £X":
+// the server re-validates everything, creates a held booking, and returns a
+// Stripe Checkout URL the guest is redirected to. An enquiry path remains for
+// questions or unavailable dates, but is no longer the default.
 export default function BookingPanel({ arrival, length, affected }) {
   const isMobile = useIsMobile();
   const [guests, setGuests] = useState(2);
@@ -25,7 +26,7 @@ export default function BookingPanel({ arrival, length, affected }) {
   const [marketing, setMarketing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [confirmed, setConfirmed] = useState(false);
+  const [enquirySent, setEnquirySent] = useState(false);
   const [sticky, setSticky] = useState(false);
   const breakdownRef = useRef(null);
   const utmRef = useRef({});
@@ -48,6 +49,8 @@ export default function BookingPanel({ arrival, length, affected }) {
   const coolingOffPhrase = cancelInfo?.coolingOff?.sevenDayException
     ? "24 hours before you arrive"
     : "48 hours";
+  const payableInFull = arrival ? isPayableInFull(arrival) : false;
+  const amountDue = breakdown ? (payableInFull ? breakdown.total : breakdown.deposit) : 0;
   const canSubmit = !!(
     details.name &&
     details.email &&
@@ -57,7 +60,7 @@ export default function BookingPanel({ arrival, length, affected }) {
   );
 
   useEffect(() => {
-    setConfirmed(false);
+    setEnquirySent(false);
     setError(null);
   }, [arrival, length]);
 
@@ -72,7 +75,48 @@ export default function BookingPanel({ arrival, length, affected }) {
     return () => obs.disconnect();
   }, [isMobile, arrival, length, dogs]);
 
-  const handleSubmit = async () => {
+  // Default path: pay and confirm. Server validates, creates a hold, returns
+  // a Stripe Checkout URL — the guest is redirected there to pay.
+  const handlePay = async () => {
+    if (!canSubmit || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const u = utmRef.current;
+      const res = await base44.functions.invoke("createCheckoutSession", {
+        arrival_date: format(arrival, "yyyy-MM-dd"),
+        nights: length,
+        guests,
+        dog_count: dogs,
+        name: details.name,
+        email: details.email,
+        phone: details.phone,
+        address: details.address,
+        message: details.message,
+        marketing_consent: marketing,
+        facilities_acknowledged: facilitiesAck,
+        cancellation_acknowledged: pastFullRefund && cancelAck,
+        utm_source: u.utm_source,
+        utm_medium: u.utm_medium,
+        utm_campaign: u.utm_campaign,
+        how_heard: details.how_heard,
+      });
+      const data = res.data || res;
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || "Could not start checkout. Please try again.");
+        setSubmitting(false);
+      }
+    } catch (e) {
+      const data = e?.data || e;
+      setError(data?.error || "Could not start checkout. Please try again.");
+      setSubmitting(false);
+    }
+  };
+
+  // Enquiry path — kept for questions or unavailable dates, no longer default.
+  const handleEnquiry = async () => {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
     setError(null);
@@ -84,9 +128,7 @@ export default function BookingPanel({ arrival, length, affected }) {
       if (res.data && !res.data.valid) {
         setError(res.data.errors?.[0] || "These dates aren't available.");
       } else {
-        setConfirmed(true);
-        // Record the contact + marketing consent (best-effort, never blocks the
-        // confirmation). Consent is opt-in only — an unticked box stays false.
+        setEnquirySent(true);
         const u = utmRef.current;
         const utm = [u.utm_source, u.utm_medium, u.utm_campaign].filter(Boolean).join("/");
         const acquisition_source = [details.how_heard, utm].filter(Boolean).join(" · ");
@@ -109,26 +151,23 @@ export default function BookingPanel({ arrival, length, affected }) {
 
   if (!arrival || !length || !breakdown) return null;
 
-  if (confirmed) {
+  if (enquirySent) {
     return (
       <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-32">
         <div className="bg-surface border border-line p-8 md:p-12 text-center">
-          <p className="text-sm text-sea tracking-wide uppercase">Request received</p>
+          <p className="text-sm text-sea tracking-wide uppercase">Enquiry received</p>
           <h2 className="text-3xl text-ink mt-3">
             Thank you, {details.name.split(" ")[0] || "we'll be in touch"}
           </h2>
           <p className="mt-4 text-ink-soft max-w-lg mx-auto">
-            We've received your request for {length} nights, arriving {format(arrival, "EEE d MMM yyyy")}. We'll be in touch to confirm availability and arrange your {gbpMoney(breakdown.deposit)} deposit.
-          </p>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Planning your journey? <Link to="/find-us" className="text-sea underline">Find us</Link> — drive times, the last mile, and a map to the van.
+            We've received your enquiry for {length} nights, arriving {format(arrival, "EEE d MMM yyyy")}. We'll be in touch to confirm availability and answer any questions.
           </p>
           <button
             type="button"
-            onClick={() => setConfirmed(false)}
+            onClick={() => setEnquirySent(false)}
             className="mt-8 inline-flex items-center justify-center bg-ink text-white px-6 py-3 text-sm font-medium hover:bg-ink-soft transition-colors min-h-[44px]"
           >
-            Make another request
+            Back to booking
           </button>
         </div>
       </section>
@@ -172,7 +211,10 @@ export default function BookingPanel({ arrival, length, affected }) {
                 setCancelAck={setCancelAck}
                 canSubmit={canSubmit}
                 submitting={submitting}
-                onSubmit={handleSubmit}
+                onSubmit={handlePay}
+                onEnquiry={handleEnquiry}
+                amountDue={amountDue}
+                payableInFull={payableInFull}
                 error={error}
               />
             </div>
@@ -180,7 +222,7 @@ export default function BookingPanel({ arrival, length, affected }) {
         </div>
       </section>
       {isMobile && sticky && (
-        <StickyTotalBar total={breakdown.total} canSubmit={canSubmit} submitting={submitting} onSubmit={handleSubmit} />
+        <StickyTotalBar total={amountDue} canSubmit={canSubmit} submitting={submitting} onSubmit={handlePay} />
       )}
     </>
   );
