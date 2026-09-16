@@ -23,6 +23,7 @@ export const NAV_LINKS = [
   { label: "Prices & Availability", path: "/prices" },
   { label: "Dog Friendly", path: "/dogs" },
   { label: "Guides", path: "/guides" },
+  { label: "Reviews", path: "/reviews" },
   { label: "Find Us", path: "/find-us" },
   { label: "Terms & Conditions", path: "/terms" },
   { label: "Contact", path: "/contact" },
