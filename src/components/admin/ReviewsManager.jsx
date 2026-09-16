@@ -11,7 +11,16 @@ export default function ReviewsManager() {
   const [busy, setBusy] = useState(null);
 
   const load = () => {
-    base44.entities.Review.list("-created_date", 200).then(setReviews).catch(() => setReviews([]));
+    base44.entities.Review.list("-created_date", 200).then((rows) => {
+      // Pending (unpublished) reviews first, newest first within each group.
+      const sorted = [...(rows || [])].sort((a, b) => {
+        const pa = a.published ? 1 : 0;
+        const pb = b.published ? 1 : 0;
+        if (pa !== pb) return pa - pb;
+        return 0; // list already sorted by -created_date
+      });
+      setReviews(sorted);
+    }).catch(() => setReviews([]));
   };
   useEffect(load, []);
 
@@ -38,8 +47,15 @@ export default function ReviewsManager() {
   if (!reviews) return <p className="text-white/50 text-sm">Loading…</p>;
   if (!reviews.length) return <p className="text-white/50 text-sm">No reviews yet.</p>;
 
+  const pending = reviews.filter((r) => !r.published).length;
+
   return (
     <div className="space-y-4">
+      {pending > 0 && (
+        <p className="text-sm text-signal">
+          {pending} {pending === 1 ? "review" : "reviews"} awaiting your approval — published reviews stay hidden until you approve them.
+        </p>
+      )}
       {reviews.map((r) => (
         <div key={r.id} className="border border-white/10 p-5">
           <div className="flex items-start justify-between gap-4">
