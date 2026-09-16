@@ -29,6 +29,7 @@ const ALL_PHOTOS = [
   { id: "floor-plan", src: `${BASE}/c02808269_PlanLayout.jpg`, alt: "Ty Dee floor plan — single-storey layout of approximately 447 square feet", caption: "Floor plan — single-storey, ~447 sq ft, two bedrooms and a sofa bed." },
   { id: "decking-view", src: `${BASE}/23d07571c_DeckingandView.jpg`, alt: "Elevated corner of the decking looking out over the park to the coast, outdoor sectional and glass-topped table", caption: "Elevated corner of the decking, looking out over the park to the coast." },
   { id: "park-setting", src: `${BASE}/0ccdb513c_DeckingandView3.jpg`, alt: "The paved road winding through the green lawns of Polperro Holiday Park toward the coastal view", caption: "The paved road through the green lawns of Polperro Holiday Park toward the coastal view." },
+  { id: "deck-view-3", src: `${BASE}/283fa6e1c_Decking_and_View_3.jpg`, alt: "The view from the decking across Polperro Holiday Park, glass balustrade in the foreground and rolling green hills beyond", caption: "The view from the decking across the park to the hills beyond." },
   { id: "decking-view2", src: `${BASE}/e32785bb9_DeckingandView2.jpg`, alt: "Decking and view with outdoor sectional seating and a glass-topped table for slow afternoons", caption: "Decking and view — outdoor sectional and glass-topped table for slow afternoons." },
   { id: "lounge-corner", src: `${BASE}/ecfdfe0eb_LivingArea4.jpg`, alt: "Lounge corner with L-shaped sofa, electric fireplace and bay windows", caption: "Lounge corner — L-shaped sofa, electric fireplace, bay windows." },
   { id: "dining-nook", src: `${BASE}/8bbe68b7b_LivingArea2.jpg`, alt: "Dining nook with built-in bench seating and a light-oak pedestal table", caption: "Dining nook — built-in bench seating and light-oak pedestal table." },
@@ -89,8 +90,16 @@ const SECTIONS = [
   },
 ];
 
-// Surplus photographs — shown only in the gallery grid at the foot of the page.
-const GALLERY = ["decking-view", "park-setting", "decking-view2", "lounge-corner", "dining-nook", "twin-symmetry"].map(byId);
+// The full gallery — every photograph in the collection (floor plan excluded),
+// ordered as a guest walks through the van: exterior and deck, living and
+// dining, kitchen, bedrooms, bathroom.
+const GALLERY = [
+  "exterior", "decking", "view", "decking-view", "park-setting", "deck-view-3", "decking-view2",
+  "living", "lounge-flow", "dining-nook", "lounge-corner", "dining-booth",
+  "kitchen", "kitchen-detail",
+  "principal", "principal-vanity", "twin", "twin-window", "twin-symmetry",
+  "bathroom",
+].map(byId);
 
 export default function Caravan() {
   const [lightbox, setLightbox] = useState(null);
