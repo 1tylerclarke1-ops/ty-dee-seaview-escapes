@@ -40,17 +40,16 @@ export default async function (req) {
       return Response.json({ error: "Name, email, arrival date and stay length are required." }, { status: 400 });
     }
 
-    // Pricing config drift guard — refuse the booking if the published site's
-    // pricing fingerprint doesn't match the server's, so a guest is never
-    // charged a price that differs from what the site displayed.
-    if (pricing_fingerprint) {
-      const serverFp = pricingFingerprint(PRICING_SETTINGS, SEASONS, BOOKING_RULES);
-      if (pricing_fingerprint !== serverFp) {
-        return Response.json(
-          { error: "Pricing on this page is out of date. Please refresh and try again.", drift: true },
-          { status: 200 }
-        );
-      }
+    // Pricing config drift guard — refuse the booking unless the published
+    // site's pricing fingerprint matches the server's, so a guest is never
+    // charged a price that differs from what the site displayed. A missing
+    // fingerprint is refused the same as a mismatched one.
+    const serverFp = pricingFingerprint(PRICING_SETTINGS, SEASONS, BOOKING_RULES);
+    if (pricing_fingerprint !== serverFp) {
+      return Response.json(
+        { error: "Pricing on this page is out of date. Please refresh and try again.", drift: true },
+        { status: 200 }
+      );
     }
     const arrival = new Date(arrival_date + "T00:00:00Z");
     if (isNaN(arrival.getTime())) return Response.json({ error: "Invalid arrival date." }, { status: 400 });

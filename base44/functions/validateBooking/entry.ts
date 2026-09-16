@@ -18,21 +18,20 @@ export default async function (req) {
       );
     }
 
-    // Pricing config drift guard — the client sends a fingerprint of its
-    // pricing rules; if it doesn't match the server's, the published site and
-    // the server disagree on price, so refuse rather than book at the wrong rate.
-    if (pricing_fingerprint) {
-      const serverFp = pricingFingerprint(PRICING_SETTINGS, SEASONS, BOOKING_RULES);
-      if (pricing_fingerprint !== serverFp) {
-        return Response.json(
-          {
-            valid: false,
-            errors: ["Pricing on this page is out of date. Please refresh and try again."],
-            drift: true,
-          },
-          { status: 200 }
-        );
-      }
+    // Pricing config drift guard — the client must send a fingerprint of its
+    // pricing rules that matches the server's. A missing or mismatched
+    // fingerprint means the published site and server disagree on price (or
+    // the client is stale), so refuse rather than book at the wrong rate.
+    const serverFp = pricingFingerprint(PRICING_SETTINGS, SEASONS, BOOKING_RULES);
+    if (pricing_fingerprint !== serverFp) {
+      return Response.json(
+        {
+          valid: false,
+          errors: ["Pricing on this page is out of date. Please refresh and try again."],
+          drift: true,
+        },
+        { status: 200 }
+      );
     }
 
     const arrival = new Date(arrival_date);
