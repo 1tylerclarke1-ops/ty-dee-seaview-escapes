@@ -42,13 +42,19 @@ export function formatGuestDate(iso) {
 export function formatCoolingOffHour(iso) {
   if (!iso) return "";
   const dt = new Date(iso);
-  const hourLabel = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/London", hour: "numeric", hour12: true,
-  }).format(dt).toLowerCase().replace(/\s+/g, "");
-  const dateLabel = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/London", weekday: "long", day: "numeric", month: "long", year: "numeric",
-  }).format(dt);
-  return `${hourLabel} on ${dateLabel}`;
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    hour: "numeric", hour12: true,
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  }).formatToParts(dt);
+  const get = (t) => (parts.find((p) => p.type === t) || {}).value || "";
+  const hour = get("hour");
+  const dayPeriod = (get("dayPeriod") || "").toLowerCase();
+  const weekday = get("weekday");
+  const day = get("day");
+  const month = get("month");
+  const year = get("year");
+  return `${hour}${dayPeriod} on ${weekday} ${day} ${month} ${year}`;
 }
 
 // The guest confirmation email — sent at payment time AND on admin resend.

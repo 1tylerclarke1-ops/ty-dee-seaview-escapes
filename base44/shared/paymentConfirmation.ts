@@ -7,19 +7,14 @@
 
 import { toMinorUnits, fromMinorUnits } from "./money.ts";
 import { createRefund, retrievePaymentFee } from "./stripe.ts";
-import { calculatePrice, isPayableInFullIso, balanceDueIso } from "./pricing.ts";
+import { calculatePrice, isPayableInFullIso } from "./pricing.ts";
 import { findConflict, findAlternativeDates } from "./availability.ts";
 import {
   normalizePolicy,
-  buildPolicyText,
   DEFAULT_CANCELLATION_POLICY,
   computeCoolingOffExpiry,
-  formatCoolingOffExpiry,
 } from "./cancellation.ts";
-import {
-  stayFacilitiesStatus,
-  DEFAULT_FACILITIES_SETTINGS,
-} from "./facilities.ts";
+import { DEFAULT_FACILITIES_SETTINGS } from "./facilities.ts";
 import { normalizeEmail } from "./contacts.ts";
 import { logEmailAttempt } from "./emailLog.ts";
 import { appBaseUrl } from "./origin.ts";
