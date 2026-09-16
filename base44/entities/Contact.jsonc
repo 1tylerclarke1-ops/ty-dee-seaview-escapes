@@ -125,6 +125,25 @@
     "notes": {
       "type": "string",
       "title": "Notes"
+    },
+    "last_enquiry_message": {
+      "type": "string",
+      "title": "Latest contact-form enquiry message"
+    },
+    "last_enquiry_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "When the latest enquiry arrived"
+    },
+    "enquiry_digest_sent": {
+      "type": "boolean",
+      "default": false,
+      "title": "Included in an owner digest (prevents re-telling)"
+    },
+    "enquiry_resolved": {
+      "type": "boolean",
+      "default": false,
+      "title": "Resolved by the owner (clears the dashboard banner)"
     }
   },
   "required": [

@@ -53,10 +53,18 @@ export default async function (req) {
     }
     // Free-text message from the public contact form (stored on the contact's
     // notes so the owner reads it in admin). Checkout enquiries have no
-    // message, so this is a no-op there.
+    // message, so this is a no-op there. A message also (re)surfaces the
+    // contact as a new enquiry for the daily digest and the dashboard's
+    // unanswered-enquiries list — resetting the flags means a repeat enquiry
+    // from the same contact re-enters both.
     if (body.message) {
-      const noteLine = `[Contact form — ${new Date().toISOString().slice(0, 10)}]\n${body.message}`;
+      const now = new Date().toISOString();
+      const noteLine = `[Contact form — ${now.slice(0, 10)}]\n${body.message}`;
       data.notes = ex?.notes ? `${ex.notes}\n\n${noteLine}` : noteLine;
+      data.last_enquiry_message = body.message;
+      data.last_enquiry_at = now;
+      data.enquiry_digest_sent = false;
+      data.enquiry_resolved = false;
     }
 
     if (ex) {

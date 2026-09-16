@@ -1,13 +1,16 @@
-// Daily digest — sends the owner ONE email listing every paid booking not yet
-// included in a digest, then marks those bookings as alerted. Replaces the old
-// per-booking owner alert (one email per booking), so owner email volume is at
-// most one per day regardless of how many bookings arrive, and the per-recipient
-// email cap can never throttle a real alert. The admin dashboard's "new
-// bookings since you last looked" indicator remains the primary, email-independent
-// record. Runs as a scheduled job (no user context) via the service role.
+// Daily digest — sends the owner ONE email listing every paid booking AND
+// every contact-form enquiry not yet included in a digest, then marks them
+// alerted/digested. Replaces the old per-booking owner alert (one email per
+// booking), so owner email volume is at most one per day regardless of how
+// many bookings or enquiries arrive, and the per-recipient email cap can
+// never throttle a real alert. The admin dashboard's "new bookings since you
+// last looked" indicator and the "unanswered enquiries" list remain the
+// primary, email-independent records. Runs as a scheduled job (no user
+// context) via the service role.
 //
 // A failed/throttled digest is logged to EmailLog and flagged on AdminState so
-// the dashboard can show it; the bookings themselves stay recorded regardless.
+// the dashboard can show it; the bookings/enquiries themselves stay recorded
+// regardless.
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { logEmailAttempt } from "../../shared/emailLog.ts";
 import { ownerEmail, formatGuestDate } from "../../shared/bookingEmail.ts";
@@ -19,47 +22,76 @@ export default async function (req) {
 
     // Paid bookings not yet included in a digest.
     const all = await base44.asServiceRole.entities.Booking.list(null, 500);
-    const pending = (all || []).filter(
+    const pendingBookings = (all || []).filter(
       (b) => ["deposit_paid", "confirmed"].includes(b.status) && !b.owner_alert_sent
     );
 
-    if (!pending.length) {
+    // Contact-form enquiries not yet digested and not already resolved.
+    const contacts = await base44.asServiceRole.entities.Contact.list(null, 500);
+    const pendingEnquiries = (contacts || []).filter(
+      (c) => c.last_enquiry_message && !c.enquiry_digest_sent && !c.enquiry_resolved
+    );
+
+    if (!pendingBookings.length && !pendingEnquiries.length) {
       await recordDigest(base44, { ok: true, count: 0, error: null, sent: false });
       return Response.json({ ok: true, count: 0, sent: false });
     }
 
-    pending.sort(
-      (a, b) =>
-        new Date(b.created_date).getTime() - new Date(a.created_date).getTime()
+    pendingBookings.sort(
+      (a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime()
+    );
+    pendingEnquiries.sort(
+      (a, b) => new Date(b.last_enquiry_at).getTime() - new Date(a.last_enquiry_at).getTime()
     );
 
-    const owner = ownerEmail();
-    const subject = `${pending.length} new booking${pending.length === 1 ? "" : "s"} — daily digest`;
-    const lines = [
-      `${pending.length} new booking${pending.length === 1 ? "" : "s"} confirmed since the last digest:`,
-      ``,
-    ];
-    for (const b of pending) {
-      const arr = formatGuestDate(b.arrival_date);
-      const paid = Number(b.deposit_paid) || 0;
-      const total = Number(b.gross_revenue) || 0;
-      const balanceDue = Math.max(total - paid, 0);
-      const payNote =
-        b.status === "confirmed"
-          ? "paid in full"
-          : `deposit paid; balance £${balanceDue.toFixed(2)} due`;
-      lines.push(
-        `• ${b.guest_name} (${b.guest_email || "no email"}) — arriving ${arr}, ${b.nights} night(s), ${b.guests || 0} guest(s). ${payNote}. Ref ${b.id}.`
-      );
+    const bCount = pendingBookings.length;
+    const eCount = pendingEnquiries.length;
+    let subject;
+    if (bCount && eCount) {
+      subject = `${bCount} new booking${bCount === 1 ? "" : "s"} and ${eCount} new enquiry${eCount === 1 ? "" : "ies"} — daily digest`;
+    } else if (bCount) {
+      subject = `${bCount} new booking${bCount === 1 ? "" : "s"} — daily digest`;
+    } else {
+      subject = `${eCount} new enquiry${eCount === 1 ? "" : "ies"} — daily digest`;
     }
-    lines.push(``);
-    lines.push(`View all bookings: ${appBaseUrl()}/admin`);
-    lines.push(``);
-    lines.push(`Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
+
+    const lines = [];
+    if (bCount) {
+      lines.push(`${bCount} new booking${bCount === 1 ? "" : "s"} confirmed since the last digest:`, ``);
+      for (const b of pendingBookings) {
+        const arr = formatGuestDate(b.arrival_date);
+        const paid = Number(b.deposit_paid) || 0;
+        const total = Number(b.gross_revenue) || 0;
+        const balanceDue = Math.max(total - paid, 0);
+        const payNote =
+          b.status === "confirmed"
+            ? "paid in full"
+            : `deposit paid; balance £${balanceDue.toFixed(2)} due`;
+        lines.push(
+          `• ${b.guest_name} (${b.guest_email || "no email"}) — arriving ${arr}, ${b.nights} night(s), ${b.guests || 0} guest(s). ${payNote}. Ref ${b.id}.`
+        );
+      }
+      lines.push(``);
+    }
+    if (eCount) {
+      lines.push(`${eCount} new enquiry${eCount === 1 ? "" : "ies"} from the contact form:`, ``);
+      for (const c of pendingEnquiries) {
+        const when = formatEnquiryWhen(c.last_enquiry_at);
+        const msg = String(c.last_enquiry_message || "").slice(0, 240);
+        const phone = c.phone ? `, ${c.phone}` : "";
+        lines.push(
+          `• ${c.name || "(no name)"} (${c.email || "no email"}${phone}) — enquired ${when}: "${msg}"`
+        );
+      }
+      lines.push(``);
+    }
+    lines.push(`View everything in admin: ${appBaseUrl()}/admin`);
+    lines.push(``, `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
     const text = lines.join("\n");
 
     let ok = false;
     let err = null;
+    const owner = ownerEmail();
     if (!owner) {
       err = "OWNER_EMAIL secret is not configured";
     } else {
@@ -85,18 +117,44 @@ export default async function (req) {
     });
 
     if (ok) {
-      // Mark every included booking as alerted so the next digest skips them.
+      // Mark every included booking as alerted so the next digest skips it.
       try {
-        await base44.asServiceRole.entities.Booking.bulkUpdate(
-          pending.map((b) => ({ id: b.id, owner_alert_sent: true }))
-        );
+        if (pendingBookings.length) {
+          await base44.asServiceRole.entities.Booking.bulkUpdate(
+            pendingBookings.map((b) => ({ id: b.id, owner_alert_sent: true }))
+          );
+        }
+      } catch {}
+      // Mark every included enquiry as digested so the next digest skips it.
+      // The dashboard banner keeps showing it until the owner resolves it.
+      try {
+        if (pendingEnquiries.length) {
+          await base44.asServiceRole.entities.Contact.bulkUpdate(
+            pendingEnquiries.map((c) => ({ id: c.id, enquiry_digest_sent: true }))
+          );
+        }
       } catch {}
     }
 
-    await recordDigest(base44, { ok, count: pending.length, error: ok ? null : err, sent: true });
-    return Response.json({ ok: true, count: pending.length, sent: true, emailOk: ok, error: err });
+    await recordDigest(base44, { ok, count: bCount + eCount, error: ok ? null : err, sent: true });
+    return Response.json({ ok: true, count: bCount + eCount, sent: true, emailOk: ok, error: err });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
+  }
+}
+
+function formatEnquiryWhen(iso) {
+  try {
+    return new Date(iso).toLocaleString("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/London",
+    });
+  } catch {
+    return iso;
   }
 }
 
