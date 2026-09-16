@@ -106,7 +106,6 @@ export default async function (req) {
       dog_count: dogs,
       status: "held",
       gross_revenue: breakdown.total,
-      damage_waiver: breakdown.damageWaiver,
       deposit_paid: 0,
       balance_paid: 0,
       source: acquisition_source || undefined,

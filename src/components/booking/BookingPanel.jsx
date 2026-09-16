@@ -49,7 +49,7 @@ export default function BookingPanel({ arrival, length, affected }) {
   const { settings: cancelPolicy } = useCancellationPolicy();
   const arrivalIso = arrival ? format(arrival, "yyyy-MM-dd") : null;
   const cancelInfo =
-    arrivalIso && breakdown ? cancellationDisplay(arrivalIso, breakdown.total, cancelPolicy, breakdown.damageWaiver) : null;
+    arrivalIso && breakdown ? cancellationDisplay(arrivalIso, breakdown.total, cancelPolicy) : null;
   const pastFullRefund = !!cancelInfo?.pastFullRefund;
   const cancelPercent = cancelInfo?.currentTier?.refund_percent ?? 0;
   const coolingOffPhrase = cancelInfo?.coolingOff?.sevenDayException

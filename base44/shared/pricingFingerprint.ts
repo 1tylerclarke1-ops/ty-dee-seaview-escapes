@@ -15,7 +15,6 @@ export function pricingFingerprint(scalars, seasons, bookingRules) {
       dog_fee: scalars.dog_fee,
       dog_fee_per_dog: scalars.dog_fee_per_dog,
       max_dogs: scalars.max_dogs,
-      damage_waiver: scalars.damage_waiver,
       deposit_percentage: scalars.deposit_percentage,
       balance_due_days_before_arrival: scalars.balance_due_days_before_arrival
     },

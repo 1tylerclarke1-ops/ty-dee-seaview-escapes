@@ -16,11 +16,6 @@ export default function PriceBreakdown({ breakdown, arrival }) {
   if (breakdown.dogFee > 0) {
     rows.push({ label: `Dogs (${breakdown.dogs})`, value: gbpMoney(breakdown.dogFee) });
   }
-  rows.push({
-    label: "Damage waiver",
-    value: gbpMoney(breakdown.damageWaiver),
-    sub: "Covers accidental damage up to £250 — no deposit to pay and nothing to claim back.",
-  });
 
   const balanceDue = balanceDueDate(arrival);
   const payableInFull = isPayableInFull(arrival);
@@ -65,7 +60,7 @@ export default function PriceBreakdown({ breakdown, arrival }) {
           </div>
         </div>
       )}
-      <CancellationSummary arrival={arrival} total={breakdown.total} waiver={breakdown.damageWaiver} />
+      <CancellationSummary arrival={arrival} total={breakdown.total} />
     </div>
   );
 }

@@ -71,7 +71,6 @@ const SHARED_SCALAR_KEYS = [
   "dog_fee",
   "dog_fee_per_dog",
   "max_dogs",
-  "damage_waiver",
   "deposit_percentage",
   "balance_due_days_before_arrival",
 ];
@@ -96,7 +95,7 @@ export function checkPricingDrift() {
     assert.deepStrictEqual(clientRules, serverRules);
   });
 
-  // 3. Shared pricing scalars (deposit %, dog fee, waiver, rounding, etc.).
+  // 3. Shared pricing scalars (deposit %, dog fee, rounding, etc.).
   const clientSettings = evalBlock(extractBlock(clientSrc, "export const PRICING_SETTINGS ="));
   const serverSettings = evalBlock(extractBlock(pricingSrc, "export const PRICING_SETTINGS ="));
   for (const key of SHARED_SCALAR_KEYS) {

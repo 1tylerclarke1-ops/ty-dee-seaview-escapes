@@ -130,7 +130,6 @@ export function refundTierForDays(days, policy) {
 // a booking context only the tier bands apply (backward compatible). Past
 // arrival (days < 0) -> 0%.
 export function computeRefund(arrivalIso, totalPaid, policy, todayIsoValue, bookingCtx) {
-  // bookingCtx.waiverAmount — damage waiver retained on partial tiers.
   const today = todayIsoValue || todayIso();
   const nowMs = (bookingCtx && bookingCtx.nowMs) || Date.now();
   const paid = Math.max(0, Number(totalPaid) || 0);
@@ -162,9 +161,7 @@ export function computeRefund(arrivalIso, totalPaid, policy, todayIsoValue, book
   if (days < 0) days = 0;
   const tier = refundTierForDays(days, policy);
   const pct = tier.refund_percent || 0;
-  const waiver = Math.max(0, Number(bookingCtx && bookingCtx.waiverAmount) || 0);
-  const refundBase = pct >= 100 ? paid : Math.max(0, paid - waiver);
-  const refundDue = Math.round((pct / 100) * refundBase);
+  const refundDue = Math.round((pct / 100) * paid);
   return {
     daysBeforeArrival: days,
     tier,
@@ -192,7 +189,7 @@ export function cancellationDateBands(arrivalIso, policy) {
 // tiers whose refund window has already passed, leads with the guest's current
 // position, and returns each remaining band with its real "from" date and the
 // pounds it is worth. Refunds are calculated on the amount paid.
-export function cancellationDisplay(arrivalIso, total, policy, waiver, todayIsoValue) {
+export function cancellationDisplay(arrivalIso, total, policy, todayIsoValue) {
   const nowMs = todayIsoValue ? new Date(todayIsoValue + "T00:00:00Z").getTime() : Date.now();
   const p = normalizePolicy(policy);
   const expiryMs = computeCoolingOffExpiry(nowMs, arrivalIso, p);
@@ -220,9 +217,8 @@ export function cancellationDisplay(arrivalIso, total, policy, waiver, todayIsoV
     : tiers[currentIdx];
   const pastFullRefund = currentIdx !== 0;
   const paid = Math.max(0, Number(total) || 0);
-  const waiverAmt = Math.max(0, Number(waiver) || 0);
   const poundsFor = (pct) =>
-    pct >= 100 ? paid : Math.round((pct / 100) * Math.max(0, paid - waiverAmt));
+    pct >= 100 ? paid : Math.round((pct / 100) * paid);
   const bands = [];
   if (inNoRefund) {
     bands.push({
@@ -324,7 +320,7 @@ export function buildPolicyText(policy) {
     "",
     ...tierLines,
     "",
-    "The refund percentage applies to the total paid at the time you cancel. The damage waiver is non-refundable on partial refunds, but is refunded in full within the cooling-off window or under the 100% tier.",
+    "The refund percentage applies to the total paid at the time you cancel.",
     "Refunds are returned to the original payment method within 10 working days.",
     "",
     "Changes to your dates",

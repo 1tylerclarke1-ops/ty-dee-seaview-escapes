@@ -57,7 +57,6 @@ export default async function (req) {
     const calc = computeRefund(booking.arrival_date, totalPaid, policy, today, {
       bookedAtMs,
       coolingOffExpiresAtMs,
-      waiverAmount: Number(booking.damage_waiver) || 0,
     });
 
     const refundDue = calc.refundDue;

@@ -9,12 +9,12 @@ import { gbp } from "@/lib/pricing";
 // closes (never "Cancel now: 75%" while a full refund is still on the table
 // today). When arrival is fewer than 7 days away the window is capped at 24
 // hours before arrival and the lead line says so plainly.
-export default function CancellationSummary({ arrival, total, waiver }) {
+export default function CancellationSummary({ arrival, total }) {
   const { settings } = useCancellationPolicy();
   if (!arrival) return null;
 
   const arrivalIso = arrival instanceof Date ? format(arrival, "yyyy-MM-dd") : arrival;
-  const info = cancellationDisplay(arrivalIso, total, settings, waiver);
+  const info = cancellationDisplay(arrivalIso, total, settings);
   if (!info) return null;
 
   const co = info.coolingOff;

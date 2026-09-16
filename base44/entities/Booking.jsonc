@@ -86,8 +86,8 @@
     },
     "damage_waiver": {
       "type": "number",
-      "default": 25,
-      "title": "Damage waiver (snapshot at booking)"
+      "default": 0,
+      "title": "Damage waiver (historical \u2014 not charged on new bookings)"
     },
     "deposit_paid": {
       "type": "number",

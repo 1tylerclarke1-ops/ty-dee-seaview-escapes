@@ -150,7 +150,7 @@ export function computeRefund(
   totalPaid: number,
   policy: any,
   todayIsoValue?: string,
-  bookingCtx?: { bookedAtMs?: number; coolingOffExpiresAtMs?: number; nowMs?: number; waiverAmount?: number }
+  bookingCtx?: { bookedAtMs?: number; coolingOffExpiresAtMs?: number; nowMs?: number }
 ) {
   const today = todayIsoValue || todayIso();
   const nowMs = (bookingCtx && bookingCtx.nowMs) || Date.now();
@@ -183,12 +183,7 @@ export function computeRefund(
   if (days < 0) days = 0;
   const tier = refundTierForDays(days, policy);
   const pct = tier.refund_percent || 0;
-  // The damage waiver is non-refundable on partial tiers — a 75% tier refunds
-  // 75% of (money received minus the waiver), and the waiver is retained. On a
-  // 100% outcome (cooling-off or the 100% tier) the waiver is refunded in full.
-  const waiver = Math.max(0, Number(bookingCtx && bookingCtx.waiverAmount) || 0);
-  const refundBase = pct >= 100 ? paid : Math.max(0, paid - waiver);
-  const refundDue = Math.round((pct / 100) * refundBase);
+  const refundDue = Math.round((pct / 100) * paid);
   return {
     daysBeforeArrival: days,
     tier,
@@ -271,7 +266,7 @@ export function buildPolicyText(policy: any): string {
     "",
     ...tierLines,
     "",
-    "The refund percentage applies to the total paid at the time you cancel. The damage waiver is non-refundable on partial refunds, but is refunded in full within the cooling-off window or under the 100% tier.",
+    "The refund percentage applies to the total paid at the time you cancel.",
     "Refunds are returned to the original payment method within 10 working days.",
     "",
     "Changes to your dates",
