@@ -1,0 +1,74 @@
+{
+  "name": "PaymentLog",
+  "type": "object",
+  "properties": {
+    "stripe_event_id": {
+      "type": "string",
+      "title": "Stripe event id"
+    },
+    "event_type": {
+      "type": "string",
+      "title": "Event type"
+    },
+    "api_version": {
+      "type": "string",
+      "title": "Stripe API version"
+    },
+    "livemode": {
+      "type": "boolean",
+      "default": false,
+      "title": "Live mode"
+    },
+    "stripe_created": {
+      "type": "number",
+      "title": "Stripe event timestamp (unix)"
+    },
+    "payload": {
+      "type": "string",
+      "title": "Raw event JSON (full payload)"
+    },
+    "object_id": {
+      "type": "string",
+      "title": "Related object id (e.g. payment intent id)"
+    },
+    "object_type": {
+      "type": "string",
+      "title": "Related object type"
+    },
+    "processed": {
+      "type": "boolean",
+      "default": false,
+      "title": "Processed (business logic applied)"
+    },
+    "error": {
+      "type": "string",
+      "title": "Error (if signature verification or processing failed)"
+    }
+  },
+  "required": [
+    "stripe_event_id",
+    "event_type"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

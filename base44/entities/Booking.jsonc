@@ -41,6 +41,11 @@
       "default": "enquiry",
       "title": "Status"
     },
+    "payment_provider": {
+      "type": "string",
+      "default": "stripe",
+      "title": "Payment provider"
+    },
     "source": {
       "type": "string",
       "title": "Acquisition source (UTM / how-heard)"
