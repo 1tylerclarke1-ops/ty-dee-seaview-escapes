@@ -12,6 +12,9 @@ export const MAX_GUESTS = 6;
 // From 1 November onwards on-site park facilities are closed.
 export const PARK_CLOSURE_DATE = "2026-11-01";
 
+// Park facilities reopen on 19 March each year.
+export const PARK_OPEN_DATE = "2027-03-19";
+
 export const SITE_ORIGIN = "https://tydeeseaviewescapes.co.uk";
 
 export const NAV_LINKS = [

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { format, isBefore, isEqual, parseISO, startOfMonth } from "date-fns";
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { SEASON_START, SEASON_END, PARK_CLOSURE_DATE } from "@/lib/siteConfig";
+import { SEASON_START, SEASON_END, PARK_CLOSURE_DATE, PARK_OPEN_DATE } from "@/lib/siteConfig";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MonthGrid from "@/components/MonthGrid";
 import CalendarLegend from "@/components/CalendarLegend";
@@ -71,6 +71,11 @@ export default function StayCalendar({ selectedArrival, selectedLength, onSelect
       ? `Facilities closed from ${format(parseISO(PARK_CLOSURE_DATE), "d MMM")}`
       : null;
 
+  const openNoteFor = (m) =>
+    m.year === 2027 && m.month === 2
+      ? `Facilities open from ${format(parseISO(PARK_OPEN_DATE), "d MMM")}`
+      : null;
+
   const visible = months.slice(viewIndex, viewIndex + showCount);
 
   return (
@@ -130,6 +135,7 @@ export default function StayCalendar({ selectedArrival, selectedLength, onSelect
               selectedLength={selectedLength}
               onSelect={onSelect}
               closedNote={closedNoteFor(m)}
+              openNote={openNoteFor(m)}
             />
           ))}
         </motion.div>

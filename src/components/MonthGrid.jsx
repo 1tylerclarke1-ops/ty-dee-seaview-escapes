@@ -35,7 +35,7 @@ function isParkClosedPeriod(date) {
 // One month grid. Leading/trailing days from neighbouring months are inert
 // spacers — no number, no border, no hover, not focusable, aria-hidden — so a
 // date never appears in two grids.
-export default function MonthGrid({ year, month, selectedArrival, selectedLength, onSelect, closedNote }) {
+export default function MonthGrid({ year, month, selectedArrival, selectedLength, onSelect, closedNote, openNote }) {
   const days = monthGrid(year, month);
   const blockDates =
     selectedArrival && selectedLength
@@ -50,6 +50,11 @@ export default function MonthGrid({ year, month, selectedArrival, selectedLength
         {closedNote && (
           <span className="text-[0.65rem] tracking-wide uppercase text-muted-foreground text-right leading-tight">
             {closedNote}
+          </span>
+        )}
+        {openNote && (
+          <span className="text-[0.65rem] tracking-wide uppercase text-muted-foreground text-right leading-tight">
+            {openNote}
           </span>
         )}
       </div>
