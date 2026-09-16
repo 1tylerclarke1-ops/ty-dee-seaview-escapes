@@ -1,0 +1,66 @@
+{
+  "name": "EmailLog",
+  "type": "object",
+  "properties": {
+    "booking_id": {
+      "type": "string",
+      "title": "Booking id"
+    },
+    "recipient": {
+      "type": "string",
+      "title": "Recipient email"
+    },
+    "template": {
+      "type": "string",
+      "title": "Template / email type"
+    },
+    "subject": {
+      "type": "string",
+      "title": "Subject"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "sent",
+        "failed"
+      ],
+      "title": "Status"
+    },
+    "error": {
+      "type": "string",
+      "title": "Error message (if failed)"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Sent at"
+    }
+  },
+  "required": [
+    "recipient",
+    "template",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -21,6 +21,7 @@ import {
   DEFAULT_FACILITIES_SETTINGS,
 } from "./facilities.ts";
 import { normalizeEmail } from "./contacts.ts";
+import { logEmailAttempt } from "./emailLog.ts";
 
 const OWNER_EMAIL = "stay@tydee.co.uk";
 const APP_ORIGIN = "https://ty-dee-stays.base44.app";
@@ -231,18 +232,47 @@ async function sendConfirmationEmails(base44, booking, breakdown, payableInFull)
   lines.push(`Ty Dee Seaview Escapes — Polperro, Cornwall`);
   const body = lines.join("\n");
 
+  // Guest confirmation — log the attempt, never block the confirmation.
+  let guestOk = false;
+  let guestError = null;
   if (booking.guest_email) {
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: booking.guest_email, subject, text: body,
       });
-    } catch {}
+      guestOk = true;
+    } catch (e) {
+      guestError = e?.message || String(e);
+    }
+    await logEmailAttempt(base44, {
+      booking_id: booking.id, recipient: booking.guest_email,
+      template: "booking_confirmation_guest", subject, ok: guestOk, error: guestError,
+    });
   }
+
+  // Owner alert — logged separately.
+  const ownerSubject = `New booking confirmed & paid — ${booking.guest_name}`;
+  const ownerBody = `${booking.guest_name} (${booking.guest_email || "no email"}) booked ${booking.arrival_date} for ${booking.nights} night(s), ${booking.guests} guest(s). Paid £${amountPaid.toFixed(2)}${payableInFull ? " (full)" : " (deposit)"}. Booking ref ${booking.id}.`;
+  let ownerOk = false;
+  let ownerError = null;
   try {
     await base44.asServiceRole.integrations.Core.SendEmail({
-      to: OWNER_EMAIL,
-      subject: `New booking confirmed & paid — ${booking.guest_name}`,
-      text: `${booking.guest_name} (${booking.guest_email || "no email"}) booked ${booking.arrival_date} for ${booking.nights} night(s), ${booking.guests} guest(s). Paid £${amountPaid.toFixed(2)}${payableInFull ? " (full)" : " (deposit)"}. Booking ref ${booking.id}.`,
+      to: OWNER_EMAIL, subject: ownerSubject, text: ownerBody,
+    });
+    ownerOk = true;
+  } catch (e) {
+    ownerError = e?.message || String(e);
+  }
+  await logEmailAttempt(base44, {
+    booking_id: booking.id, recipient: OWNER_EMAIL,
+    template: "booking_confirmation_owner", subject: ownerSubject, ok: ownerOk, error: ownerError,
+  });
+
+  // Flag the booking so admin can see and resend if the guest email failed.
+  // Best-effort — never blocks.
+  try {
+    await base44.asServiceRole.entities.Booking.update(booking.id, {
+      confirmation_email_sent: guestOk,
     });
   } catch {}
 }
@@ -267,13 +297,23 @@ async function sendApologyEmail(base44, booking, alternatives) {
     `With apologies,`,
     `Ty Dee Seaview Escapes`,
   ].join("\n");
+  const apologySubject = `Your booking — we're sorry, the dates were just taken`;
+  let ok = false;
+  let err = null;
   try {
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: booking.guest_email,
-      subject: `Your booking — we're sorry, the dates were just taken`,
+      subject: apologySubject,
       text: body,
     });
-  } catch {}
+    ok = true;
+  } catch (e) {
+    err = e?.message || String(e);
+  }
+  await logEmailAttempt(base44, {
+    booking_id: booking.id, recipient: booking.guest_email,
+    template: "apology_race_lost", subject: apologySubject, ok, error: err,
+  });
 }
 
 async function sendOwnerAlert(base44, booking, headline, extra) {
@@ -285,11 +325,20 @@ async function sendOwnerAlert(base44, booking, headline, extra) {
     `Booking ref: ${booking.id}`,
     extra ? `Note: ${extra}` : "",
   ].filter(Boolean).join("\n");
+  let ok = false;
+  let err = null;
   try {
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: OWNER_EMAIL,
       subject: headline,
       text: body,
     });
-  } catch {}
+    ok = true;
+  } catch (e) {
+    err = e?.message || String(e);
+  }
+  await logEmailAttempt(base44, {
+    booking_id: booking.id, recipient: OWNER_EMAIL,
+    template: "owner_alert", subject: headline, ok, error: err,
+  });
 }

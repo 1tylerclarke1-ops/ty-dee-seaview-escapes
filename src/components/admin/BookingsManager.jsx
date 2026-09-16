@@ -17,6 +17,47 @@ export default function BookingsManager() {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState(null);
+  const [resendingId, setResendingId] = useState(null);
+  const [resendErrors, setResendErrors] = useState({});
+  const [logOpenId, setLogOpenId] = useState(null);
+  const [logEntries, setLogEntries] = useState({});
+  const [logLoading, setLogLoading] = useState(false);
+
+  const resendConfirmation = async (b) => {
+    setResendingId(b.id);
+    setResendErrors((m) => ({ ...m, [b.id]: null }));
+    try {
+      const res = await base44.functions.invoke("sendBookingConfirmation", { booking_id: b.id, send: true });
+      const data = res.data || res;
+      if (data.sent) {
+        load();
+      } else {
+        setResendErrors((m) => ({
+          [b.id]: data.sendResult?.error || "Could not send — is the guest email a registered user, or is a custom domain connected?",
+        }));
+      }
+    } catch (e) {
+      const data = e?.data || e;
+      setResendErrors((m) => ({ [b.id]: data?.error || "Could not send." }));
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  const toggleLog = async (b) => {
+    if (logOpenId === b.id) { setLogOpenId(null); return; }
+    setLogOpenId(b.id);
+    if (logEntries[b.id]) return;
+    setLogLoading(true);
+    try {
+      const rows = await base44.entities.EmailLog.filter({ booking_id: b.id }, "-sent_at", 20);
+      setLogEntries((m) => ({ ...m, [b.id]: rows || [] }));
+    } catch {
+      setLogEntries((m) => ({ ...m, [b.id]: [] }));
+    } finally {
+      setLogLoading(false);
+    }
+  };
 
   const load = () => {
     setLoading(true);
@@ -96,6 +137,53 @@ export default function BookingsManager() {
               </p>
             </div>
           </div>
+
+          {(b.status === "deposit_paid" || b.status === "confirmed") && (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              {b.confirmation_email_sent ? (
+                <span className="text-xs text-white/40">Confirmation email sent</span>
+              ) : (
+                <>
+                  <span className="text-xs text-signal">Confirmation email not sent</span>
+                  <button
+                    type="button"
+                    onClick={() => resendConfirmation(b)}
+                    disabled={resendingId === b.id}
+                    className="text-xs text-sea hover:underline disabled:opacity-50"
+                  >
+                    {resendingId === b.id ? "Sending…" : "Resend confirmation"}
+                  </button>
+                  {resendErrors[b.id] && <span className="text-xs text-signal">{resendErrors[b.id]}</span>}
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => toggleLog(b)}
+                className="text-xs text-white/50 hover:text-white/80"
+              >
+                {logOpenId === b.id ? "Hide email log" : "Email log"}
+              </button>
+              {logOpenId === b.id && (
+                <div className="w-full mt-2 space-y-1">
+                  {logLoading ? (
+                    <p className="text-xs text-white/40">Loading…</p>
+                  ) : logEntries[b.id]?.length ? (
+                    logEntries[b.id].map((e) => (
+                      <div key={e.id} className="text-xs text-white/60 tnum flex flex-wrap gap-x-3">
+                        <span>{e.sent_at ? format(parseISO(e.sent_at), "d MMM HH:mm") : "—"}</span>
+                        <span className={e.status === "sent" ? "text-sea" : "text-signal"}>{e.status}</span>
+                        <span>{e.template}</span>
+                        <span className="text-white/40">{e.recipient}</span>
+                        {e.error && <span className="text-signal">⚠ {e.error}</span>}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-white/40">No email attempts logged.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {b.status === "cancelled" ? (
             <div className="mt-4 pt-4 border-t border-white/10 text-sm text-white/60 tnum">

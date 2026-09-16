@@ -132,6 +132,11 @@
       "format": "date-time",
       "title": "Cooling-off window expiry (fixed at booking)"
     },
+    "confirmation_email_sent": {
+      "type": "boolean",
+      "default": false,
+      "title": "Confirmation email sent to guest"
+    },
     "notes": {
       "type": "string",
       "title": "Notes"

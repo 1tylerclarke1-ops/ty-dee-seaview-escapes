@@ -12,6 +12,7 @@ import {
   computeCoolingOffExpiry,
   formatCoolingOffExpiry,
 } from "../../shared/cancellation.ts";
+import { logEmailAttempt } from "../../shared/emailLog.ts";
 
 // Builds (and optionally sends) the booking confirmation email. For any
 // facilities-affected stay it states plainly that the park's on-site
@@ -104,6 +105,13 @@ export default async function (req) {
           text: emailText,
         });
         sent = true;
+        await logEmailAttempt(base44, {
+          booking_id: booking.id, recipient: booking.guest_email,
+          template: "booking_confirmation_guest", subject, ok: true, error: null,
+        });
+        await base44.asServiceRole.entities.Booking.update(booking.id, {
+          confirmation_email_sent: true,
+        }).catch(() => {});
         if (!booking.cooling_off_expires_at) {
           await base44.asServiceRole.entities.Booking.update(booking.id, {
             cooling_off_expires_at: new Date(coolingOffExpiryMs).toISOString(),
@@ -111,6 +119,10 @@ export default async function (req) {
         }
       } catch (e) {
         sendResult = { error: e.message };
+        await logEmailAttempt(base44, {
+          booking_id: booking.id, recipient: booking.guest_email,
+          template: "booking_confirmation_guest", subject, ok: false, error: e.message,
+        });
       }
     }
 
