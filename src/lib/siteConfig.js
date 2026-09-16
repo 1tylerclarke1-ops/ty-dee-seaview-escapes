@@ -21,7 +21,6 @@ export const NAV_LINKS = [
   { label: "Home", path: "/" },
   { label: "The Caravan", path: "/caravan" },
   { label: "Prices & Availability", path: "/prices" },
-  { label: "The Area", path: "/area" },
   { label: "Dog Friendly", path: "/dogs" },
   { label: "Guides", path: "/guides" },
   { label: "Find Us", path: "/find-us" },
