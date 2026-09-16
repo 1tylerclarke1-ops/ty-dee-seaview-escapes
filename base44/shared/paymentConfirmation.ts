@@ -57,8 +57,10 @@ export async function confirmBookingPayment(base44, booking, session) {
     return { error: `Amount mismatch: expected ${expectedPence}, got ${session.amount_total}` };
   }
 
-  // Race condition: re-check availability before confirming.
-  const conflict = await findConflict(base44, booking.arrival_date, booking.nights, booking.id);
+  // Race condition, pre-check: at confirm time only deposit_paid/confirmed
+  // bookings block — NOT holds (see availability.ts). If a confirmed booking
+  // already holds these dates, this payment lost the race.
+  const conflict = await findConflict(base44, booking.arrival_date, booking.nights, booking.id, false);
   if (conflict) {
     return await handleRaceLost(base44, booking, session);
   }
@@ -83,7 +85,36 @@ export async function confirmBookingPayment(base44, booking, session) {
     updateData.deposit_paid = amountPaid;
     updateData.balance_paid = 0;
   }
-  await base44.asServiceRole.entities.Booking.update(booking.id, updateData);
+
+  // ATOMIC CONFIRM — a conditional update: { stripe_session_id, status: "held" }
+  // uniquely targets this booking (session id is unique) AND tests the status
+  // in one atomic write. If the webhook and the return-to-site both fire, only
+  // one flips the status; the other sees updated=0 and treats it as already
+  // confirmed. This is the per-booking atomicity guarantee.
+  const atomic = await base44.asServiceRole.entities.Booking.updateMany(
+    { stripe_session_id: session.id, status: "held" },
+    { $set: updateData }
+  );
+  if (!atomic || atomic.updated === 0) {
+    // Another path already moved the status off "held" — idempotent skip.
+    return { already_confirmed: true };
+  }
+
+  // Post-update tiebreaker: if two overlapping holds both confirmed in the
+  // same instant (a createCheckoutSession race past the availability check),
+  // the one created earlier wins. If we lost, refund ourselves; the winner's
+  // own check finds no earlier-created overlap and keeps its confirmation.
+  const overlap = await findConflict(base44, booking.arrival_date, booking.nights, booking.id, false);
+  if (overlap) {
+    const myCreated = booking.created_date ? new Date(booking.created_date).getTime() : 0;
+    const theirCreated = overlap.created_date ? new Date(overlap.created_date).getTime() : 0;
+    const iLost = theirCreated < myCreated || (theirCreated === myCreated && overlap.id < booking.id);
+    if (iLost) {
+      return await handleRaceLost(base44, { ...booking, ...updateData }, session);
+    }
+    // We won — the other booking's own post-update check will refund it.
+  }
+
   const confirmedBooking = { ...booking, ...updateData };
 
   // Capture the contact + marketing consent (best-effort, never blocks).

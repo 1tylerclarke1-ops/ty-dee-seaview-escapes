@@ -1,24 +1,35 @@
 // Availability checks against the Booking entity. A single caravan, so we list
 // bookings and check for date overlaps in JS. A held booking past its
-// hold_expires_at is treated as released (does not block). Used by the payment
-// flow to re-check availability before creating a session and before
-// confirming payment (the race-condition guard).
+// hold_expires_at is treated as released (does not block).
+//
+// Two call sites, two policies:
+//   createCheckoutSession — includeHeld=true: an active hold blocks, so two
+//     guests can't both create holds on the same dates (the second gets a 409).
+//   confirmBookingPayment   — includeHeld=false: only deposit_paid/confirmed
+//     bookings block. The first payment to confirm wins; a later overlapping
+//     payment sees the first as confirmed and is refunded. (Holds block at
+//     session-creation time, not at confirm time — otherwise two racing holds
+//     would both see each other as conflicts and both lose.)
 
 import { addDaysIso } from "./cancellation.ts";
 import { allowedLengthsForArrival, seasonForDate } from "./bookingRules.ts";
 
-// Returns the conflicting booking (held/deposit_paid/confirmed) that overlaps
-// the given stay, or null if the dates are free. `excludeId` skips the booking
-// being confirmed (its own hold should not block itself).
-export async function findConflict(base44, arrivalIso, nights, excludeId) {
+export async function findConflict(base44, arrivalIso, nights, excludeId, includeHeld = true) {
   const departureIso = addDaysIso(arrivalIso, nights);
   const bookings = await base44.asServiceRole.entities.Booking.list("-arrival_date", 500);
   const now = Date.now();
   for (const b of bookings || []) {
     if (b.id === excludeId) continue;
-    if (b.status !== "held" && b.status !== "deposit_paid" && b.status !== "confirmed") continue;
-    // Expired hold = released dates
-    if (b.status === "held" && b.hold_expires_at && new Date(b.hold_expires_at).getTime() < now) continue;
+    let statusOk;
+    if (b.status === "deposit_paid" || b.status === "confirmed") {
+      statusOk = true;
+    } else if (b.status === "held" && includeHeld) {
+      // Expired hold = released dates.
+      if (b.hold_expires_at && new Date(b.hold_expires_at).getTime() < now) continue;
+      statusOk = true;
+    } else {
+      continue;
+    }
     const bDeparture = addDaysIso(b.arrival_date, b.nights);
     // Overlap: this arrival < their departure AND their arrival < this departure
     if (arrivalIso < bDeparture && b.arrival_date < departureIso) return b;
@@ -27,7 +38,7 @@ export async function findConflict(base44, arrivalIso, nights, excludeId) {
 }
 
 export async function isAvailable(base44, arrivalIso, nights, excludeId) {
-  return !(await findConflict(base44, arrivalIso, nights, excludeId));
+  return !(await findConflict(base44, arrivalIso, nights, excludeId, true));
 }
 
 // Find the next N available arrival dates for a given stay length, starting
