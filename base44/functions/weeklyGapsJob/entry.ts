@@ -54,14 +54,19 @@ export default async function (req) {
     lines.push(`${appBaseUrl()}/admin`);
 
     const body = lines.join("\n");
-    try {
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: ownerEmail(),
-        subject: `Weekly gaps review — ${formatShort(today)}`,
-        body,
-      });
-    } catch {
-      /* email may fail without a custom domain; the job still ran */
+    const owner = ownerEmail();
+    if (!owner) {
+      console.error("[config] OWNER_EMAIL not set — weekly gaps email skipped");
+    } else {
+      try {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: owner,
+          subject: `Weekly gaps review — ${formatShort(today)}`,
+          body,
+        });
+      } catch {
+        /* email may fail without a custom domain; the job still ran */
+      }
     }
 
     return Response.json({

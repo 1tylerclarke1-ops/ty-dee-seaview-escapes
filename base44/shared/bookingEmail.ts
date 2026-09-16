@@ -17,13 +17,18 @@ import {
   DEFAULT_FACILITIES_SETTINGS,
 } from "./facilities.ts";
 
-const DEFAULT_OWNER_EMAIL = "tyler-92@hotmail.co.uk";
-
 // Owner alert destination — single source of truth across every sender.
+// No fallback: a missing OWNER_EMAIL is a configuration error, not a silent
+// default. Returns null when unset so callers skip the send and flag it,
+// rather than quietly mailing a wrong address. Set it in Settings →
+// Environment variables.
 export function ownerEmail() {
   const fromSecret = secrets.get("OWNER_EMAIL");
-  if (fromSecret) return fromSecret.trim();
-  return DEFAULT_OWNER_EMAIL;
+  if (fromSecret && fromSecret.trim()) return fromSecret.trim();
+  console.error(
+    "[config] OWNER_EMAIL secret is not set — owner alerts cannot be delivered. Set it in Settings → Environment variables."
+  );
+  return null;
 }
 
 const DAYS_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];

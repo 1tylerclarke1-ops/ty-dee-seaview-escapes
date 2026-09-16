@@ -35,6 +35,6 @@ export const BUSINESS = {
   sleeps: 6,
   bedrooms: "2 bedrooms plus sofa bed",
   bathrooms: "Family bathroom plus ensuite WC",
-  email: "tyler-92@hotmail.co.uk",
+  email: "bookings@tydeeseaviewescapes.co.uk",
   phone: "+44 1503 000 000",
 };

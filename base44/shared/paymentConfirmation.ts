@@ -234,16 +234,20 @@ async function sendConfirmationEmails(base44, booking, breakdown, payableInFull)
   });
   let ownerOk = false;
   let ownerError = null;
-  try {
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: owner, subject: ownerSubject, text: ownerBody,
-    });
-    ownerOk = true;
-  } catch (e) {
-    ownerError = e?.message || String(e);
+  if (!owner) {
+    ownerError = "OWNER_EMAIL secret is not configured";
+  } else {
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: owner, subject: ownerSubject, text: ownerBody,
+      });
+      ownerOk = true;
+    } catch (e) {
+      ownerError = e?.message || String(e);
+    }
   }
   await logEmailAttempt(base44, {
-    booking_id: booking.id, recipient: owner,
+    booking_id: booking.id, recipient: owner || "(unset)",
     template: "booking_confirmation_owner", subject: ownerSubject, ok: ownerOk, error: ownerError,
   });
 
@@ -308,18 +312,22 @@ async function sendOwnerAlert(base44, booking, headline, extra) {
   let ok = false;
   let err = null;
   const owner = ownerEmail();
-  try {
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: owner,
-      subject: headline,
-      text: body,
-    });
-    ok = true;
-  } catch (e) {
-    err = e?.message || String(e);
+  if (!owner) {
+    err = "OWNER_EMAIL secret is not configured";
+  } else {
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: owner,
+        subject: headline,
+        text: body,
+      });
+      ok = true;
+    } catch (e) {
+      err = e?.message || String(e);
+    }
   }
   await logEmailAttempt(base44, {
-    booking_id: booking.id, recipient: owner,
+    booking_id: booking.id, recipient: owner || "(unset)",
     template: "owner_alert", subject: headline, ok, error: err,
   });
 }

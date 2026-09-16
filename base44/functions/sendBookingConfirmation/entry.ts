@@ -88,7 +88,10 @@ export default async function (req) {
         return Response.json({ error: "Admin required to send" }, { status: 403 });
       }
       if (!recipient) {
-        return Response.json({ error: `${target} email recipient required to send` }, { status: 400 });
+        return Response.json(
+          { error: target === "owner" ? "OWNER_EMAIL is not configured — set it in Settings → Environment variables" : "Guest email address is missing on this booking" },
+          { status: 400 }
+        );
       }
       try {
         sendResult = await base44.asServiceRole.integrations.Core.SendEmail({
