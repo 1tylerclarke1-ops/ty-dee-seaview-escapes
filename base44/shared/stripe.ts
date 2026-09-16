@@ -49,8 +49,10 @@ export async function constructWebhookEvent(body, signature, secret) {
 }
 
 // Estimated Stripe processing fee on a GBP charge. Stripe does not return this
-// fee on a refund, so the owner is out of pocket by it. UK domestic card rate
-// (1.5% + £0.20) — an estimate; the actual fee depends on the card's region.
+// fee on a refund, so the owner is out of pocket by it. This is the UK DOMESTIC
+// card rate (1.5% + £0.20) ONLY — European (EEA) cards are ~2.5% and non-UK /
+// non-EEA cards higher. For the true fee, use retrieveChargeFee() once the
+// payment flow stores the charge id on the booking.
 const STRIPE_UK_DOMESTIC_RATE = 0.015;
 const STRIPE_UK_DOMESTIC_FIXED_PENCE = 20;
 
@@ -58,4 +60,16 @@ export function estimateStripeFee(amountPounds) {
   const amount = Math.max(0, Number(amountPounds) || 0);
   const feePence = Math.round(amount * 100 * STRIPE_UK_DOMESTIC_RATE + STRIPE_UK_DOMESTIC_FIXED_PENCE);
   return feePence / 100;
+}
+
+// Retrieve the actual processing fee Stripe charged on a charge, from its
+// balance transaction. Call this from the webhook handler when a payment
+// succeeds and store the result on the Booking (stripe_fee) — then cancelBooking
+// uses the real fee instead of the UK-domestic estimate above. Returns null if
+// the balance transaction or fee cannot be read.
+export async function retrieveChargeFee(chargeId) {
+  const stripe = getStripe();
+  const charge = await stripe.charges.retrieve(chargeId, { expand: ["balance_transaction"] });
+  const fee = charge.balance_transaction && charge.balance_transaction.fee;
+  return typeof fee === "number" ? fromMinorUnits(fee) : null;
 }

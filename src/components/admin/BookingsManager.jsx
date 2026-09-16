@@ -111,6 +111,15 @@ export default function BookingsManager() {
                           Outside the cooling-off window{preview.cooling_off_expires_display ? ` (ended ${preview.cooling_off_expires_display})` : ""}.
                         </p>
                       )}
+                      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 pb-3 border-b border-white/10">
+                        <div>
+                          <p className="text-xs tracking-wide uppercase text-white/40">You keep (net)</p>
+                          <p className="text-2xl text-white tnum">{gbpMoney(preview.net_retained)}</p>
+                        </div>
+                        <p className="text-sm text-white/50 tnum">
+                          Gross retained {gbpMoney(preview.retained)} · less Stripe fee {gbpMoney(preview.stripe_fee)}
+                        </p>
+                      </div>
                       <div className="grid sm:grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-xs tracking-wide uppercase text-white/40">Days to arrival</p>
@@ -129,20 +138,17 @@ export default function BookingsManager() {
                           <p className="text-white tnum">{gbpMoney(preview.refund_due)}</p>
                         </div>
                         <div>
-                          <p className="text-xs tracking-wide uppercase text-white/40">Amount retained</p>
-                          <p className="text-white tnum">{gbpMoney(preview.retained)}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs tracking-wide uppercase text-white/40">Stripe fee (est.)</p>
-                          <p className="text-white/70 tnum">{gbpMoney(preview.stripe_fee)}</p>
-                        </div>
-                        <div>
                           <p className="text-xs tracking-wide uppercase text-white/40">Out of pocket</p>
                           <p className="text-signal tnum">{gbpMoney(preview.out_of_pocket)}</p>
                         </div>
                       </div>
-                      <p className="text-[0.65rem] text-white/40">Stripe fee estimated (UK domestic card rate). Refund is on money received — calculated server-side.</p>
+                      <p className="text-[0.65rem] text-white/40">
+                        Stripe fee {preview.fee_source === "actual" ? "actual (from balance transaction)" : "estimated — UK domestic card rate only; European/non-UK cards cost more"}. Refund is on money received — calculated server-side.
+                      </p>
 
+                      <p className="text-xs text-white/50 border border-white/10 p-3">
+                        Confirming records the refund calculation on the booking only — <strong className="text-white/80">no money is moved via Stripe yet</strong>. The actual Stripe refund will be wired when the payment flow is built.
+                      </p>
                       <div className="flex items-center gap-4 pt-2">
                         <button
                           type="button"
@@ -150,7 +156,7 @@ export default function BookingsManager() {
                           disabled={confirming}
                           className="bg-signal text-white px-5 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity min-h-[44px] disabled:opacity-50"
                         >
-                          {confirming ? "Cancelling…" : "Confirm cancellation"}
+                          {confirming ? "Recording…" : "Confirm — record refund"}
                         </button>
                         <button
                           type="button"

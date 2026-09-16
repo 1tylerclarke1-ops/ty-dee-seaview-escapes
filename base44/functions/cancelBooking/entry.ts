@@ -68,10 +68,15 @@ export default async function (req) {
     const insideCoolingOff = calc.insideCoolingOff;
     const coolingOffExpiryMs = calc.coolingOffExpiryMs;
 
-    // Stripe does not return its processing fee on a refund. Estimate it on
-    // the original payment so the owner sees the true out-of-pocket cost.
-    const stripeFee = estimateStripeFee(totalPaid);
+    // Stripe does not return its processing fee on a refund. If the actual fee
+    // was stored on the booking at payment time (from the balance transaction),
+    // use it; otherwise fall back to the UK-domestic estimate.
+    const storedFee = Number(booking.stripe_fee);
+    const hasActualFee = isFinite(storedFee) && storedFee > 0;
+    const stripeFee = hasActualFee ? storedFee : estimateStripeFee(totalPaid);
+    const feeSource = hasActualFee ? "actual" : "estimated";
     const outOfPocket = Math.max(0, refundDue + stripeFee - totalPaid);
+    const netRetained = totalPaid - stripeFee - refundDue;
 
     const policyText = booking.cancellation_policy_text || buildPolicyText(policy);
 
@@ -90,6 +95,8 @@ export default async function (req) {
       refund_due: refundDue,
       retained,
       stripe_fee: stripeFee,
+      fee_source: feeSource,
+      net_retained: netRetained,
       out_of_pocket: outOfPocket,
       policy_text: policyText,
     };

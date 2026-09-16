@@ -46,6 +46,15 @@
       "default": "stripe",
       "title": "Payment provider"
     },
+    "stripe_payment_intent_id": {
+      "type": "string",
+      "title": "Stripe payment intent id (stored at payment)"
+    },
+    "stripe_fee": {
+      "type": "number",
+      "default": 0,
+      "title": "Stripe processing fee (actual, stored at payment)"
+    },
     "source": {
       "type": "string",
       "title": "Acquisition source (UTM / how-heard)"
