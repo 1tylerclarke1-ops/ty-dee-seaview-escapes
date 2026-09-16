@@ -23,7 +23,7 @@ export default function Navigation() {
     <>
       <header
         className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${
-          solid ? "bg-base/90 backdrop-blur-md border-b border-line" : "bg-transparent"
+          solid ? "bg-base border-b border-line" : "bg-transparent"
         }`}
       >
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-20 flex items-center justify-between">
