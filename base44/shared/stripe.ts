@@ -6,7 +6,7 @@
 // messages. This module lives under base44/ which is server-side only and is
 // never imported from the client bundle.
 
-import Stripe from "npm:stripe";
+import Stripe from "npm:stripe@22.6.2";
 import { secrets } from "base44:runtime";
 import { toMinorUnits, fromMinorUnits } from "./money.ts";
 
