@@ -11,8 +11,9 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { SEASON_START, SEASON_END, PARK_CLOSURE_DATE } from "@/lib/siteConfig";
+import { SEASON_START, SEASON_END } from "@/lib/siteConfig";
 import { isArrivalDay } from "@/lib/pricing";
+import { isFacilitiesClosed } from "@/lib/facilities";
 
 const WEEK_STARTS_ON = 1; // Monday
 
@@ -28,14 +29,14 @@ function inSeason(date) {
   return (isEqual(date, s) || isAfter(date, s)) && (isEqual(date, e) || isBefore(date, e));
 }
 
-function isParkClosedPeriod(date) {
-  return isEqual(date, parseISO(PARK_CLOSURE_DATE)) || isAfter(date, parseISO(PARK_CLOSURE_DATE));
+function isParkClosedPeriod(date, settings) {
+  return isFacilitiesClosed(date, settings);
 }
 
 // One month grid. Leading/trailing days from neighbouring months are inert
 // spacers — no number, no border, no hover, not focusable, aria-hidden — so a
 // date never appears in two grids.
-export default function MonthGrid({ year, month, selectedArrival, selectedLength, onSelect, closedNote, openNote }) {
+export default function MonthGrid({ year, month, selectedArrival, selectedLength, onSelect, closedNote, openNote, facilitiesSettings }) {
   const days = monthGrid(year, month);
   const blockDates =
     selectedArrival && selectedLength
@@ -72,7 +73,7 @@ export default function MonthGrid({ year, month, selectedArrival, selectedLength
           const season = inSeason(date);
           const arrival = isArrivalDay(date);
           const blocked = inBlock(date);
-          const closed = isParkClosedPeriod(date);
+          const closed = isParkClosedPeriod(date, facilitiesSettings);
           const isSelectedArrival = selectedArrival && isEqual(date, selectedArrival);
 
           let cls =

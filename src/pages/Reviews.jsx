@@ -29,13 +29,13 @@ export default function Reviews() {
     <>
       <Seo
         title="Guest Reviews · Ty Dee Seaview Escapes"
-        description="Verified guest reviews of stays at Ty Dee Seaview Escapes, a boutique static caravan in Polperro, Cornwall."
+        description="Verified guest reviews of stays at Ty Dee Seaview Escapes, a boutique static caravan in Polperro, Looe, Cornwall."
         canonical="/reviews"
       />
 
       <PageHero
         title="Guest Reviews"
-        subtitle="Verified reviews from guests who stayed at Ty Dee Seaview Escapes in Polperro, Cornwall."
+        subtitle="Verified reviews from guests who stayed at Ty Dee Seaview Escapes in Polperro, Looe, Cornwall."
       />
 
       <section className="px-6 md:px-10 max-w-[1400px] mx-auto pb-24 md:pb-32">

@@ -1,9 +1,9 @@
 import PageHero from "@/components/PageHero";
 import Seo from "@/components/Seo";
 import { SITE_ORIGIN } from "@/lib/structuredData";
-import { PARK_CLOSURE_DATE } from "@/lib/siteConfig";
 import { format, parseISO } from "date-fns";
 import { useCancellationPolicy, tierDisplayRows } from "@/lib/cancellation";
+import { useFacilitiesSettings } from "@/lib/facilities";
 
 const STATIC_SECTIONS = [
   {
@@ -13,14 +13,6 @@ const STATIC_SECTIONS = [
       "Stays are available year-round, and you can book up to twelve months ahead.",
       "Only two stay lengths are offered: three nights arriving on a Friday, or four nights arriving on a Monday. No other arrival days or durations are available.",
       "Maximum occupancy is six guests. This includes children and infants.",
-    ],
-  },
-  {
-    title: "Winter residency — park facilities",
-    body: [
-      `From ${format(parseISO(PARK_CLOSURE_DATE), "d MMMM yyyy")} onwards, on-site holiday park facilities — including the swimming pool, clubhouse, entertainment and children's play areas — are closed for the winter season.`,
-      "Any booking that includes dates on or after 1 November is a winter residency: a peaceful, self-catered retreat. The caravan itself remains fully equipped and heated.",
-      "Guests booking a winter stay must acknowledge this closure before confirming their booking. No refund or reduction is available on the basis of closed park facilities.",
     ],
   },
   {
@@ -94,7 +86,17 @@ function CancellationSection({ policy, index }) {
 
 export default function Terms() {
   const { settings: policy } = useCancellationPolicy();
-  const sections = [...STATIC_SECTIONS, { title: "Cancellation policy", kind: "cancellation" }];
+  const { settings: facilities } = useFacilitiesSettings();
+  const closedFrom = format(parseISO(facilities.facilities_closed_from), "d MMMM yyyy");
+  const winterSection = {
+    title: "Winter residency — park facilities",
+    body: [
+      `From ${closedFrom} onwards, on-site holiday park facilities — including the swimming pool, clubhouse, entertainment and children's play areas — are closed for the winter season.`,
+      "Any booking that includes dates on or after 1 November is a winter residency: a peaceful, self-catered retreat. The caravan itself remains fully equipped and heated.",
+      "Guests booking a winter stay must acknowledge this closure before confirming their booking. No refund or reduction is available on the basis of closed park facilities.",
+    ],
+  };
+  const sections = [STATIC_SECTIONS[0], winterSection, ...STATIC_SECTIONS.slice(1), { title: "Cancellation policy", kind: "cancellation" }];
 
   return (
     <div>

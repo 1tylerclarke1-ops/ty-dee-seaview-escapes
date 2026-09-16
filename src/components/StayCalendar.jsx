@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { format, isBefore, isEqual, parseISO, startOfMonth } from "date-fns";
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { SEASON_START, SEASON_END, PARK_CLOSURE_DATE, PARK_OPEN_DATE } from "@/lib/siteConfig";
+import { SEASON_START, SEASON_END } from "@/lib/siteConfig";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useFacilitiesSettings } from "@/lib/facilities";
 import MonthGrid from "@/components/MonthGrid";
 import CalendarLegend from "@/components/CalendarLegend";
 
@@ -66,15 +67,22 @@ export default function StayCalendar({ selectedArrival, selectedLength, onSelect
     }
   };
 
-  const closedNoteFor = (m) =>
-    m.year === 2026 && (m.month === 9 || m.month === 10)
-      ? `Facilities closed from ${format(parseISO(PARK_CLOSURE_DATE), "d MMM")}`
-      : null;
+  const { settings: facilities } = useFacilitiesSettings();
 
-  const openNoteFor = (m) =>
-    m.year === 2027 && m.month === 2
-      ? `Facilities open from ${format(parseISO(PARK_OPEN_DATE), "d MMM")}`
+  const closedNoteFor = (m) => {
+    const cf = parseISO(facilities.facilities_closed_from);
+    const inMonth = m.year === cf.getFullYear() && m.month === cf.getMonth();
+    const prev = new Date(cf.getFullYear(), cf.getMonth() - 1, 1);
+    const inPrevMonth = m.year === prev.getFullYear() && m.month === prev.getMonth();
+    return inMonth || inPrevMonth ? `Facilities closed from ${format(cf, "d MMM")}` : null;
+  };
+
+  const openNoteFor = (m) => {
+    const of = parseISO(facilities.facilities_open_from);
+    return m.year === of.getFullYear() && m.month === of.getMonth()
+      ? `Facilities open from ${format(of, "d MMM")}`
       : null;
+  };
 
   const visible = months.slice(viewIndex, viewIndex + showCount);
 
@@ -136,6 +144,7 @@ export default function StayCalendar({ selectedArrival, selectedLength, onSelect
               onSelect={onSelect}
               closedNote={closedNoteFor(m)}
               openNote={openNoteFor(m)}
+              facilitiesSettings={facilities}
             />
           ))}
         </motion.div>
