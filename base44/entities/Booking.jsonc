@@ -29,6 +29,16 @@
       "type": "number",
       "title": "Guests"
     },
+    "dogs": {
+      "type": "boolean",
+      "default": false,
+      "title": "Dogs"
+    },
+    "dog_count": {
+      "type": "number",
+      "default": 0,
+      "title": "Dog count"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -50,10 +60,19 @@
       "type": "string",
       "title": "Stripe payment intent id (stored at payment)"
     },
+    "stripe_session_id": {
+      "type": "string",
+      "title": "Stripe checkout session id"
+    },
     "stripe_fee": {
       "type": "number",
       "default": 0,
       "title": "Stripe processing fee (actual, stored at payment)"
+    },
+    "hold_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Hold expiry (30 min from creation)"
     },
     "source": {
       "type": "string",
@@ -106,11 +125,6 @@
       "type": "string",
       "format": "date-time",
       "title": "Cooling-off window expiry (fixed at booking)"
-    },
-    "dogs": {
-      "type": "boolean",
-      "default": false,
-      "title": "Dogs"
     },
     "notes": {
       "type": "string",

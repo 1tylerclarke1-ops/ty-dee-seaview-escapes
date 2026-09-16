@@ -73,3 +73,51 @@ export async function retrieveChargeFee(chargeId) {
   const fee = charge.balance_transaction && charge.balance_transaction.fee;
   return typeof fee === "number" ? fromMinorUnits(fee) : null;
 }
+
+// Create a Stripe Checkout Session for immediate card payment in GBP.
+// Cards only, immediate capture (no authorisation holds). The booking id is
+// set as client_reference_id and embedded in metadata for reconciliation.
+export async function createCheckoutSession({ amountPence, reference, metadata, successUrl, cancelUrl, email }) {
+  const stripe = getStripe();
+  return await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    mode: "payment",
+    line_items: [{
+      price_data: {
+        currency: "gbp",
+        unit_amount: amountPence,
+        product_data: { name: "Ty Dee Seaview Escapes — holiday booking" },
+      },
+      quantity: 1,
+    }],
+    client_reference_id: reference,
+    metadata,
+    customer_email: email,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    billing_address_collection: "auto",
+  });
+}
+
+// Retrieve a Checkout Session by id — for return-to-site verification.
+export async function retrieveSession(sessionId) {
+  const stripe = getStripe();
+  return await stripe.checkout.sessions.retrieve(sessionId);
+}
+
+// Issue a refund for a Payment Intent. amountPence optional — omit for full.
+export async function createRefund({ paymentIntentId, amountPence }) {
+  const stripe = getStripe();
+  const params = { payment_intent: paymentIntentId };
+  if (amountPence != null) params.amount = amountPence;
+  return await stripe.refunds.create(params);
+}
+
+// Retrieve the actual processing fee from a Payment Intent's latest charge
+// balance transaction. Returns pounds, or null if unavailable.
+export async function retrievePaymentFee(paymentIntentId) {
+  const stripe = getStripe();
+  const pi = await stripe.paymentIntents.retrieve(paymentIntentId, { expand: ["latest_charge.balance_transaction"] });
+  const fee = pi.latest_charge && pi.latest_charge.balance_transaction && pi.latest_charge.balance_transaction.fee;
+  return typeof fee === "number" ? fromMinorUnits(fee) : null;
+}
