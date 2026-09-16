@@ -1,6 +1,6 @@
 import { BUSINESS } from "@/lib/siteConfig";
 
-export const SITE_ORIGIN = "https://ty-dee-stays.base44.app";
+export const SITE_ORIGIN = "https://tydeeseaviewescapes.co.uk";
 
 // schema.org LodgingBusiness (a LocalBusiness subtype) for the caravan.
 // Reviews (when present) are folded in as aggregateRating + Review entries

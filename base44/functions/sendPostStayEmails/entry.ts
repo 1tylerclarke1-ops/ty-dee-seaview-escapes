@@ -1,8 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { renderTemplate, textToHtml, DEFAULT_TEMPLATES } from "../../shared/emailTemplates.ts";
 import { seasonForDate, formatLong } from "../../shared/pricing.ts";
-
-const APP_ORIGIN = "https://ty-dee-stays.base44.app";
+import { appBaseUrl } from "../../shared/origin.ts";
 
 // Daily job — finds confirmed/deposit_paid bookings that departed two days ago
 // and sends the post-stay email (thank you, review request, opt-in prompt).
@@ -61,9 +60,9 @@ export default async function (req) {
           season: season ? ` · ${season.name}` : "",
           offer_description: "",
           offer_link: "",
-          unsubscribe_link: `${APP_ORIGIN}/unsubscribe/${contact.unsubscribe_token}`,
-          consent_link: `${APP_ORIGIN}/consent/${contact.unsubscribe_token}`,
-          review_link: `${APP_ORIGIN}/review/${b.id}`,
+          unsubscribe_link: `${appBaseUrl()}/unsubscribe/${contact.unsubscribe_token}`,
+          consent_link: `${appBaseUrl()}/consent/${contact.unsubscribe_token}`,
+          review_link: `${appBaseUrl()}/review/${b.id}`,
         };
         const { subject, text } = renderTemplate(tpl, vars);
         const html = textToHtml(text);

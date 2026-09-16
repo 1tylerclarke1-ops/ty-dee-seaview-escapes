@@ -18,14 +18,9 @@ import {
 } from "../../shared/cancellation.ts";
 import { stayFacilitiesStatus, DEFAULT_FACILITIES_SETTINGS } from "../../shared/facilities.ts";
 import { addDaysIso } from "../../shared/cancellation.ts";
+import { appOrigin } from "../../shared/origin.ts";
 
-const APP_ORIGIN = "https://ty-dee-stays.base44.app";
 const HOLD_MINUTES = 30;
-
-function appOrigin(req) {
-  const origin = req.headers.get("origin");
-  return origin ? origin.replace(/\/$/, "") : APP_ORIGIN;
-}
 
 export default async function (req) {
   try {

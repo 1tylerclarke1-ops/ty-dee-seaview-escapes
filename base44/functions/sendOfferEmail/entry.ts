@@ -3,8 +3,7 @@ import { filterSegment, segmentById } from "../../shared/contacts.ts";
 import { describeOffer } from "../../shared/offers.ts";
 import { seasonForDate, formatLong } from "../../shared/pricing.ts";
 import { renderTemplate, textToHtml, DEFAULT_TEMPLATES } from "../../shared/emailTemplates.ts";
-
-const APP_ORIGIN = "https://ty-dee-stays.base44.app";
+import { appBaseUrl } from "../../shared/origin.ts";
 
 // Send an offer email to a segment of the guest list, using the owner's
 // editable template (template_type, default "late_availability"). preview_only
@@ -37,7 +36,7 @@ export default async function (req) {
     const arrival = new Date(offer.arrival_date + "T00:00:00Z");
     const season = seasonForDate(arrival);
     const desc = describeOffer(offer.type, offer.value);
-    const offerLink = `${APP_ORIGIN}/offer/${offer.token}`;
+    const offerLink = `${appBaseUrl()}/offer/${offer.token}`;
     const departureStr = offer.nights
       ? new Date(arrival.getTime() + offer.nights * 86400000).toISOString().slice(0, 10)
       : "";
@@ -49,7 +48,7 @@ export default async function (req) {
 
     const buildEmail = (c) => {
       const first = (c.name || "there").split(" ")[0];
-      const unsub = `${APP_ORIGIN}/unsubscribe/${c.unsubscribe_token}`;
+      const unsub = `${appBaseUrl()}/unsubscribe/${c.unsubscribe_token}`;
       const vars = {
         name: first,
         arrival_date: formatLong(offer.arrival_date),
@@ -64,7 +63,7 @@ export default async function (req) {
       const { subject, text } = renderTemplate(tpl, vars);
       const html =
         textToHtml(text) +
-        `<img src="${APP_ORIGIN}/functions/trackOpen?token=${offer.token}" width="1" height="1" alt="">`;
+        `<img src="${appBaseUrl()}/functions/trackOpen?token=${offer.token}" width="1" height="1" alt="">`;
       return { text, html, subject };
     };
 

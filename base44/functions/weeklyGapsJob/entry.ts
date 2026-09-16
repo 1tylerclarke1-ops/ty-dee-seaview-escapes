@@ -1,8 +1,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { computeGaps } from "../../shared/gaps.ts";
 import { formatLong, gbp, formatShort } from "../../shared/pricing.ts";
-
-const APP_ORIGIN = "https://ty-dee-stays.base44.app";
+import { appBaseUrl } from "../../shared/origin.ts";
 
 // Weekly job (Saturdays 06:00). Reduced scope: it does NOT apply discounts.
 // It expires stale holds, then emails the owner the gaps view for the next
@@ -51,7 +50,7 @@ export default async function (req) {
     lines.push(`Expired holds: ${expired}`);
     lines.push("");
     lines.push(`Review and create offers in the admin dashboard:`);
-    lines.push(`${APP_ORIGIN}/admin`);
+    lines.push(`${appBaseUrl()}/admin`);
 
     const body = lines.join("\n");
     try {

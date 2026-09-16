@@ -1,7 +1,7 @@
 // Public — returns a real XML sitemap (application/xml) listing every indexable
-// page. Submit https://ty-dee-stays.base44.app/functions/getSitemap to Google
-// Search Console. Update ORIGIN when a custom domain is connected.
-const ORIGIN = "https://ty-dee-stays.base44.app";
+// page. Submit https://tydeeseaviewescapes.co.uk/functions/getSitemap to Google
+// Search Console. The origin comes from the APP_BASE_URL secret (shared/origin.ts).
+import { appBaseUrl } from "../../shared/origin.ts";
 
 const PAGES = [
   { path: "/", priority: "1.0", freq: "weekly" },
@@ -22,7 +22,7 @@ export default async function () {
   const today = new Date().toISOString().slice(0, 10);
   const urls = PAGES.map(
     (p) =>
-      `  <url><loc>${ORIGIN}${p.path}</loc><lastmod>${today}</lastmod><changefreq>${p.freq}</changefreq><priority>${p.priority}</priority></url>`
+      `  <url><loc>${appBaseUrl()}${p.path}</loc><lastmod>${today}</lastmod><changefreq>${p.freq}</changefreq><priority>${p.priority}</priority></url>`
   ).join("\n");
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
   return new Response(xml, {

@@ -22,9 +22,9 @@ import {
 } from "./facilities.ts";
 import { normalizeEmail } from "./contacts.ts";
 import { logEmailAttempt } from "./emailLog.ts";
+import { appBaseUrl } from "./origin.ts";
 
 const OWNER_EMAIL = "stay@tydee.co.uk";
-const APP_ORIGIN = "https://ty-dee-stays.base44.app";
 
 // Confirm a booking's payment from a verified Stripe Checkout Session.
 // `session` is the Stripe session object (already retrieved + verified by the
@@ -292,7 +292,7 @@ async function sendApologyEmail(base44, booking, alternatives) {
     `If you'd still like to stay with us, here are the next available dates for a ${booking.nights}-night stay:`,
     altText,
     ``,
-    `Or browse all availability at ${APP_ORIGIN}/prices — or reply to this email and we'll help directly.`,
+    `Or browse all availability at ${appBaseUrl()}/prices — or reply to this email and we'll help directly.`,
     ``,
     `With apologies,`,
     `Ty Dee Seaview Escapes`,
