@@ -39,7 +39,7 @@ export default function Photo({
           type="button"
           onClick={onClick}
           aria-label={`Enlarge image: ${alt}`}
-          className="group block w-full p-0 m-0 border-0 bg-transparent text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sea focus-visible:ring-offset-2 focus-visible:ring-offset-base"
+          className="group block w-full h-full p-0 m-0 border-0 bg-transparent text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sea focus-visible:ring-offset-2 focus-visible:ring-offset-base"
         >
           {image}
         </button>

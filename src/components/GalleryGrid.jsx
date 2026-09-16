@@ -16,6 +16,7 @@ export default function GalleryGrid({ photos, onOpen }) {
               src={p.src}
               alt={p.alt}
               onClick={() => onOpen(p.index)}
+              className="h-full"
               imgClassName="block w-full h-full"
             />
           </div>
