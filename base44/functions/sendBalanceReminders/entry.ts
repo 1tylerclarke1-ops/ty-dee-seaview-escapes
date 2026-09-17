@@ -12,6 +12,8 @@
 // to cancel and release (no auto-cancel).
 //
 // Reminders stop the moment the balance is paid (status moves to "confirmed").
+// One reminder per booking per day: if multiple thresholds have passed, only
+// the most urgent stage is sent and earlier ones are marked superseded.
 // Each send is logged to EmailLog and recorded on the booking's
 // balance_reminders_sent array so a reminder is never sent twice.
 
@@ -57,29 +59,39 @@ export default async function (req) {
       const balanceDueDate = balanceDueIso(fresh.arrival_date);
       const manageUrl = fresh.cancel_token ? `${appBaseUrl()}/booking/${fresh.cancel_token}` : null;
 
-      // Each reminder fires when its threshold has passed AND it hasn't been
-      // sent yet — no upper bound on the day count. If the daily run is missed
-      // for a day or a week, the next run catches up every missed reminder.
-      // If multiple thresholds have passed, all missed reminders fire in one
-      // run (the guest receives each one, oldest first).
-      // Reminders halt on the first send failure (likely the daily email cap) —
-      // this preserves the remaining allowance for confirmations, which matter
-      // more. The failed reminder and all unsent ones retry the next day.
-      if (!remindersHalted && days <= 70 && !remindersSent.includes("70")) {
-        const ok = await sendOne(base44, fresh, "70", balanceOwed, balanceDueDate, days, manageUrl);
+      // One reminder per booking per day. If multiple thresholds have passed
+      // (the job was down and the booking crossed two or three at once), send
+      // only the MOST URGENT stage and mark the earlier ones as superseded so
+      // they never fire — the guest gets one clear message, not three in a row.
+      // Stages fire when their threshold has passed AND the stage isn't in
+      // balance_reminders_sent (no upper bound on the day count, so missed
+      // runs catch up). Reminders halt on the first send failure (likely the
+      // daily email cap) to preserve the allowance for confirmations.
+      const STAGES = ["70", "60", "55"];
+      const dueStages = STAGES.filter(
+        (s) => days <= Number(s) && !remindersSent.includes(s)
+      );
+
+      if (dueStages.length > 0 && !remindersHalted) {
+        const toSend = dueStages[dueStages.length - 1];
+        const toSupersede = dueStages.slice(0, -1);
+
+        const ok = await sendOne(base44, fresh, toSend, balanceOwed, balanceDueDate, days, manageUrl);
         if (!ok) remindersHalted = true;
-        sent.push({ ref: fresh.reference, type: "70_days", ok });
+        sent.push({ ref: fresh.reference, type: `${toSend}_days`, ok, superseded: toSupersede });
+
+        // On success, mark the sent stage AND any superseded stages in one
+        // update. If the send failed, nothing is marked — the next day retries
+        // the most urgent stage and supersedes the earlier ones again.
+        if (ok) {
+          try {
+            await base44.asServiceRole.entities.Booking.update(fresh.id, {
+              balance_reminders_sent: [...remindersSent, ...toSupersede, toSend],
+            });
+          } catch {}
+        }
       }
-      if (!remindersHalted && days <= 60 && !remindersSent.includes("60")) {
-        const ok = await sendOne(base44, fresh, "60", balanceOwed, balanceDueDate, days, manageUrl);
-        if (!ok) remindersHalted = true;
-        sent.push({ ref: fresh.reference, type: "60_days", ok });
-      }
-      if (!remindersHalted && days <= 55 && !remindersSent.includes("55")) {
-        const ok = await sendOne(base44, fresh, "55", balanceOwed, balanceDueDate, days, manageUrl);
-        if (!ok) remindersHalted = true;
-        sent.push({ ref: fresh.reference, type: "55_days", ok });
-      }
+
       // Flagging always continues — overdue detection must not be blocked by email failures.
       if (days <= 53 && !fresh.balance_overdue_flagged) {
         await base44.asServiceRole.entities.Booking.update(fresh.id, {
@@ -115,15 +127,5 @@ async function sendOne(base44, booking, stage, balanceOwed, balanceDueDate, days
     booking_id: booking.id, recipient: booking.guest_email,
     template: `balance_reminder_${stage}`, subject, ok, error: err,
   });
-  if (ok) {
-    const reminders = booking.balance_reminders_sent || [];
-    if (!reminders.includes(stage)) {
-      try {
-        await base44.asServiceRole.entities.Booking.update(booking.id, {
-          balance_reminders_sent: [...reminders, stage],
-        });
-      } catch {}
-    }
-  }
   return ok;
 }
