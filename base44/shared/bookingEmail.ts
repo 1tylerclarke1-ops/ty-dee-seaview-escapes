@@ -432,6 +432,26 @@ export function buildBalanceReminderEmail({ booking, stage, balanceOwed, balance
   return { subject, text, html };
 }
 
+// Formats the balance reminder send dates from the stage numbers stored in
+// balance_reminders_sent (e.g. ["70","60","57","55","53"]) into a human-readable
+// list: "30 August, 9 September, 12 September, 14 September and 16 September".
+// Returns null when no reminders were recorded.
+function formatReminderDates(stages, arrivalDate) {
+  if (!stages || !stages.length) return null;
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const dates = stages
+    .map((s) => parseInt(s, 10))
+    .filter((n) => !isNaN(n))
+    .sort((a, b) => a - b)
+    .map((n) => {
+      const d = new Date(addDaysIso(arrivalDate, -n) + "T00:00:00Z");
+      return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+    });
+  if (!dates.length) return null;
+  if (dates.length === 1) return dates[0];
+  return `${dates.slice(0, -1).join(", ")} and ${dates[dates.length - 1]}`;
+}
+
 // Auto-cancellation email — sent when a booking is automatically cancelled for
 // non-payment at day 52. Warm rather than punitive: acknowledges that
 // circumstances change and invites the guest to get in touch.
@@ -442,24 +462,34 @@ export function buildAutoCancelEmail({ booking, appBaseUrl }) {
   const contactUrl = `${appBaseUrl}/contact`;
   const subject = `Your booking has been cancelled — Ty Dee Seaview Escapes`;
 
-  const text = [
+  const reminderDates = formatReminderDates(booking.balance_reminders_sent, booking.arrival_date);
+  const textLines = [
     `Hello ${booking.guest_name || ""},`,
     ``,
     `We're very sorry to see your booking go. Because the balance wasn't received by the due date, your booking arriving ${arrivalLong} has been cancelled and your deposit of ${deposit} retained.`,
     ``,
-    `We understand that circumstances change — sometimes plans shift, or life simply gets in the way. If you'd still like to stay with us, please get in touch. We can't promise anything, but we'll see what we can do.`,
+    `Your dates have gone back on sale, but if they're still free we'd be glad to rebook you — just reply and let me know.`,
     ``,
+  ];
+  if (reminderDates) {
+    textLines.push(`We emailed you about the balance on ${reminderDates}.`, ``);
+  }
+  textLines.push(
     `Booking reference: ${booking.reference}.`,
     ``,
     `With warm wishes,`,
     `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`,
-  ].join("\n");
+  );
+  const text = textLines.join("\n");
 
   let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">Your booking has been cancelled</h1>`;
   body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
   body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
   body += para(`We're very sorry to see your booking go. Because the balance wasn't received by the due date, your booking arriving <strong>${escapeHtml(arrivalLong)}</strong> has been cancelled and your deposit of <strong>${escapeHtml(deposit)}</strong> retained.`);
-  body += para(`We understand that circumstances change — sometimes plans shift, or life simply gets in the way. If you'd still like to stay with us, please ${inlineLink(contactUrl, "get in touch")}. We can't promise anything, but we'll see what we can do.`);
+  body += para(`Your dates have gone back on sale, but if they're still free we'd be glad to rebook you — just reply and let me know.`);
+  if (reminderDates) {
+    body += para(`We emailed you about the balance on ${escapeHtml(reminderDates)}.`);
+  }
   body += figureBox([
     boxLabel("Your booking"),
     figRow("Booking ref", booking.reference),
