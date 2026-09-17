@@ -442,7 +442,7 @@ function formatReminderDates(stages, arrivalDate) {
   const dates = stages
     .map((s) => parseInt(s, 10))
     .filter((n) => !isNaN(n))
-    .sort((a, b) => a - b)
+    .sort((a, b) => b - a)
     .map((n) => {
       const d = new Date(addDaysIso(arrivalDate, -n) + "T00:00:00Z");
       return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
