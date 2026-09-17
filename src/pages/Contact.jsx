@@ -90,13 +90,6 @@ export default function Contact() {
 
           <div className="hairline mt-14" />
           <div className="mt-8">
-            <p className="text-sm text-muted-foreground">Prefer email?</p>
-            <a
-              href={`mailto:${BUSINESS.email}`}
-              className="block text-base lg:text-lg text-ink mt-3 hover:text-sea transition-colors break-all"
-            >
-              {BUSINESS.email}
-            </a>
             <p className="mt-6 text-ink-soft">
               {BUSINESS.name}<br />
               {BUSINESS.location}
