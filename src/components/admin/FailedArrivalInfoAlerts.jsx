@@ -1,18 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import AlertSection from "@/components/admin/AlertSection";
 
 // Prominently flags confirmed bookings whose arrival info email failed to
 // send. A guest who arrives without the lockbox code will ring the owner —
 // so failures surface here with the booking, the error, and a one-click
 // retry. Clears automatically once the retry succeeds (the flag is cleared
 // in sendArrivalInfoForBooking on a successful send).
-export default function FailedArrivalInfoAlerts() {
+export default function FailedArrivalInfoAlerts({ onCount }) {
   const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const bookings = await base44.entities.Booking.filter(
         { arrival_info_send_failed: true },
@@ -23,12 +22,11 @@ export default function FailedArrivalInfoAlerts() {
       setAlerts(confirmed);
     } catch {
       setAlerts([]);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { onCount?.(alerts.length); }, [alerts, onCount]);
 
   const retryAll = async () => {
     setRetrying(true);
@@ -42,16 +40,9 @@ export default function FailedArrivalInfoAlerts() {
     }
   };
 
-  if (loading) return <p className="text-white/40 text-sm mb-6">Checking arrival info sends…</p>;
-  if (alerts.length === 0) return null;
-
   return (
-    <div className="mb-10 border border-signal/50 bg-signal/10 p-6 md:p-8">
-      <p className="text-sm text-signal uppercase tracking-wide">Action needed</p>
-      <h2 className="text-2xl md:text-3xl text-white mt-1">
-        {alerts.length} arrival info {alerts.length === 1 ? "email failed to send" : "emails failed to send"}
-      </h2>
-      <p className="text-sm text-white/60 mt-2 mb-6">
+    <AlertSection title="Arrival info emails failed to send" count={alerts.length} tone="problem">
+      <p className="text-sm text-white/60 mb-4">
         A guest who arrives without the lockbox code will ring you. Retry now to send the arrival details.
       </p>
       <ul className="divide-y divide-white/10">
@@ -83,6 +74,6 @@ export default function FailedArrivalInfoAlerts() {
       >
         {retrying ? "Retrying…" : "Retry all arrival info now"}
       </button>
-    </div>
+    </AlertSection>
   );
 }

@@ -1,18 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import AlertSection from "@/components/admin/AlertSection";
 
 // Loud, unmissable alert for cancelled bookings whose guest confirmation email
 // failed to send at cancel time. A guest who cancels and receives nothing may
 // assume the cancellation failed and contact their bank — so a failed send is
 // surfaced here with the guest's details and a one-click resend, not buried in
 // the email log. Clears automatically once a resend succeeds (the flag flips).
-export default function CancellationEmailAlerts() {
+export default function CancellationEmailAlerts({ onCount }) {
   const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const bs = await base44.entities.Booking.list("-updated_date", 500);
       setBookings((bs || []).filter(
@@ -20,12 +19,11 @@ export default function CancellationEmailAlerts() {
       ));
     } catch {
       setBookings([]);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { onCount?.(bookings.length); }, [bookings, onCount]);
 
   const resend = async (id) => {
     setSending(id);
@@ -38,16 +36,9 @@ export default function CancellationEmailAlerts() {
     }
   };
 
-  if (loading) return <p className="text-white/40 text-sm mb-6">Checking cancellation emails…</p>;
-  if (bookings.length === 0) return null;
-
   return (
-    <div className="mb-10 border border-signal/50 bg-signal/10 p-6 md:p-8">
-      <p className="text-sm text-signal uppercase tracking-wide">Action needed</p>
-      <h2 className="text-2xl md:text-3xl text-white mt-1">
-        {bookings.length} cancellation confirmation {bookings.length === 1 ? "email not sent" : "emails not sent"}
-      </h2>
-      <p className="text-sm text-white/60 mt-2 mb-6">
+    <AlertSection title="Cancellation confirmations not sent" count={bookings.length} tone="problem">
+      <p className="text-sm text-white/60 mb-4">
         These bookings were cancelled and refunded, but the guest confirmation email failed to send. Resend so the guest isn't left without confirmation.
       </p>
       <ul className="divide-y divide-white/10">
@@ -73,6 +64,6 @@ export default function CancellationEmailAlerts() {
           </li>
         ))}
       </ul>
-    </div>
+    </AlertSection>
   );
 }

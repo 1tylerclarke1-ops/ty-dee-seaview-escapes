@@ -4,6 +4,7 @@ import PageNotFound from "@/lib/PageNotFound";
 import { useAuth } from "@/lib/AuthContext";
 import { BUSINESS } from "@/lib/siteConfig";
 import { useNoIndex } from "@/components/NoIndex";
+import TodayTab from "@/components/admin/TodayTab";
 import PitchFeeTracker from "@/components/admin/PitchFeeTracker";
 import FacilitiesSettingsEditor from "@/components/admin/FacilitiesSettingsEditor";
 import CancellationPolicyEditor from "@/components/admin/CancellationPolicyEditor";
@@ -14,14 +15,6 @@ import ContactsManager from "@/components/admin/ContactsManager";
 import ReviewsManager from "@/components/admin/ReviewsManager";
 import StripeConnectionPanel from "@/components/admin/StripeConnectionPanel";
 import ConfigBanner from "@/components/admin/ConfigBanner";
-import NewBookingsBanner from "@/components/admin/NewBookingsBanner";
-import CancellationEmailAlerts from "@/components/admin/CancellationEmailAlerts";
-import BalanceOverdueAlerts from "@/components/admin/BalanceOverdueAlerts";
-import TextReminderAlerts from "@/components/admin/TextReminderAlerts";
-import AutoCancelUndoAlerts from "@/components/admin/AutoCancelUndoAlerts";
-import GracePeriodAlerts from "@/components/admin/GracePeriodAlerts";
-import FailedBalanceReminderAlerts from "@/components/admin/FailedBalanceReminderAlerts";
-import FailedArrivalInfoAlerts from "@/components/admin/FailedArrivalInfoAlerts";
 import ArrivalInfoSettingsEditor from "@/components/admin/ArrivalInfoSettingsEditor";
 import SendTestEmails from "@/components/admin/SendTestEmails";
 import BlockedDatesManager from "@/components/admin/BlockedDatesManager";
@@ -34,9 +27,76 @@ function Spinner() {
   );
 }
 
+const TABS = [
+  { id: "today", label: "Today" },
+  { id: "bookings", label: "Bookings" },
+  { id: "settings", label: "Settings" },
+];
+
+function Section({ title, children }) {
+  return (
+    <div className="mb-10">
+      <h2 className="text-xl text-white mb-4">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function BookingsTab() {
+  return (
+    <div>
+      <Section title="Bookings">
+        <BookingsManager />
+      </Section>
+      <Section title="Blocked dates">
+        <BlockedDatesManager />
+      </Section>
+      <Section title="Gaps view · next 30 days">
+        <GapsView />
+      </Section>
+    </div>
+  );
+}
+
+function SettingsTab() {
+  return (
+    <div>
+      <ConfigBanner />
+      <Section title="Stripe connection">
+        <StripeConnectionPanel />
+      </Section>
+      <Section title="Park facilities settings">
+        <FacilitiesSettingsEditor />
+      </Section>
+      <Section title="Arrival info email">
+        <ArrivalInfoSettingsEditor />
+      </Section>
+      <Section title="Cancellation policy">
+        <CancellationPolicyEditor />
+      </Section>
+      <Section title="Email templates">
+        <EmailTemplatesEditor />
+      </Section>
+      <Section title="Send test emails">
+        <SendTestEmails />
+      </Section>
+      <Section title="Reviews">
+        <ReviewsManager />
+      </Section>
+      <Section title="Guest list">
+        <ContactsManager />
+      </Section>
+      <Section title="Pitch fee tracker">
+        <PitchFeeTracker />
+      </Section>
+    </div>
+  );
+}
+
 export default function Admin() {
   const { user, isAuthenticated, isLoadingAuth, authChecked, navigateToLogin } = useAuth();
   useNoIndex();
+  const [tab, setTab] = useState("today");
 
   // AuthContext only resolves a session when a bearer token is present — a
   // public app never calls me() for anonymous visitors, so a cookie-only
@@ -79,7 +139,7 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-ink text-white px-6 md:px-10 py-12 md:py-16">
+    <div className="min-h-screen bg-ink text-white px-4 sm:px-6 md:px-10 py-10 md:py-16">
       <div className="max-w-[1100px] mx-auto">
         <div className="flex items-baseline justify-between gap-4 mb-2">
           <p className="text-sm text-white/50">Owner dashboard</p>
@@ -91,63 +151,32 @@ export default function Admin() {
             Sign out
           </button>
         </div>
-        <h1 className="text-4xl md:text-5xl text-white mt-2">{BUSINESS.name}</h1>
-        <div className="border-t border-white/10 mt-8 mb-10" />
-        <NewBookingsBanner />
-        <CancellationEmailAlerts />
-        <FailedBalanceReminderAlerts />
-        <FailedArrivalInfoAlerts />
-        <BalanceOverdueAlerts />
-        <TextReminderAlerts />
-        <AutoCancelUndoAlerts />
-        <GracePeriodAlerts />
-        <ConfigBanner />
-        <div className="mb-12">
-          <StripeConnectionPanel />
-        </div>
-        <div className="mb-12">
-          <h2 className="text-2xl text-white mb-6">Blocked dates</h2>
-          <BlockedDatesManager />
-        </div>
-        <div className="mb-12">
-          <h2 className="text-2xl text-white mb-6">Gaps view · next 30 days</h2>
-          <GapsView />
-        </div>
-        <div className="mb-12">
-          <h2 className="text-2xl text-white mb-6">Reviews</h2>
-          <ReviewsManager />
-        </div>
-        <div className="mb-12">
-          <h2 className="text-2xl text-white mb-6">Guest list</h2>
-          <ContactsManager />
-        </div>
-        <div className="mb-12">
-          <h2 className="text-2xl text-white mb-6">Park facilities settings</h2>
-          <FacilitiesSettingsEditor />
-        </div>
-        <div className="mb-12">
-          <h2 className="text-2xl text-white mb-6">Arrival info email</h2>
-          <ArrivalInfoSettingsEditor />
-        </div>
-        <div className="mb-12">
-          <h2 className="text-2xl text-white mb-6">Cancellation policy</h2>
-          <CancellationPolicyEditor />
-        </div>
-        <div className="mb-12">
-          <h2 className="text-2xl text-white mb-6">Email templates</h2>
-          <EmailTemplatesEditor />
-        </div>
-        <div className="mb-12">
-          <h2 className="text-2xl text-white mb-6">Send test emails</h2>
-          <SendTestEmails />
-        </div>
-        <div className="mb-12">
-          <h2 className="text-2xl text-white mb-6">Bookings</h2>
-          <BookingsManager />
-        </div>
-        <div className="mb-12">
-          <h2 className="text-2xl text-white mb-6">Pitch fee tracker</h2>
-          <PitchFeeTracker />
+        <h1 className="text-3xl md:text-5xl text-white mt-2">{BUSINESS.name}</h1>
+
+        {/* Tab nav — sticky on mobile so it stays reachable while scrolling. */}
+        <nav className="sticky top-0 z-10 -mx-4 sm:-mx-6 md:-mx-10 px-4 sm:px-6 md:px-10 mt-8 mb-2 bg-ink/95 backdrop-blur border-b border-white/10">
+          <div className="flex gap-1 overflow-x-auto tydee-scroll">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={`px-4 py-3 text-sm whitespace-nowrap transition-colors border-b-2 -mb-px ${
+                  tab === t.id
+                    ? "text-white border-sea"
+                    : "text-white/50 border-transparent hover:text-white/80"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        <div className="mt-6">
+          {tab === "today" && <TodayTab />}
+          {tab === "bookings" && <BookingsTab />}
+          {tab === "settings" && <SettingsTab />}
         </div>
       </div>
     </div>

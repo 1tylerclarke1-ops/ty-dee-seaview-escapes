@@ -2,26 +2,25 @@ import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { gbpMoney } from "@/lib/pricing";
+import AlertSection from "@/components/admin/AlertSection";
 
 // Admin alert for bookings flagged balance-overdue (53+ days from arrival,
 // balance unpaid). Shows the guest's details and a one-click cancel-and-release
 // that retains the deposit. No auto-cancel — the owner decides.
-export default function BalanceOverdueAlerts() {
+export default function BalanceOverdueAlerts({ onCount }) {
   const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(null);
   const [error, setError] = useState(null);
 
   const load = () => {
-    setLoading(true);
     base44.entities.Booking
       .filter({ balance_overdue_flagged: true, status: "deposit_paid" }, "-arrival_date", 50)
       .then((rows) => setBookings(rows || []))
-      .catch(() => setBookings([]))
-      .finally(() => setLoading(false));
+      .catch(() => setBookings([]));
   };
 
   useEffect(load, []);
+  useEffect(() => { onCount?.(bookings.length); }, [bookings, onCount]);
 
   const cancelAndRelease = async (b) => {
     if (!confirm(`Cancel ${b.guest_name}'s booking and release the dates? The deposit is retained — no refund.`)) return;
@@ -42,13 +41,9 @@ export default function BalanceOverdueAlerts() {
     }
   };
 
-  if (loading) return <p className="text-sm text-white/50">Loading…</p>;
-  if (!bookings.length) return null;
-
   return (
-    <div className="border border-signal/40 bg-signal/10 p-5 mb-8">
-      <h2 className="text-xl text-white mb-1">Balance overdue</h2>
-      <p className="text-sm text-white/50 mb-4">
+    <AlertSection title="Balance overdue" count={bookings.length} tone="problem">
+      <p className="text-sm text-white/60 mb-4">
         These bookings are past the 7-day grace period with an unpaid balance. The deposit is retained if you cancel and release the dates.
       </p>
       {error && <p className="text-sm text-signal mb-3">{error}</p>}
@@ -83,6 +78,6 @@ export default function BalanceOverdueAlerts() {
           </div>
         );
       })}
-    </div>
+    </AlertSection>
   );
 }

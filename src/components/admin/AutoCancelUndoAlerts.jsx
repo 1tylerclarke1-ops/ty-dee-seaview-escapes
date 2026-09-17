@@ -2,21 +2,20 @@ import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { gbpMoney } from "@/lib/pricing";
+import AlertSection from "@/components/admin/AlertSection";
 
 // Prominent 24-hour undo for auto-cancelled bookings. Shows each booking
 // cancelled for non-payment within the last 24 hours, with a one-click
 // "Undo cancellation" that restores the booking, re-blocks the dates and
 // emails the guest a fresh payment link. Refuses (with a reason) if the
 // dates have been taken since.
-export default function AutoCancelUndoAlerts() {
+export default function AutoCancelUndoAlerts({ onCount }) {
   const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [undoing, setUndoing] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
   const load = () => {
-    setLoading(true);
     base44.entities.Booking
       .filter({ status: "cancelled" }, "-updated_date", 50)
       .then((rows) => {
@@ -29,11 +28,11 @@ export default function AutoCancelUndoAlerts() {
         );
         setBookings(filtered);
       })
-      .catch(() => setBookings([]))
-      .finally(() => setLoading(false));
+      .catch(() => setBookings([]));
   };
 
   useEffect(load, []);
+  useEffect(() => { onCount?.(bookings.length); }, [bookings, onCount]);
 
   const undo = async (b) => {
     setUndoing(b.id);
@@ -56,13 +55,17 @@ export default function AutoCancelUndoAlerts() {
     }
   };
 
-  if (loading) return null;
-  if (!bookings.length && !success) return null;
-
+  // forceShow keeps the section visible after an undo so the success (or
+  // error) message is not lost when the booking drops out of the list.
   return (
-    <div className="border border-signal/50 bg-signal/15 p-5 mb-8">
-      <h2 className="text-xl text-white mb-1">Auto-cancelled — 24-hour undo</h2>
-      <p className="text-sm text-white/50 mb-4">
+    <AlertSection
+      title="Auto-cancelled — 24-hour undo"
+      count={bookings.length}
+      tone="action"
+      forceShow={!!success || !!error}
+      defaultOpen={!!success || !!error}
+    >
+      <p className="text-sm text-white/60 mb-4">
         These bookings were automatically cancelled for non-payment. You have 24 hours to undo the cancellation and restore the booking. If the dates have been taken since, the undo will be refused.
       </p>
       {success && (
@@ -109,6 +112,6 @@ export default function AutoCancelUndoAlerts() {
           </div>
         );
       })}
-    </div>
+    </AlertSection>
   );
 }

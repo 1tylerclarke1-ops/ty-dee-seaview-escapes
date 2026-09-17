@@ -2,16 +2,15 @@ import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { gbpMoney } from "@/lib/pricing";
+import AlertSection from "@/components/admin/AlertSection";
 
 // Shows bookings in an active grace period (restored after auto-cancellation).
 // The grace period deadline is displayed so the owner can see which bookings
 // are in it and when the final payment is due.
-export default function GracePeriodAlerts() {
+export default function GracePeriodAlerts({ onCount }) {
   const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   const load = () => {
-    setLoading(true);
     base44.entities.Booking
       .filter({ status: "deposit_paid" }, "-updated_date", 50)
       .then((rows) => {
@@ -21,18 +20,15 @@ export default function GracePeriodAlerts() {
         );
         setBookings(filtered);
       })
-      .catch(() => setBookings([]))
-      .finally(() => setLoading(false));
+      .catch(() => setBookings([]));
   };
 
   useEffect(load, []);
-
-  if (loading || !bookings.length) return null;
+  useEffect(() => { onCount?.(bookings.length); }, [bookings, onCount]);
 
   return (
-    <div className="border border-sea/50 bg-sea/15 p-5 mb-8">
-      <h2 className="text-xl text-white mb-1">Grace period — restored bookings</h2>
-      <p className="text-sm text-white/50 mb-4">
+    <AlertSection title="Grace period — restored bookings" count={bookings.length} tone="action">
+      <p className="text-sm text-white/60 mb-4">
         These bookings were restored after auto-cancellation. The guest has until the grace period deadline to pay the balance before the booking is cancelled again.
       </p>
       {bookings.map((b) => {
@@ -66,6 +62,6 @@ export default function GracePeriodAlerts() {
           </div>
         );
       })}
-    </div>
+    </AlertSection>
   );
 }

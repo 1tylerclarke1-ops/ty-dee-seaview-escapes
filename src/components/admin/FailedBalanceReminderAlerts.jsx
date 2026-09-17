@@ -1,18 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import AlertSection from "@/components/admin/AlertSection";
 
 // Shows balance reminder emails that failed to send and haven't been
 // successfully retried. A guest who never got a reminder and then gets flagged
 // overdue is a complaint — so failures are surfaced here with the booking,
 // the stage, and the error, with a one-click retry. Clears automatically once
 // the retry succeeds (the stage lands in balance_reminders_sent).
-export default function FailedBalanceReminderAlerts() {
+export default function FailedBalanceReminderAlerts({ onCount }) {
   const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const logs = await base44.entities.EmailLog.filter({ status: "failed" }, "-sent_at", 200);
       const reminderLogs = (logs || []).filter(
@@ -48,12 +47,11 @@ export default function FailedBalanceReminderAlerts() {
       setAlerts(outstanding);
     } catch {
       setAlerts([]);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { onCount?.(alerts.length); }, [alerts, onCount]);
 
   const retryAll = async () => {
     setRetrying(true);
@@ -65,16 +63,9 @@ export default function FailedBalanceReminderAlerts() {
     }
   };
 
-  if (loading) return <p className="text-white/40 text-sm mb-6">Checking balance reminders…</p>;
-  if (alerts.length === 0) return null;
-
   return (
-    <div className="mb-10 border border-signal/50 bg-signal/10 p-6 md:p-8">
-      <p className="text-sm text-signal uppercase tracking-wide">Action needed</p>
-      <h2 className="text-2xl md:text-3xl text-white mt-1">
-        {alerts.length} balance reminder {alerts.length === 1 ? "email failed to send" : "emails failed to send"}
-      </h2>
-      <p className="text-sm text-white/60 mt-2 mb-6">
+    <AlertSection title="Balance reminder emails failed to send" count={alerts.length} tone="problem">
+      <p className="text-sm text-white/60 mb-4">
         These reminder emails failed and the guest hasn't received them. Retry now, or the next daily run will retry automatically.
       </p>
       <ul className="divide-y divide-white/10">
@@ -106,6 +97,6 @@ export default function FailedBalanceReminderAlerts() {
       >
         {retrying ? "Retrying…" : "Retry all reminders now"}
       </button>
-    </div>
+    </AlertSection>
   );
 }

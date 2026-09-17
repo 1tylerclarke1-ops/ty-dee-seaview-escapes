@@ -2,32 +2,27 @@ import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { gbpMoney } from "@/lib/pricing";
+import AlertSection from "@/components/admin/AlertSection";
 
 // Day 55 prompt: surfaces bookings flagged for the owner to text the guest
 // personally. Shows the guest's name, mobile number (if on file) and a
 // suggested message. No auto-send — the owner texts from their own phone.
-export default function TextReminderAlerts() {
+export default function TextReminderAlerts({ onCount }) {
   const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   const load = () => {
-    setLoading(true);
     base44.entities.Booking
       .filter({ text_reminder_flagged: true, status: "deposit_paid" }, "-arrival_date", 50)
       .then((rows) => setBookings(rows || []))
-      .catch(() => setBookings([]))
-      .finally(() => setLoading(false));
+      .catch(() => setBookings([]));
   };
 
   useEffect(load, []);
-
-  if (loading) return null;
-  if (!bookings.length) return null;
+  useEffect(() => { onCount?.(bookings.length); }, [bookings, onCount]);
 
   return (
-    <div className="border border-sea/40 bg-sea/10 p-5 mb-8">
-      <h2 className="text-xl text-white mb-1">Text the guest</h2>
-      <p className="text-sm text-white/50 mb-4">
+    <AlertSection title="Text the guest (day 55)" count={bookings.length} tone="action">
+      <p className="text-sm text-white/60 mb-4">
         These bookings are overdue and flagged for a personal text. The guest's mobile and a suggested message are below — text from your own phone.
       </p>
       {bookings.map((b) => {
@@ -65,6 +60,6 @@ export default function TextReminderAlerts() {
           </div>
         );
       })}
-    </div>
+    </AlertSection>
   );
 }
