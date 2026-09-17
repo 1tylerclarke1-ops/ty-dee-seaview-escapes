@@ -16,6 +16,20 @@ import { allowedLengthsForArrival, seasonForDate } from "./bookingRules.ts";
 
 export async function findConflict(base44, arrivalIso, nights, excludeId, includeHeld = true) {
   const departureIso = addDaysIso(arrivalIso, nights);
+
+  // Owner-blocked dates are checked first and always win — a block makes the
+  // dates unbookable regardless of booking races. A synthetic object with an
+  // epoch created_date is returned so any post-update tiebreaker (which
+  // compares created_date) always favours the block.
+  const blocks = await base44.asServiceRole.entities.BlockedDate.list("-start_date", 500);
+  for (const block of blocks || []) {
+    // Block [start, end] inclusive overlaps stay [arrival, departure) if
+    // arrival <= end AND start < departure.
+    if (arrivalIso <= block.end_date && block.start_date < departureIso) {
+      return { _isBlock: true, id: block.id || "block", created_date: new Date(0).toISOString(), reference: "Owner block" };
+    }
+  }
+
   const bookings = await base44.asServiceRole.entities.Booking.list("-arrival_date", 500);
   const now = Date.now();
   for (const b of bookings || []) {

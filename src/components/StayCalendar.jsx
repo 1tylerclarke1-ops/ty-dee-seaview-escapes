@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format, isBefore, isEqual, parseISO, startOfMonth } from "date-fns";
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SEASON_START, SEASON_END } from "@/lib/siteConfig";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFacilitiesSettings } from "@/lib/facilities";
+import { base44 } from "@/api/base44Client";
 import MonthGrid from "@/components/MonthGrid";
 import CalendarLegend from "@/components/CalendarLegend";
 
@@ -15,6 +16,16 @@ export default function StayCalendar({ selectedArrival, selectedLength, onSelect
   const isMobile = useIsMobile();
   const showCount = isMobile ? 1 : 2;
   const reduce = useReducedMotion();
+
+  // Owner-blocked date ranges — public, reason-free. Fetched once so every
+  // visible month shares the same data. A guest sees these as "not available".
+  const [blockedRanges, setBlockedRanges] = useState([]);
+  useEffect(() => {
+    base44.functions
+      .invoke("getBlockedDateRanges", {})
+      .then((res) => setBlockedRanges((res.data || res).ranges || []))
+      .catch(() => setBlockedRanges([]));
+  }, []);
 
   const months = useMemo(() => {
     const start = startOfMonth(parseISO(SEASON_START));
@@ -145,6 +156,7 @@ export default function StayCalendar({ selectedArrival, selectedLength, onSelect
               closedNote={closedNoteFor(m)}
               openNote={openNoteFor(m)}
               facilitiesSettings={facilities}
+              blockedRanges={blockedRanges}
             />
           ))}
         </motion.div>

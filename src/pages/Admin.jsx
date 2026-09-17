@@ -17,6 +17,7 @@ import ConfigBanner from "@/components/admin/ConfigBanner";
 import NewBookingsBanner from "@/components/admin/NewBookingsBanner";
 import CancellationEmailAlerts from "@/components/admin/CancellationEmailAlerts";
 import SendTestEmails from "@/components/admin/SendTestEmails";
+import BlockedDatesManager from "@/components/admin/BlockedDatesManager";
 
 function Spinner() {
   return (
@@ -90,6 +91,10 @@ export default function Admin() {
         <ConfigBanner />
         <div className="mb-12">
           <StripeConnectionPanel />
+        </div>
+        <div className="mb-12">
+          <h2 className="text-2xl text-white mb-6">Blocked dates</h2>
+          <BlockedDatesManager />
         </div>
         <div className="mb-12">
           <h2 className="text-2xl text-white mb-6">Gaps view · next 30 days</h2>

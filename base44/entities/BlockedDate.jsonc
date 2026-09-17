@@ -1,0 +1,57 @@
+{
+  "name": "BlockedDate",
+  "type": "object",
+  "properties": {
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Start date (inclusive)"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "title": "End date (inclusive)"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "owner_use",
+        "maintenance",
+        "booked_elsewhere",
+        "other"
+      ],
+      "title": "Reason"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes (admin only)"
+    }
+  },
+  "required": [
+    "start_date",
+    "end_date",
+    "reason"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

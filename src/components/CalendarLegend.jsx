@@ -43,6 +43,14 @@ const ITEMS = [
     ),
   },
   {
+    label: "Not available",
+    swatch: (
+      <Swatch className="bg-booked">
+        <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+      </Swatch>
+    ),
+  },
+  {
     label: "Outside booking window",
     swatch: (
       <Swatch className="border border-line opacity-50">
