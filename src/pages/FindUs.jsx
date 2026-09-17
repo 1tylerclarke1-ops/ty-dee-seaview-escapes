@@ -1,6 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import PageHero from "@/components/PageHero";
 import ParkMap from "@/components/ParkMap";
+import MapEmbed from "@/components/MapEmbed";
 import Seo from "@/components/Seo";
 import { lodgingSchema, SITE_ORIGIN } from "@/lib/structuredData";
 import {
@@ -84,12 +85,10 @@ export default function FindUs() {
           <div>
             <p className="text-sm text-muted-foreground mb-2">On the map</p>
             <div className="w-full h-[260px] md:h-[320px] bg-offseason border border-line overflow-hidden">
-              <iframe
+              <MapEmbed
+                embedSrc={EMBED_SRC}
+                directionsUrl={DIRECTIONS_URL}
                 title="Map centred on Polperro Holiday Park entrance"
-                src={EMBED_SRC}
-                className="w-full h-full"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
               />
             </div>
           </div>
