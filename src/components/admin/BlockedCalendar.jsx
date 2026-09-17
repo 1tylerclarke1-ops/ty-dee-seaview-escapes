@@ -2,11 +2,9 @@ import { useMemo } from "react";
 import { format, parseISO, isWithinInterval } from "date-fns";
 
 // A compact admin-only calendar showing the next N months. Each day is
-// colour-coded: blocked (owner) dates in signal amber, booked (guest) dates
-// in slate, and both (a block overlapping a booking — should never happen but
-// is shown if it does) in a warning red. Lets the owner distinguish their own
-// blocks from real bookings at a glance. No selection, no interaction —
-// display only.
+// colour-coded: booked (guest) dates in a soft green, conflicts (a block
+// overlapping a booking) in red, and owner blocks / free dates with no
+// distinct background. No selection, no interaction — display only.
 
 function isDateInRange(dateStr, ranges) {
   if (!ranges?.length) return false;
@@ -39,19 +37,19 @@ function DayCell({ date, inMonth, blocked, booked }) {
   if (blocked && booked) {
     bg = "bg-red-500/40";
     label = "Conflict";
-  } else if (blocked) {
-    bg = "bg-signal/40";
-    label = "Block";
   } else if (booked) {
-    bg = "bg-white/25";
+    bg = "bg-green-500/20";
     label = "Booked";
+  } else if (blocked) {
+    // Owner block — no distinct background, same as free
+    label = "Block";
   }
   return (
     <div
       className={`aspect-square flex flex-col items-center justify-center text-xs tnum ${bg} rounded-sm`}
       title={label ? `${dateStr} · ${label}` : dateStr}
     >
-      <span className={blocked || booked ? "text-white" : "text-white/60"}>{date.getDate()}</span>
+      <span className={booked ? "text-white" : "text-white/60"}>{date.getDate()}</span>
     </div>
   );
 }
@@ -85,16 +83,13 @@ export default function BlockedCalendar({ blocks = [], bookings = [], months = 4
     <div>
       <div className="flex flex-wrap gap-x-5 gap-y-2 mb-5 text-xs text-white/60">
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 bg-signal/40 rounded-sm" /> Owner block
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 bg-white/25 rounded-sm" /> Guest booking
+          <span className="w-3 h-3 bg-green-500/20 rounded-sm" /> Guest booking
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 bg-red-500/40 rounded-sm" /> Conflict
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 bg-white/5 rounded-sm border border-white/10" /> Free
+          <span className="w-3 h-3 bg-white/5 rounded-sm border border-white/10" /> Free / Owner block
         </span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
