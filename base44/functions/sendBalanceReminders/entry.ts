@@ -63,6 +63,8 @@ export default async function (req) {
         ? new Date(fresh.balance_session_created_at).getTime() : 0;
       if (sessionMs && Date.now() - sessionMs < 3_600_000) continue;
 
+      const manageUrl = fresh.cancel_token ? `${appBaseUrl()}/booking/${fresh.cancel_token}` : null;
+
       // Grace period (from undo of auto-cancel): separate reminder schedule
       // and auto-cancel. While the grace period is running, the normal
       // day-52 auto-cancel must NOT fire. One reminder at the halfway point,
@@ -113,7 +115,6 @@ export default async function (req) {
 
       const remindersSent = fresh.balance_reminders_sent || [];
       const balanceDueDate = balanceDueIso(fresh.arrival_date);
-      const manageUrl = fresh.cancel_token ? `${appBaseUrl()}/booking/${fresh.cancel_token}` : null;
 
       // One reminder per booking per day. If multiple thresholds have passed
       // (the job was down and the booking crossed two or three at once), send
