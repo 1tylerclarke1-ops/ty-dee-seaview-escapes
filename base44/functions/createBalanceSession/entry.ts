@@ -58,6 +58,7 @@ export default async function (req) {
     // Store the balance session id — used as the atomic guard in confirmation.
     await base44.asServiceRole.entities.Booking.update(booking.id, {
       stripe_session_id: session.id,
+      balance_session_created_at: new Date().toISOString(),
     });
 
     return Response.json({ ok: true, url: session.url });

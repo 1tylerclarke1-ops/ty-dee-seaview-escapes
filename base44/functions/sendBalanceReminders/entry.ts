@@ -55,10 +55,13 @@ export default async function (req) {
       const balanceOwed = Math.max(Number(fresh.gross_revenue || 0) - totalPaid, 0);
       if (balanceOwed <= 0) continue;
 
-      // Skip if the guest paid or started a checkout session within the last
-      // 24 hours — a reminder now would be redundant or confusing.
-      const updatedMs = fresh.updated_date ? new Date(fresh.updated_date).getTime() : 0;
-      if (updatedMs && Date.now() - updatedMs < 86_400_000) continue;
+      // Skip only if the guest is mid-checkout — an open balance session
+      // created in the last hour. Not any write, not a whole day. The
+      // "already paid" case is already handled by the status + balanceOwed
+      // checks above.
+      const sessionMs = fresh.balance_session_created_at
+        ? new Date(fresh.balance_session_created_at).getTime() : 0;
+      if (sessionMs && Date.now() - sessionMs < 3_600_000) continue;
 
       const remindersSent = fresh.balance_reminders_sent || [];
       const balanceDueDate = balanceDueIso(fresh.arrival_date);

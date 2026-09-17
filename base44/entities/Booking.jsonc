@@ -73,6 +73,11 @@
       "type": "string",
       "title": "Stripe checkout session id"
     },
+    "balance_session_created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Balance checkout session created at (mid-checkout skip, 1 hour)"
+    },
     "stripe_fee": {
       "type": "number",
       "default": 0,
