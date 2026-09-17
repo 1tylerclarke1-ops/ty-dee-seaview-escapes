@@ -61,6 +61,9 @@ export async function confirmBalancePayment(base44, booking, session) {
         stripe_payment_intent_id: paymentIntentId,
         stripe_fee: (Number(booking.stripe_fee) || 0) + stripeFee,
         balance_overdue_flagged: false,
+        grace_period_deadline: null,
+        grace_period_started_at: null,
+        grace_period_reminders_sent: [],
       }
     }
   );
