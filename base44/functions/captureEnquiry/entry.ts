@@ -1,5 +1,8 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { normalizeEmail, randomToken } from "../../shared/contacts.ts";
+import { ownerEmail, buildOwnerEnquiryAlertEmail } from "../../shared/bookingEmail.ts";
+import { appBaseUrl } from "../../shared/origin.ts";
+import { logEmailAttempt } from "../../shared/emailLog.ts";
 
 // Capture an enquiry from the public checkout form. Upserts a Contact
 // (source: enquiry, or keeps past_guest if they've stayed before) and records
@@ -77,6 +80,28 @@ export default async function (req) {
         unsubscribe_token: randomToken(),
       });
     }
+
+    // Instant owner alert — best-effort, never affects the contact record
+    // or the digest flags above. A failure here is logged but does not
+    // change the response: the enquiry is already saved and will appear
+    // in the next daily digest regardless.
+    if (body.message) {
+      const to = ownerEmail();
+      if (to) {
+        const { subject, text } = buildOwnerEnquiryAlertEmail({
+          name: body.name, email, phone: body.phone, message: body.message,
+          arrivalDate: body.arrival_date, partySize: party, dogCount: dogs,
+          appBaseUrl: appBaseUrl(),
+        });
+        try {
+          await base44.asServiceRole.integrations.Core.SendEmail({ to, subject, text });
+          await logEmailAttempt(base44, { recipient: to, template: "enquiry_alert", subject, ok: true });
+        } catch (e) {
+          await logEmailAttempt(base44, { recipient: to, template: "enquiry_alert", subject, ok: false, error: e?.message || String(e) });
+        }
+      }
+    }
+
     return Response.json({ ok: true });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

@@ -204,6 +204,27 @@ export function buildOwnerAlertEmail({ booking, breakdown, payableInFull }) {
   return { subject, text };
 }
 
+// Instant owner enquiry alert — sent immediately when a contact-form
+// enquiry arrives, so the owner sees it without waiting for the daily
+// digest. Best-effort: a failed send does not affect the contact record
+// or the digest (the enquiry stays flagged for the next digest run).
+// Owner-facing, plain text, with the admin link so the owner can act.
+export function buildOwnerEnquiryAlertEmail({ name, email, phone, message, arrivalDate, partySize, dogCount, appBaseUrl }) {
+  const subject = `New enquiry — ${name || "(no name)"}`;
+  const lines = [
+    `New enquiry from the contact form:`,
+    ``,
+    `• ${name || "(no name)"} (${email || "no email"}${phone ? `, ${phone}` : ""}${partySize ? `, ${partySize} guest(s)` : ""}${dogCount ? `, ${dogCount} dog(s)` : ""})`,
+  ];
+  if (arrivalDate) lines.push(`• Interested in arriving ${formatGuestDate(arrivalDate)}`);
+  if (message) {
+    lines.push(``, `Message:`, String(message).slice(0, 500));
+  }
+  lines.push(``, `View in admin: ${appBaseUrl}/admin`, ``, `Ty Dee Seaview Escapes`);
+  const text = lines.join("\n");
+  return { subject, text };
+}
+
 // The daily owner digest email — one email listing every paid booking AND
 // every contact-form enquiry not yet digested. Built here (not inline in the
 // digest job) so the admin "send test emails" tool renders the exact same
