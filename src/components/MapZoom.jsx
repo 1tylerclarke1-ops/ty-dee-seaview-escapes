@@ -3,13 +3,14 @@ import { Image } from "@/components/ui/image";
 import MapPin from "@/components/MapPin";
 import { Plus, Minus, X } from "lucide-react";
 
-// Fullscreen pinch-zoom viewer for the park map. Pinch to zoom, drag to pan,
-// +/- buttons and mouse wheel for desktop. The pitch marker is overlaid by
-// percentage so it tracks the image at any scale.
-export default function MapZoom({ src, alt, credit, markerLabel, markerPos, onClose }) {
+// Fullscreen pinch-zoom viewer for the park map (desktop only — touch devices
+// use the browser's native pinch on the inline map). +/- buttons and mouse
+// wheel zoom; drag to pan. The pin marker is overlaid by percentage and
+// counter-scaled so it stays a constant size and its tip stays locked on
+// pitch 157 at every zoom level.
+export default function MapZoom({ src, alt, credit, markerPos, onClose }) {
   const [scale, setScale] = useState(1);
   const [pos, setPos] = useState({ x: 0, y: 0 });
-  const pinch = useRef(null);
   const drag = useRef(null);
 
   useEffect(() => {
@@ -29,29 +30,17 @@ export default function MapZoom({ src, alt, credit, markerLabel, markerPos, onCl
     setPos({ x: 0, y: 0 });
   };
 
-  const onTouchStart = (e) => {
-    if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      pinch.current = { dist: Math.hypot(dx, dy), scale };
-    } else if (e.touches.length === 1) {
-      drag.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, pos };
-    }
+  const onPointerDown = (e) => {
+    drag.current = { x: e.clientX, y: e.clientY, pos };
   };
-  const onTouchMove = (e) => {
-    if (pinch.current && e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const dist = Math.hypot(dx, dy);
-      setScale(clamp(+(pinch.current.scale * (dist / pinch.current.dist)).toFixed(2)));
-    } else if (drag.current && e.touches.length === 1) {
-      setPos({
-        x: drag.current.pos.x + (e.touches[0].clientX - drag.current.x),
-        y: drag.current.pos.y + (e.touches[0].clientY - drag.current.y),
-      });
-    }
+  const onPointerMove = (e) => {
+    if (!drag.current) return;
+    setPos({
+      x: drag.current.pos.x + (e.clientX - drag.current.x),
+      y: drag.current.pos.y + (e.clientY - drag.current.y),
+    });
   };
-  const onTouchEnd = () => { pinch.current = null; drag.current = null; };
+  const onPointerUp = () => { drag.current = null; };
   const onWheel = (e) => zoom(e.deltaY < 0 ? 1 : -1);
 
   return (
@@ -76,10 +65,11 @@ export default function MapZoom({ src, alt, credit, markerLabel, markerPos, onCl
         </div>
       </div>
       <div
-        className="flex-1 overflow-hidden relative touch-none"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
+        className="flex-1 overflow-hidden relative touch-none cursor-grab active:cursor-grabbing"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
         onWheel={onWheel}
       >
         <div
