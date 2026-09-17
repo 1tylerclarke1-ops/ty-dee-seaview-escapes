@@ -1,0 +1,45 @@
+{
+  "description": "Daily 07:00 \u2014 retries failed confirmation emails in priority order (cancellation, balance paid, booking confirmation) before the reminder job runs at 08:00. Halts on first failure so reminders never crowd out a confirmation.",
+  "name": "Retry failed emails",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 7 * * *",
+      "one_time_date": null,
+      "timezone": "Europe/London",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "retry_failed_emails",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "retry_confirmations": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "retryFailedConfirmations",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Retry failed confirmations",
+            "description": "Cancellation \u2192 balance paid \u2192 booking confirmation"
+          }
+        }
+      }
+    ]
+  }
+}

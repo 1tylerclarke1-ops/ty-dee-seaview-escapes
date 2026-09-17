@@ -196,6 +196,9 @@ export default function BookingsManager() {
                   {resendOwnerErrors[b.id] && <span className="text-xs text-signal">{resendOwnerErrors[b.id]}</span>}
                 </>
               )}
+              {b.status === "confirmed" && b.balance_paid > 0 && !b.balance_paid_email_sent && (
+                <span className="text-xs text-signal">Balance paid email not sent</span>
+              )}
               <button
                 type="button"
                 onClick={() => toggleLog(b)}

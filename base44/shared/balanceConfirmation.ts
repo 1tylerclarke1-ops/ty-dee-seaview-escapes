@@ -102,4 +102,11 @@ async function sendBalancePaidEmail(base44, booking, breakdown) {
     booking_id: booking.id, recipient: booking.guest_email,
     template: "balance_paid", subject, ok, error: err,
   });
+  if (ok) {
+    try {
+      await base44.asServiceRole.entities.Booking.update(booking.id, {
+        balance_paid_email_sent: true,
+      });
+    } catch {}
+  }
 }

@@ -32,41 +32,60 @@ export default async function (req) {
     const sent = [];
     const flagged = [];
 
+    let remindersHalted = false;
+
     for (const b of bookings || []) {
-      const days = daysBetween(today, b.arrival_date);
-      if (days < 0) continue; // past arrival — skip
+      // Re-fetch the booking right before processing — the guest may have
+      // paid their balance moments ago, during this run. Never rely on a
+      // status read at the start of the run.
+      const fresh = await base44.asServiceRole.entities.Booking.get(b.id).catch(() => null);
+      if (!fresh || fresh.status !== "deposit_paid") continue;
 
-      const totalPaid = Number(b.deposit_paid || 0) + Number(b.balance_paid || 0);
-      const balanceOwed = Math.max(Number(b.gross_revenue || 0) - totalPaid, 0);
-      if (balanceOwed <= 0) continue; // nothing owed — skip
+      const days = daysBetween(today, fresh.arrival_date);
+      if (days < 0) continue;
 
-      const remindersSent = b.balance_reminders_sent || [];
-      const balanceDueDate = balanceDueIso(b.arrival_date);
-      const manageUrl = b.cancel_token ? `${appBaseUrl()}/booking/${b.cancel_token}` : null;
+      const totalPaid = Number(fresh.deposit_paid || 0) + Number(fresh.balance_paid || 0);
+      const balanceOwed = Math.max(Number(fresh.gross_revenue || 0) - totalPaid, 0);
+      if (balanceOwed <= 0) continue;
+
+      // Skip if the guest paid or started a checkout session within the last
+      // 24 hours — a reminder now would be redundant or confusing.
+      const updatedMs = fresh.updated_date ? new Date(fresh.updated_date).getTime() : 0;
+      if (updatedMs && Date.now() - updatedMs < 86_400_000) continue;
+
+      const remindersSent = fresh.balance_reminders_sent || [];
+      const balanceDueDate = balanceDueIso(fresh.arrival_date);
+      const manageUrl = fresh.cancel_token ? `${appBaseUrl()}/booking/${fresh.cancel_token}` : null;
 
       // Each reminder fires when its threshold has passed AND it hasn't been
       // sent yet — no upper bound on the day count. If the daily run is missed
       // for a day or a week, the next run catches up every missed reminder.
       // If multiple thresholds have passed, all missed reminders fire in one
       // run (the guest receives each one, oldest first).
-      if (days <= 70 && !remindersSent.includes("70")) {
-        const ok = await sendOne(base44, b, "70", balanceOwed, balanceDueDate, days, manageUrl);
-        sent.push({ ref: b.reference, type: "70_days", ok });
+      // Reminders halt on the first send failure (likely the daily email cap) —
+      // this preserves the remaining allowance for confirmations, which matter
+      // more. The failed reminder and all unsent ones retry the next day.
+      if (!remindersHalted && days <= 70 && !remindersSent.includes("70")) {
+        const ok = await sendOne(base44, fresh, "70", balanceOwed, balanceDueDate, days, manageUrl);
+        if (!ok) remindersHalted = true;
+        sent.push({ ref: fresh.reference, type: "70_days", ok });
       }
-      if (days <= 60 && !remindersSent.includes("60")) {
-        const ok = await sendOne(base44, b, "60", balanceOwed, balanceDueDate, days, manageUrl);
-        sent.push({ ref: b.reference, type: "60_days", ok });
+      if (!remindersHalted && days <= 60 && !remindersSent.includes("60")) {
+        const ok = await sendOne(base44, fresh, "60", balanceOwed, balanceDueDate, days, manageUrl);
+        if (!ok) remindersHalted = true;
+        sent.push({ ref: fresh.reference, type: "60_days", ok });
       }
-      if (days <= 55 && !remindersSent.includes("55")) {
-        const ok = await sendOne(base44, b, "55", balanceOwed, balanceDueDate, days, manageUrl);
-        sent.push({ ref: b.reference, type: "55_days", ok });
+      if (!remindersHalted && days <= 55 && !remindersSent.includes("55")) {
+        const ok = await sendOne(base44, fresh, "55", balanceOwed, balanceDueDate, days, manageUrl);
+        if (!ok) remindersHalted = true;
+        sent.push({ ref: fresh.reference, type: "55_days", ok });
       }
-      // 53 days — flag for admin (7 days after the due date)
-      if (days <= 53 && !b.balance_overdue_flagged) {
-        await base44.asServiceRole.entities.Booking.update(b.id, {
+      // Flagging always continues — overdue detection must not be blocked by email failures.
+      if (days <= 53 && !fresh.balance_overdue_flagged) {
+        await base44.asServiceRole.entities.Booking.update(fresh.id, {
           balance_overdue_flagged: true,
         });
-        flagged.push({ ref: b.reference, guest: b.guest_name, email: b.guest_email });
+        flagged.push({ ref: fresh.reference, guest: fresh.guest_name, email: fresh.guest_email });
       }
     }
 
@@ -78,7 +97,7 @@ export default async function (req) {
 }
 
 async function sendOne(base44, booking, stage, balanceOwed, balanceDueDate, daysBeforeArrival, manageUrl) {
-  if (!booking.guest_email || !manageUrl) return;
+  if (!booking.guest_email || !manageUrl) return true;
   const { subject, text, html } = buildBalanceReminderEmail({
     booking, stage, balanceOwed, balanceDueDate, daysBeforeArrival, manageUrl,
   });
