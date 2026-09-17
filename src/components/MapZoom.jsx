@@ -85,15 +85,20 @@ export default function MapZoom({ src, alt, credit, markerLabel, markerPos, onCl
           className="absolute inset-0 flex items-center justify-center"
           style={{ transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})` }}
         >
-          <div className="relative w-[92%] max-w-[1107px]">
+          <div className="relative w-[92%] max-w-[1107px]" style={{ containerType: "inline-size" }}>
             <Image src={src} alt={alt} fittingType="fit" className="block w-full aspect-[1107/767]" />
             <span
-              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 z-10"
-              style={{ top: `${markerPos.top}%`, left: `${markerPos.left}%` }}
+              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center rounded-full bg-sea text-white font-semibold border-white shadow-lg"
+              style={{
+                top: `${markerPos.top}%`,
+                left: `${markerPos.left}%`,
+                width: "2.7cqw",
+                aspectRatio: "1 / 1",
+                borderWidth: "0.3cqw",
+                fontSize: "1.05cqw",
+              }}
             >
-              <span className="flex items-center justify-center w-9 h-9 rounded-full bg-sea text-white text-xs font-semibold ring-4 ring-white shadow-lg">
-                {markerLabel}
-              </span>
+              {markerLabel}
             </span>
           </div>
         </div>

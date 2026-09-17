@@ -24,15 +24,20 @@ export default function ParkMap({
         aria-label="Open park map to zoom"
         className="group block w-full p-0 m-0 border-0 bg-transparent text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sea focus-visible:ring-offset-2 focus-visible:ring-offset-base"
       >
-        <div className="relative block w-full bg-surface">
+        <div className="relative block w-full bg-surface" style={{ containerType: "inline-size" }}>
           <Image src={src} alt={alt} fittingType="fit" className="block w-full aspect-[1107/767]" />
           <span
-            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 z-10"
-            style={{ top: `${markerPos.top}%`, left: `${markerPos.left}%` }}
+            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center rounded-full bg-sea text-white font-semibold border-white shadow-md"
+            style={{
+              top: `${markerPos.top}%`,
+              left: `${markerPos.left}%`,
+              width: "2.7cqw",
+              aspectRatio: "1 / 1",
+              borderWidth: "0.3cqw",
+              fontSize: "1.05cqw",
+            }}
           >
-            <span className="flex items-center justify-center w-5 h-5 md:w-9 md:h-9 rounded-full bg-sea text-white text-[0.5rem] md:text-xs font-semibold ring-2 md:ring-4 ring-white shadow-md md:shadow-lg">
-              {markerLabel}
-            </span>
+            {markerLabel}
           </span>
         </div>
         {caption && <p className="mt-3 text-sm text-muted-foreground">{caption}</p>}
