@@ -126,6 +126,25 @@ export default function ManageBooking() {
     return <Wrap><InfoState title="This link is no longer valid" body="Your booking may have been cancelled, the stay may have completed, or the link may have expired. If you need help, please contact us." /></Wrap>;
   }
 
+  if (data.state === "cancelled") {
+    const c = data.booking;
+    return (
+      <Wrap>
+        <p className="text-sm text-muted mb-2">Your booking</p>
+        <h1 className="text-3xl md:text-4xl mb-1">Your booking has been cancelled</h1>
+        <p className="text-sm text-muted mb-8">Booking ref <span className="tnum text-ink">{c.reference}</span></p>
+        <div className="border border-line bg-surface p-6 md:p-8">
+          <p className="text-ink-soft mb-4">
+            We're sorry — your booking arriving {fmtDate(c.arrival_date)} was cancelled because the balance was not paid by the due date. Your deposit of {gbp(c.deposit_retained)} has been retained.
+          </p>
+          <p className="text-ink-soft mb-4">
+            We understand that circumstances change. If you'd still like to stay with us, please <Link to="/contact" className="text-sea underline">get in touch</Link> — we can't promise anything, but we'll see what we can do.
+          </p>
+        </div>
+      </Wrap>
+    );
+  }
+
   const b = data.booking;
   const p = data.preview;
   const inCooling = p.inside_cooling_off;

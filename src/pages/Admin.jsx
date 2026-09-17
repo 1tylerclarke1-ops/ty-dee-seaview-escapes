@@ -17,6 +17,8 @@ import ConfigBanner from "@/components/admin/ConfigBanner";
 import NewBookingsBanner from "@/components/admin/NewBookingsBanner";
 import CancellationEmailAlerts from "@/components/admin/CancellationEmailAlerts";
 import BalanceOverdueAlerts from "@/components/admin/BalanceOverdueAlerts";
+import TextReminderAlerts from "@/components/admin/TextReminderAlerts";
+import AutoCancelUndoAlerts from "@/components/admin/AutoCancelUndoAlerts";
 import FailedBalanceReminderAlerts from "@/components/admin/FailedBalanceReminderAlerts";
 import SendTestEmails from "@/components/admin/SendTestEmails";
 import BlockedDatesManager from "@/components/admin/BlockedDatesManager";
@@ -92,6 +94,8 @@ export default function Admin() {
         <CancellationEmailAlerts />
         <FailedBalanceReminderAlerts />
         <BalanceOverdueAlerts />
+        <TextReminderAlerts />
+        <AutoCancelUndoAlerts />
         <ConfigBanner />
         <div className="mb-12">
           <StripeConnectionPanel />

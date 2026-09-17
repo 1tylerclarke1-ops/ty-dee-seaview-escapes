@@ -22,7 +22,7 @@ const STATIC_SECTIONS = [
       "You can choose to pay in full at the time of booking — there's nothing further to pay and no balance reminders.",
       "If your stay begins within 60 days of booking, the full amount is taken at booking.",
       "You can pay your balance at any time from your booking management link — the same link you received in your confirmation email.",
-      "We'll send friendly reminders before your balance is due. If the balance is unpaid 7 days after the due date, your booking will be cancelled, the dates released, and your deposit retained.",
+      "We'll send friendly reminders before your balance is due, and further reminders if it becomes overdue. If the balance is not paid, your booking will be cancelled and your deposit retained.",
     ],
   },
   {

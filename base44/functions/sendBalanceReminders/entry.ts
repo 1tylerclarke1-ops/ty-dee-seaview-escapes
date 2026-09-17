@@ -5,11 +5,16 @@
 // Reminder schedule (days before arrival):
 //   70 days — friendly, "your balance is due on [date]"
 //   60 days — due today
-//   55 days — overdue, stating what happens if it is not paid
+//   57 days — overdue, three days late, states consequence + cancellation date
+//   55 days — final notice, "cancelled on [date] and deposit retained if unpaid"
+//   53 days — last chance, cancels tomorrow
 //
-// At 53 days (7 days after the 60-day due date), the booking is flagged
-// balance_overdue_flagged for the admin dashboard — the owner decides whether
-// to cancel and release (no auto-cancel).
+// At 55 days the booking is also flagged for the owner to text the guest
+// personally (name, mobile and a suggested message appear in admin — no
+// auto-send). At 53 days the booking is flagged balance_overdue_flagged.
+// At 52 days the booking is automatically cancelled: deposit retained,
+// dates released, guest emailed. The tokenised link stays live so the
+// guest can see what happened. The owner has a 24-hour undo window.
 //
 // Reminders stop the moment the balance is paid (status moves to "confirmed").
 // One reminder per booking per day: if multiple thresholds have passed, only
@@ -22,7 +27,7 @@ import { daysBetween, todayIso } from "../../shared/cancellation.ts";
 import { balanceDueIso } from "../../shared/pricing.ts";
 import { logEmailAttempt } from "../../shared/emailLog.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
-import { buildBalanceReminderEmail } from "../../shared/bookingEmail.ts";
+import { buildBalanceReminderEmail, buildAutoCancelEmail } from "../../shared/bookingEmail.ts";
 
 export default async function (req) {
   try {
@@ -67,12 +72,17 @@ export default async function (req) {
       // balance_reminders_sent (no upper bound on the day count, so missed
       // runs catch up). Reminders halt on the first send failure (likely the
       // daily email cap) to preserve the allowance for confirmations.
-      const STAGES = ["70", "60", "55"];
+      const STAGES = ["70", "60", "57", "55", "53"];
       const dueStages = STAGES.filter(
         (s) => days <= Number(s) && !remindersSent.includes(s)
       );
 
-      if (dueStages.length > 0 && !remindersHalted) {
+      // Reminders only fire when more than 52 days remain — at 52 or below,
+      // the auto-cancel takes over (no "cancels tomorrow" message when it's
+      // already today). One per day: most urgent stage only, earlier ones
+      // superseded. Halts on first failure to preserve the email allowance
+      // for confirmations.
+      if (days > 52 && dueStages.length > 0 && !remindersHalted) {
         const toSend = dueStages[dueStages.length - 1];
         const toSupersede = dueStages.slice(0, -1);
 
@@ -80,9 +90,6 @@ export default async function (req) {
         if (!ok) remindersHalted = true;
         sent.push({ ref: fresh.reference, type: `${toSend}_days`, ok, superseded: toSupersede });
 
-        // On success, mark the sent stage AND any superseded stages in one
-        // update. If the send failed, nothing is marked — the next day retries
-        // the most urgent stage and supersedes the earlier ones again.
         if (ok) {
           try {
             await base44.asServiceRole.entities.Booking.update(fresh.id, {
@@ -98,6 +105,32 @@ export default async function (req) {
           balance_overdue_flagged: true,
         });
         flagged.push({ ref: fresh.reference, guest: fresh.guest_name, email: fresh.guest_email });
+      }
+
+      // Day 55 — flag for the owner to text the guest personally. No auto-send;
+      // just surface the name, mobile and a suggested message in admin.
+      if (days <= 55 && !fresh.text_reminder_flagged) {
+        let phone = null;
+        try {
+          const contacts = await base44.asServiceRole.entities.Contact.filter({
+            email: fresh.guest_email,
+          });
+          if (contacts && contacts[0]) phone = contacts[0].phone || null;
+        } catch {}
+        try {
+          await base44.asServiceRole.entities.Booking.update(fresh.id, {
+            text_reminder_flagged: true,
+            text_reminder_phone: phone || "",
+          });
+        } catch {}
+      }
+
+      // Day 52 — auto-cancel: retain the deposit, release the dates, email
+      // the guest. The token is NOT invalidated — the manage link stays live
+      // so the guest can see what happened and how to contact. The owner
+      // has a 24-hour undo window in admin.
+      if (days <= 52 && days >= 0) {
+        await autoCancel(base44, fresh);
       }
     }
 
@@ -128,4 +161,43 @@ async function sendOne(base44, booking, stage, balanceOwed, balanceDueDate, days
     template: `balance_reminder_${stage}`, subject, ok, error: err,
   });
   return ok;
+}
+
+// Auto-cancel a booking for non-payment at day 52. Retains the deposit,
+// releases the dates (status → cancelled), and emails the guest a warm
+// message. The cancel_token is deliberately NOT cleared — the manage link
+// stays live so the guest can see what happened and how to contact.
+async function autoCancel(base44, booking) {
+  const deposit = Number(booking.deposit_paid || 0);
+  await base44.asServiceRole.entities.Booking.update(booking.id, {
+    status: "cancelled",
+    cancellation_reason: "unpaid_balance",
+    auto_cancelled_at: new Date().toISOString(),
+    deposit_retained: deposit,
+    refund_due: 0,
+    refund_paid: 0,
+    refund_tier: "unpaid balance — deposit retained",
+  });
+
+  if (booking.guest_email) {
+    const tpl = buildAutoCancelEmail({ booking, appBaseUrl: appBaseUrl() });
+    let ok = false, err = null;
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: booking.guest_email, subject: tpl.subject, text: tpl.text, html: tpl.html,
+      });
+      ok = true;
+    } catch (e) { err = e?.message || String(e); }
+    await logEmailAttempt(base44, {
+      booking_id: booking.id, recipient: booking.guest_email,
+      template: "auto_cancel_unpaid", subject: tpl.subject, ok, error: err,
+    });
+    if (ok) {
+      try {
+        await base44.asServiceRole.entities.Booking.update(booking.id, {
+          cancellation_email_sent: true,
+        });
+      } catch {}
+    }
+  }
 }

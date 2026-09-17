@@ -355,13 +355,19 @@ export function buildOwnerCancellationAlert({ booking, preview }) {
   return { subject, text };
 }
 
-// Balance reminder email — 3 stages: 70 days (friendly), 60 days (due today),
-// 55 days (overdue with consequences). Each links to the manage page with a
-// prominent button. Sent as multipart (HTML + plain text).
+// Balance reminder email — 5 stages, each with different wording. From day 57
+// onward the exact cancellation date and deposit retention are stated plainly.
+//   70 — friendly, balance due by [date]
+//   60 — due today
+//   57 — overdue, three days late, states consequence + cancellation date
+//   55 — final notice, "cancelled on [date] and deposit retained if unpaid"
+//   53 — last chance, cancels tomorrow
 export function buildBalanceReminderEmail({ booking, stage, balanceOwed, balanceDueDate, manageUrl }) {
   const arrivalLong = formatGuestDate(booking.arrival_date);
   const dueLong = formatGuestDate(balanceDueDate);
+  const cancelLong = formatGuestDate(addDaysIso(booking.arrival_date, -52));
   const amount = gbp(balanceOwed);
+  const deposit = gbp(booking.deposit_paid || 0);
 
   let subject, headline, bodyText, consequence;
   if (stage === "70") {
@@ -372,11 +378,21 @@ export function buildBalanceReminderEmail({ booking, stage, balanceOwed, balance
     subject = `Your balance of ${amount} is due today — Ty Dee Seaview Escapes`;
     headline = "Your balance is due today";
     bodyText = `Your balance of <strong>${escapeHtml(amount)}</strong> for your stay arriving ${escapeHtml(arrivalLong)} is due today. Please pay to keep your booking confirmed.`;
-  } else {
+  } else if (stage === "57") {
     subject = `Your balance is overdue — Ty Dee Seaview Escapes`;
-    headline = "Your balance is overdue";
-    bodyText = `Your balance of <strong>${escapeHtml(amount)}</strong> for your stay arriving ${escapeHtml(arrivalLong)} was due on <strong>${escapeHtml(dueLong)}</strong> and is now overdue.`;
-    consequence = `If the balance is not paid within 7 days of the due date, your booking will be cancelled, the dates released, and your deposit retained.`;
+    headline = "Your balance is three days overdue";
+    bodyText = `Your balance of <strong>${escapeHtml(amount)}</strong> for your stay arriving ${escapeHtml(arrivalLong)} was due on <strong>${escapeHtml(dueLong)}</strong> and is now three days overdue.`;
+    consequence = `If the balance is not paid, your booking will be cancelled on <strong>${escapeHtml(cancelLong)}</strong> and your deposit of ${escapeHtml(deposit)} retained.`;
+  } else if (stage === "55") {
+    subject = `Final notice — cancellation on ${cancelLong} — Ty Dee Seaview Escapes`;
+    headline = "Final notice";
+    bodyText = `This is a final reminder that your balance of <strong>${escapeHtml(amount)}</strong> for your stay arriving ${escapeHtml(arrivalLong)} remains unpaid.`;
+    consequence = `If we do not receive payment, your booking will be cancelled on <strong>${escapeHtml(cancelLong)}</strong> and your deposit of ${escapeHtml(deposit)} retained.`;
+  } else { // 53
+    subject = `Last chance — your booking cancels tomorrow — Ty Dee Seaview Escapes`;
+    headline = "Last chance — cancels tomorrow";
+    bodyText = `Your balance of <strong>${escapeHtml(amount)}</strong> is still unpaid. Your booking will be cancelled tomorrow, <strong>${escapeHtml(cancelLong)}</strong>, and your deposit of ${escapeHtml(deposit)} retained.`;
+    consequence = `This is your last chance to pay and keep your booking.`;
   }
 
   const lines = [`Hello ${booking.guest_name || ""}`, ``];
@@ -384,9 +400,15 @@ export function buildBalanceReminderEmail({ booking, stage, balanceOwed, balance
     lines.push(`A friendly reminder that your balance of ${amount} for your stay arriving ${arrivalLong} is due by ${dueLong}.`);
   } else if (stage === "60") {
     lines.push(`Your balance of ${amount} for your stay arriving ${arrivalLong} is due today. Please pay to keep your booking confirmed.`);
+  } else if (stage === "57") {
+    lines.push(`Your balance of ${amount} for your stay arriving ${arrivalLong} was due on ${dueLong} and is now three days overdue.`);
+    lines.push(`If the balance is not paid, your booking will be cancelled on ${cancelLong} and your deposit of ${deposit} retained.`);
+  } else if (stage === "55") {
+    lines.push(`This is a final reminder that your balance of ${amount} for your stay arriving ${arrivalLong} remains unpaid.`);
+    lines.push(`If we do not receive payment, your booking will be cancelled on ${cancelLong} and your deposit of ${deposit} retained.`);
   } else {
-    lines.push(`Your balance of ${amount} for your stay arriving ${arrivalLong} was due on ${dueLong} and is now overdue.`);
-    lines.push(`If the balance is not paid within 7 days of the due date, your booking will be cancelled, the dates released, and your deposit retained.`);
+    lines.push(`Your balance of ${amount} is still unpaid. Your booking will be cancelled tomorrow, ${cancelLong}, and your deposit of ${deposit} retained.`);
+    lines.push(`This is your last chance to pay and keep your booking.`);
   }
   lines.push(``, `Pay your balance: ${manageUrl}`, ``, `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
   const text = lines.join("\n");
@@ -404,6 +426,86 @@ export function buildBalanceReminderEmail({ booking, stage, balanceOwed, balance
     figRow("Due by", dueLong),
   ].join(""));
   body += `<p style="margin:24px 0 12px;">${buttonLink(manageUrl, "Pay your balance")}</p>`;
+  body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  const html = emailShell({ title: subject, body });
+
+  return { subject, text, html };
+}
+
+// Auto-cancellation email — sent when a booking is automatically cancelled for
+// non-payment at day 52. Warm rather than punitive: acknowledges that
+// circumstances change and invites the guest to get in touch.
+export function buildAutoCancelEmail({ booking, appBaseUrl }) {
+  const arrivalLong = formatGuestDate(booking.arrival_date);
+  const departureLong = formatGuestDate(addDaysIso(booking.arrival_date, booking.nights));
+  const deposit = gbp(booking.deposit_paid || 0);
+  const contactUrl = `${appBaseUrl}/contact`;
+  const subject = `Your booking has been cancelled — Ty Dee Seaview Escapes`;
+
+  const text = [
+    `Hello ${booking.guest_name || ""},`,
+    ``,
+    `We're very sorry to see your booking go. Because the balance wasn't received by the due date, your booking arriving ${arrivalLong} has been cancelled and your deposit of ${deposit} retained.`,
+    ``,
+    `We understand that circumstances change — sometimes plans shift, or life simply gets in the way. If you'd still like to stay with us, please get in touch. We can't promise anything, but we'll see what we can do.`,
+    ``,
+    `Booking reference: ${booking.reference}.`,
+    ``,
+    `With warm wishes,`,
+    `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`,
+  ].join("\n");
+
+  let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">Your booking has been cancelled</h1>`;
+  body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
+  body += para(`We're very sorry to see your booking go. Because the balance wasn't received by the due date, your booking arriving <strong>${escapeHtml(arrivalLong)}</strong> has been cancelled and your deposit of <strong>${escapeHtml(deposit)}</strong> retained.`);
+  body += para(`We understand that circumstances change — sometimes plans shift, or life simply gets in the way. If you'd still like to stay with us, please ${inlineLink(contactUrl, "get in touch")}. We can't promise anything, but we'll see what we can do.`);
+  body += figureBox([
+    boxLabel("Your booking"),
+    figRow("Booking ref", booking.reference),
+    figRow("Arriving", arrivalLong),
+    figRow("Departing", departureLong),
+    figRow("Deposit retained", deposit),
+  ].join(""));
+  body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">With warm wishes,<br>Ty Dee Seaview Escapes</p>`;
+  const html = emailShell({ title: subject, body });
+
+  return { subject, text, html };
+}
+
+// Booking restored email — sent when the owner undoes an auto-cancellation.
+// Gives the guest a fresh payment link and a warm "good news" tone.
+export function buildBookingRestoredEmail({ booking, balanceOwed, balanceDueDate, appBaseUrl }) {
+  const arrivalLong = formatGuestDate(booking.arrival_date);
+  const dueLong = formatGuestDate(balanceDueDate);
+  const amount = gbp(balanceOwed);
+  const manageUrl = booking.cancel_token ? `${appBaseUrl}/booking/${booking.cancel_token}` : null;
+  const subject = `Your booking has been restored — Ty Dee Seaview Escapes`;
+
+  const text = [
+    `Hello ${booking.guest_name || ""},`,
+    ``,
+    `Good news — your booking arriving ${arrivalLong} has been restored. Your balance of ${amount} is due by ${dueLong}.`,
+    ``,
+    manageUrl ? `Pay your balance: ${manageUrl}` : ``,
+    ``,
+    `We're looking forward to welcoming you.`,
+    ``,
+    `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`,
+  ].filter(Boolean).join("\n");
+
+  let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">Your booking has been restored</h1>`;
+  body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
+  body += para(`Good news — your booking arriving <strong>${escapeHtml(arrivalLong)}</strong> has been restored. Your balance of <strong>${escapeHtml(amount)}</strong> is due by <strong>${escapeHtml(dueLong)}</strong>.`);
+  body += figureBox([
+    boxLabel("Your booking"),
+    figRow("Booking ref", booking.reference),
+    figRow("Arriving", arrivalLong),
+    figRow("Balance due", amount),
+    figRow("Due by", dueLong),
+  ].join(""));
+  if (manageUrl) body += `<p style="margin:24px 0 12px;">${buttonLink(manageUrl, "Pay your balance")}</p>`;
   body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
   const html = emailShell({ title: subject, body });
 

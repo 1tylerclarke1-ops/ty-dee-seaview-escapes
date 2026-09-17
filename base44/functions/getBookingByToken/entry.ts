@@ -34,8 +34,29 @@ export default async function (req) {
     // Every non-active case returns the same generic 404 — indistinguishable
     // to a caller, so no response confirms a token ever existed.
     if (!booking) return Response.json({ state: "not_found" }, { status: 404 });
-    if (booking.status === "cancelled") return Response.json({ state: "not_found" }, { status: 404 });
     const departureIso = addDaysIso(booking.arrival_date, booking.nights);
+    if (booking.status === "cancelled") {
+      // Auto-cancelled for non-payment: the token stays live so the guest
+      // can see what happened and how to contact. Guest-initiated cancels
+      // nullified the token, so they fall through to the generic not_found.
+      if (booking.cancellation_reason === "unpaid_balance" && booking.cancel_token) {
+        return Response.json({
+          state: "cancelled",
+          booking: {
+            reference: booking.reference,
+            arrival_date: booking.arrival_date,
+            departure_date: departureIso,
+            nights: booking.nights,
+            guests: booking.guests || 0,
+            gross_revenue: Number(booking.gross_revenue || 0),
+            deposit_paid: Number(booking.deposit_paid || 0),
+            deposit_retained: Number(booking.deposit_retained || 0),
+            cancellation_reason: booking.cancellation_reason,
+          },
+        });
+      }
+      return Response.json({ state: "not_found" }, { status: 404 });
+    }
     if (departureIso <= todayIso()) return Response.json({ state: "not_found" }, { status: 404 });
     if (booking.status !== "deposit_paid" && booking.status !== "confirmed") {
       return Response.json({ state: "not_found" }, { status: 404 });

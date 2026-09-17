@@ -118,12 +118,35 @@
         "type": "string"
       },
       "default": [],
-      "title": "Balance reminders sent (e.g. [\"70\",\"60\",\"55\"])"
+      "title": "Balance reminders sent (e.g. [\"70\",\"60\",\"57\",\"55\",\"53\"])"
     },
     "balance_overdue_flagged": {
       "type": "boolean",
       "default": false,
       "title": "Balance overdue flagged (admin action needed at 53 days)"
+    },
+    "text_reminder_flagged": {
+      "type": "boolean",
+      "default": false,
+      "title": "Text reminder flagged (day 55 \u2014 owner to text guest)"
+    },
+    "text_reminder_phone": {
+      "type": "string",
+      "title": "Phone number captured at text-reminder flag time"
+    },
+    "cancellation_reason": {
+      "type": "string",
+      "enum": [
+        "unpaid_balance",
+        "guest_initiated",
+        "admin"
+      ],
+      "title": "Cancellation reason"
+    },
+    "auto_cancelled_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Auto-cancelled at (for the 24-hour undo window)"
     },
     "deposit_retained": {
       "type": "number",
