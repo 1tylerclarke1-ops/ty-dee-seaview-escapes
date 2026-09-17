@@ -21,6 +21,7 @@ import { stayFacilitiesStatus, DEFAULT_FACILITIES_SETTINGS } from "../../shared/
 import { addDaysIso } from "../../shared/cancellation.ts";
 import { bookingCancelToken } from "../../shared/contacts.ts";
 import { appOrigin } from "../../shared/origin.ts";
+import { allocateBookingReference } from "../../shared/bookingReference.ts";
 
 const HOLD_MINUTES = 30;
 
@@ -96,7 +97,9 @@ export default async function (req) {
     // --- Create the booking as held (30-minute expiry) ---
     const departure = addDaysIso(arrival_date, n);
     const holdExpiresAt = new Date(Date.now() + HOLD_MINUTES * 60000).toISOString();
+    const reference = await allocateBookingReference(base44, new Date());
     const booking = await base44.asServiceRole.entities.Booking.create({
+      reference,
       guest_name: name,
       guest_email: email,
       arrival_date,

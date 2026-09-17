@@ -103,6 +103,7 @@ export function buildGuestConfirmationEmail({ booking, breakdown, payableInFull,
     ``,
     `Your booking is confirmed and your payment of ${gbp(amountPaid)} has been received.`,
     ``,
+    `Booking reference: ${booking.reference}.`,
     `Arriving ${arrivalLong}, ${booking.nights} night(s), ${booking.guests || ""} guest(s).`,
     ``,
   ];
@@ -140,6 +141,7 @@ export function buildGuestConfirmationEmail({ booking, breakdown, payableInFull,
   // --- HTML part (hyperlinked words, figures set apart, prominent button) ---
   const stayRows = [
     boxLabel("Your stay"),
+    figRow("Booking ref", booking.reference),
     figRow("Arriving", arrivalLong),
     figRow("Length", `${booking.nights} night(s)`),
     figRow("Guests", `${booking.guests || 0}`),
@@ -198,7 +200,7 @@ export function buildOwnerAlertEmail({ booking, breakdown, payableInFull }) {
   const arrivalLong = formatGuestDate(booking.arrival_date);
   const amountPaid = payableInFull ? breakdown.total : breakdown.deposit;
   const subject = `New booking confirmed & paid — ${booking.guest_name}`;
-  const text = `${booking.guest_name} (${booking.guest_email || "no email"}) booked ${arrivalLong} for ${booking.nights} night(s), ${booking.guests} guest(s). Paid ${gbp(amountPaid)}${payableInFull ? " (full)" : " (deposit)"}. Booking ref ${booking.id}.`;
+  const text = `${booking.guest_name} (${booking.guest_email || "no email"}) booked ${arrivalLong} for ${booking.nights} night(s), ${booking.guests} guest(s). Paid ${gbp(amountPaid)}${payableInFull ? " (full)" : " (deposit)"}. Booking ref ${booking.reference}.`;
   return { subject, text };
 }
 
@@ -231,7 +233,7 @@ export function buildOwnerDigestEmail({ bookings, enquiries, appBaseUrl }) {
           ? "paid in full"
           : `deposit paid; balance ${gbp(balanceDue)} due`;
       lines.push(
-        `• ${b.guest_name} (${b.guest_email || "no email"}) — arriving ${arr}, ${b.nights} night(s), ${b.guests || 0} guest(s). ${payNote}. Ref ${b.id}.`
+        `• ${b.guest_name} (${b.guest_email || "no email"}) — arriving ${arr}, ${b.nights} night(s), ${b.guests || 0} guest(s). ${payNote}. Ref ${b.reference}.`
       );
     }
     lines.push(``);
@@ -264,7 +266,7 @@ export function buildOwnerDigestEmail({ bookings, enquiries, appBaseUrl }) {
       const total = Number(b.gross_revenue) || 0;
       const balanceDue = Math.max(total - paid, 0);
       const payNote = b.status === "confirmed" ? "paid in full" : `deposit paid; balance ${escapeHtml(gbp(balanceDue))} due`;
-      return `<li style="margin:0 0 10px;font-size:15px;line-height:1.5;">${escapeHtml(b.guest_name)} — arriving ${escapeHtml(arr)}, ${b.nights} night(s), ${b.guests || 0} guest(s). ${payNote}. Ref ${escapeHtml(b.id)}.</li>`;
+      return `<li style="margin:0 0 10px;font-size:15px;line-height:1.5;">${escapeHtml(b.guest_name)} — arriving ${escapeHtml(arr)}, ${b.nights} night(s), ${b.guests || 0} guest(s). ${payNote}. Ref ${escapeHtml(b.reference)}.</li>`;
     }).join("");
     body += `<ul style="margin:0 0 20px;padding-left:20px;font-size:15px;line-height:1.5;list-style:disc;">${items}</ul>`;
   }
@@ -301,7 +303,7 @@ export function buildGuestCancellationEmail({ booking, preview, appBaseUrl }) {
     `Hello ${booking.guest_name || ""},`,
     ``,
     `Your booking arriving ${arrivalLong} and departing ${departureLong} (${booking.nights} night(s)) has been cancelled as requested.`,
-    `Booking reference: ${booking.id}.`,
+    `Booking reference: ${booking.reference}.`,
     ``,
   ];
   if (refundDue > 0) {
@@ -325,7 +327,7 @@ export function buildGuestCancellationEmail({ booking, preview, appBaseUrl }) {
     figRow("Arriving", arrivalLong),
     figRow("Departing", departureLong),
     figRow("Length", `${booking.nights} night(s)`),
-    figRow("Booking ref", booking.id),
+    figRow("Booking ref", booking.reference),
   ].join(""));
   const refundRows = [boxLabel("Refund")];
   if (refundDue > 0) {
@@ -349,7 +351,7 @@ export function buildOwnerCancellationAlert({ booking, preview }) {
   const arrivalLong = formatGuestDate(booking.arrival_date);
   const refundDue = Number(preview.refund_due) || 0;
   const subject = `Booking cancelled — ${booking.guest_name}`;
-  const text = `${booking.guest_name} (${booking.guest_email || "no email"}) cancelled their booking arriving ${arrivalLong}, ${booking.nights} night(s). Refund ${gbp(refundDue)} (${preview.refund_tier}). Ref ${booking.id}.`;
+  const text = `${booking.guest_name} (${booking.guest_email || "no email"}) cancelled their booking arriving ${arrivalLong}, ${booking.nights} night(s). Refund ${gbp(refundDue)} (${preview.refund_tier}). Ref ${booking.reference}.`;
   return { subject, text };
 }
 

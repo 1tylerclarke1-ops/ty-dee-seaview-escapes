@@ -8,6 +8,7 @@ import { SITE_ORIGIN } from "@/lib/structuredData";
 // payment before showing a confirmation. Never trusts the browser's word.
 export default function PaymentReturn() {
   const [state, setState] = useState("loading"); // loading | confirmed | race_lost | already | error
+  const [reference, setReference] = useState(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -20,8 +21,8 @@ export default function PaymentReturn() {
       .invoke("confirmPayment", { session_id: sessionId })
       .then((res) => {
         const data = res.data || res;
-        if (data.confirmed) setState("confirmed");
-        else if (data.already_confirmed) setState("already");
+        if (data.confirmed) { setReference(data.reference); setState("confirmed"); }
+        else if (data.already_confirmed) { setReference(data.reference); setState("already"); }
         else if (data.race_lost) setState("race_lost");
         else setState("error");
       })
@@ -47,6 +48,7 @@ export default function PaymentReturn() {
             <>
               <p className="text-sm text-sea tracking-wide uppercase">Booking confirmed</p>
               <h1 className="text-4xl text-ink mt-3">You're booked in</h1>
+              {reference && <p className="mt-3 text-sm text-muted-foreground">Booking reference <span className="tnum text-ink">{reference}</span></p>}
               <p className="mt-5 text-ink-soft">
                 Your payment has been received and your booking is confirmed. We've sent a confirmation email with your stay details and cooling-off deadline.
               </p>
@@ -65,6 +67,7 @@ export default function PaymentReturn() {
             <>
               <p className="text-sm text-sea tracking-wide uppercase">Already confirmed</p>
               <h1 className="text-4xl text-ink mt-3">You're booked in</h1>
+              {reference && <p className="mt-3 text-sm text-muted-foreground">Booking reference <span className="tnum text-ink">{reference}</span></p>}
               <p className="mt-5 text-ink-soft">
                 Your booking is already confirmed and paid — no further action needed. We sent a confirmation email when your payment was first received.
               </p>

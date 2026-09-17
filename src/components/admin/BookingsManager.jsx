@@ -149,6 +149,7 @@ export default function BookingsManager() {
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <div>
               <p className="text-white font-medium">{b.guest_name || "—"}</p>
+              <p className="text-xs text-white/40 tnum">Ref {b.reference || "—"}</p>
               <p className="text-sm text-white/60 tnum">
                 Arriving {b.arrival_date ? format(parseISO(b.arrival_date), "d MMM yyyy") : "—"} · {b.nights || 0} nights · {b.guests || 0} guests
               </p>

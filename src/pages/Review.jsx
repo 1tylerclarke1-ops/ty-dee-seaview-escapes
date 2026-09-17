@@ -8,7 +8,7 @@ import PageHero from "@/components/PageHero";
 // in the URL is what makes the review "verified" (linked to a real booking).
 // The owner publishes it in admin; nothing shows on the site until then.
 export default function Review() {
-  const { bookingId } = useParams();
+  const { reference } = useParams();
   const [rating, setRating] = useState(5);
   const [hover, setHover] = useState(0);
   const [name, setName] = useState("");
@@ -24,7 +24,7 @@ export default function Review() {
     setError(null);
     try {
       const res = await base44.functions.invoke("createReview", {
-        booking_id: bookingId,
+        reference,
         rating,
         text: text.trim(),
         guest_name: name.trim(),

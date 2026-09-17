@@ -114,7 +114,7 @@ export default function ManageBooking() {
     <Wrap>
       <p className="text-sm text-muted mb-2">Manage your booking</p>
       <h1 className="text-3xl md:text-4xl mb-1">Your stay at {BUSINESS.name}</h1>
-      <p className="text-sm text-muted mb-8">Booking ref <span className="tnum text-ink">{b.id}</span></p>
+      <p className="text-sm text-muted mb-8">Booking ref <span className="tnum text-ink">{b.reference}</span></p>
 
       <div className="grid md:grid-cols-2 gap-5">
         <Card title="Your stay">
@@ -219,7 +219,7 @@ export default function ManageBooking() {
               <h2 className="text-xl">Booking cancelled</h2>
             </div>
             <div className="space-y-2 mb-4 text-sm">
-              <Row label="Booking ref" value={b.id} />
+              <Row label="Booking ref" value={b.reference} />
               <Row label="Refund amount" value={gbp(result.refund_due)} strong />
               <Row label="Refund band" value={result.refund_tier} />
               <Row label="Timescale" value="Within 10 working days" />

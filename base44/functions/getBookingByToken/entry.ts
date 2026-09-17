@@ -49,7 +49,7 @@ export default async function (req) {
     return Response.json({
       state: "active",
       booking: {
-        id: booking.id,
+        reference: booking.reference,
         arrival_date: booking.arrival_date,
         departure_date: departureIso,
         nights: booking.nights,

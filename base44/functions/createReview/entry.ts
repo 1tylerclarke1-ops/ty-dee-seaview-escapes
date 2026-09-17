@@ -1,25 +1,27 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 
 // Public — a guest submits a review from the post-stay email link. The link
-// is keyed to the booking id, so the review is "verified" (linked to a real
-// booking) the moment it is created. It is NOT published by default — the
-// owner publishes it in admin. An unverified review can never exist via this
-// path: a valid, recently-departed booking id is required and validated, and
-// only one review is allowed per booking.
+// is keyed to the booking REFERENCE (TD-YYMMDD-XXX), not the database id, so
+// the review is "verified" (linked to a real booking) the moment it is
+// created. It is NOT published by default — the owner publishes it in admin.
+// An unverified review can never exist via this path: a valid, recently-
+// departed booking reference is required and validated, and only one review
+// is allowed per booking. The database id is never exposed to the guest.
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const bookingId = String(body.booking_id || "").trim();
+    const reference = String(body.reference || "").trim();
     const rating = Math.min(5, Math.max(1, Number(body.rating) || 0));
     const text = String(body.text || "").trim().slice(0, 2000);
     const name = String(body.guest_name || "").trim().slice(0, 80);
 
-    if (!bookingId || !rating || !text) {
+    if (!reference || !rating || !text) {
       return Response.json({ ok: false, error: "Missing fields" }, { status: 400 });
     }
 
-    const booking = await base44.asServiceRole.entities.Booking.get(bookingId).catch(() => null);
+    const found = await base44.asServiceRole.entities.Booking.filter({ reference }).catch(() => []);
+    const booking = found && found[0];
     if (!booking) return Response.json({ ok: false, error: "Booking not found" }, { status: 404 });
 
     const dep = booking.departure_date ? new Date(booking.departure_date + "T00:00:00Z") : null;
@@ -29,8 +31,8 @@ export default async function (req) {
       return Response.json({ ok: false, error: "Review window closed" }, { status: 400 });
     }
 
-    // One review per booking.
-    const existing = await base44.asServiceRole.entities.Review.filter({ booking_id: bookingId });
+    // One review per booking (keyed by the internal booking id).
+    const existing = await base44.asServiceRole.entities.Review.filter({ booking_id: booking.id });
     if (existing && existing.length) {
       return Response.json({ ok: false, error: "Already reviewed" }, { status: 409 });
     }
@@ -50,7 +52,7 @@ export default async function (req) {
       text,
       verified: true,
       published: false,
-      booking_id: bookingId,
+      booking_id: booking.id,
     });
     return Response.json({ ok: true });
   } catch (error) {

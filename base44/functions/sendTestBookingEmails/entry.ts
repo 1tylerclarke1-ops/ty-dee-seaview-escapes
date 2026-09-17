@@ -16,6 +16,7 @@ import {
 } from "../../shared/cancellation.ts";
 import { DEFAULT_FACILITIES_SETTINGS } from "../../shared/facilities.ts";
 import { bookingCancelToken } from "../../shared/contacts.ts";
+import { formatBookingReference } from "../../shared/bookingReference.ts";
 import { logEmailAttempt } from "../../shared/emailLog.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
 import { buildGuestConfirmationEmail, buildOwnerDigestEmail } from "../../shared/bookingEmail.ts";
@@ -81,6 +82,7 @@ export default async function (req) {
     const departureDate = new Date(arrivalDate.getTime() + nights * 86400000).toISOString().slice(0, 10);
     const booking = {
       id: "TEST-" + now.getTime(),
+      reference: formatBookingReference(now),
       guest_name,
       guest_email: recipient,
       arrival_date,

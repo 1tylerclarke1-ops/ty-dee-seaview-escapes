@@ -52,6 +52,10 @@
       "default": "enquiry",
       "title": "Status"
     },
+    "reference": {
+      "type": "string",
+      "title": "Booking reference (TD-YYMMDD-XXX)"
+    },
     "cancel_token": {
       "type": "string",
       "title": "Long single-use token for the guest's manage/cancel link"

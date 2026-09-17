@@ -32,7 +32,7 @@ export default async function (req) {
     }
 
     const result = await confirmBookingPayment(base44, booking, session);
-    return Response.json({ ok: true, ...result });
+    return Response.json({ ok: true, ...result, reference: booking.reference });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

@@ -78,7 +78,7 @@ const AuthenticatedApp = () => {
         <Route path="/find-us" element={<FindUs />} />
         <Route path="/offer/:token" element={<OfferLanding />} />
         <Route path="/unsubscribe/:token" element={<Unsubscribe />} />
-        <Route path="/review/:bookingId" element={<Review />} />
+        <Route path="/review/:reference" element={<Review />} />
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/booking/return" element={<PaymentReturn />} />
         <Route path="/booking/cancelled" element={<PaymentCancelled />} />
