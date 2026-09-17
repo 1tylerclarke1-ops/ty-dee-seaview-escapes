@@ -8,7 +8,7 @@
 // settings entity is admin-only (RLS); the code never appears on any public
 // page, the tokenised manage page, or any other email template.
 
-import { daysBetween, todayIso, addDaysIso } from "./cancellation.ts";
+import { daysBetween, todayIso } from "./cancellation.ts";
 import { logEmailAttempt } from "./emailLog.ts";
 import { appBaseUrl } from "./origin.ts";
 import {
@@ -17,7 +17,6 @@ import {
   figureBox,
   boxLabel,
   figRow,
-  inlineLink,
   para,
 } from "./emailHtml.ts";
 
@@ -42,118 +41,85 @@ export async function getArrivalInfoSettings(base44) {
   return (rows && rows[0]) || null;
 }
 
-// Replace {{park_map}} placeholders with a hyperlinked "park map" (HTML) or
-// "park map (url)" (plain text). The admin writes {{park_map}} in the editable
-// text where they want the Find Us link to appear.
-function replaceParkMap(text, findUsUrl, isHtml) {
-  if (!text) return "";
-  const link = isHtml ? inlineLink(findUsUrl, "park map") : `park map (${findUsUrl})`;
-  return text.split("{{park_map}}").join(link);
-}
-
-export function buildArrivalInfoEmail({ booking, settings, appBaseUrl: baseUrl }) {
+// Arrival info email — word-for-word template. Only four values are dynamic
+// (read at send time from ArrivalInfoSettings): WiFi network, WiFi password,
+// lockbox code, and lockbox location. Everything else is fixed wording.
+export function buildArrivalInfoEmail({ booking, settings }) {
   const arrivalLong = formatGuestDate(booking.arrival_date);
-  const departureLong = formatGuestDate(addDaysIso(booking.arrival_date, booking.nights));
-  const findUsUrl = `${baseUrl}/find-us`;
-  const hasDogs = (booking.dog_count || 0) > 0;
+  const subject = `Welcome to Ty Dee Seaview Escapes — arriving ${arrivalLong}`;
 
-  const subject = `Your arrival at Ty Dee Seaview Escapes — ${arrivalLong}`;
+  const wifiNetwork = settings.wifi_network || "";
+  const wifiPassword = settings.wifi_password || "";
+  const lockboxCode = settings.lockbox_code || "";
+  const lockboxLocation = settings.lockbox_location || "";
 
-  // --- Plain text ---
-  const lines = [
-    `Hello ${booking.guest_name || ""},`,
+  // --- Plain text (word for word as the owner specified) ---
+  const text = [
+    `🌊 Welcome to Ty Dee Seaview Escapes 🌊`,
     ``,
-    `Your stay is nearly here — arriving ${arrivalLong}, departing ${departureLong}.`,
-    `Check-in from ${settings.check_in_time}. Check-out by ${settings.check_out_time}.`,
+    `Hello and welcome!`,
     ``,
-    `Finding us`,
-    settings.park_address || "",
-    settings.park_postcode || "",
-    settings.directions_brief || "",
-    settings.steep_road_note || "",
+    `We're delighted to have you staying with us and hope you have a wonderful, relaxing break at Ty Dee Seaview Escapes.`,
     ``,
-    `See the park map and full directions: ${findUsUrl}`,
+    `Wi-Fi`,
     ``,
-    `Parking`,
-    settings.parking_info || "",
+    `Network: ${wifiNetwork}`,
+    `Password: ${wifiPassword}`,
     ``,
-    `Lockbox`,
-    settings.lockbox_location || "",
-    `Code: ${settings.lockbox_code}`,
+    `Key Collection`,
     ``,
-    `WiFi`,
-    `Network: ${settings.wifi_network || ""}`,
-    `Password: ${settings.wifi_password || ""}`,
+    `Lockbox Code: ${lockboxCode}`,
     ``,
-    `Contact on the day`,
-    `${settings.contact_number || ""}`,
+    lockboxLocation,
     ``,
-    `Departure`,
-    settings.departure_instructions || "",
-  ];
-  if (hasDogs) {
-    lines.push(
-      ``,
-      `Travelling with your dog`,
-      `What to bring — ${replaceParkMap(settings.dog_bring_items, findUsUrl, false)}`,
-      `Waste — ${replaceParkMap(settings.dog_waste_note, findUsUrl, false)}`,
-      `Walking — ${replaceParkMap(settings.dog_walking_note, findUsUrl, false)}`,
-      `House rules — ${settings.dog_house_rules || ""}`,
-    );
-  }
-  lines.push(``, `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
-  const text = lines.join("\n");
+    `Following this message, you'll receive a picture showing the route from the park entrance to the caravan to help you find us easily.`,
+    ``,
+    `A Few Friendly Reminders`,
+    ``,
+    `- If you use the outdoor furniture, please could you replace the large protective cover once you've finished. This helps keep the furniture clean and in good condition for everyone to enjoy.`,
+    `- There is a locked storage box on the decking containing the owner's personal belongings. Please do not remove the cover or attempt to open or access it during your stay.`,
+    ``,
+    `Need Any Help?`,
+    ``,
+    `If you have any questions or need assistance during your stay, please don't hesitate to get in touch. I'm available every day between 8:00am and 10:00pm and will be happy to help.`,
+    ``,
+    `We hope you have a fantastic stay and make some wonderful memories!`,
+    ``,
+    `Best regards,`,
+    ``,
+    `Tyler Dee Clarke`,
+  ].join("\n");
 
   // --- HTML ---
-  let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">Your arrival</h1>`;
+  let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">🌊 Welcome to Ty Dee Seaview Escapes 🌊</h1>`;
   body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes — Polperro, Looe, Cornwall</p>`;
-  body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
-  body += para(`Your stay is nearly here — arriving <strong>${escapeHtml(arrivalLong)}</strong>, departing <strong>${escapeHtml(departureLong)}</strong>.`);
+  body += para(`Hello and welcome!`);
+  body += para(`We're delighted to have you staying with us and hope you have a wonderful, relaxing break at Ty Dee Seaview Escapes.`);
 
   body += figureBox([
-    boxLabel("Your stay"),
-    figRow("Arriving", arrivalLong),
-    figRow("Departing", departureLong),
-    figRow("Check-in", settings.check_in_time || ""),
-    figRow("Check-out", settings.check_out_time || ""),
-  ].join(""));
-
-  body += para(`<strong>Finding us</strong>`);
-  body += para(esc(settings.park_address) + (settings.park_postcode ? `<br>${esc(settings.park_postcode)}` : ""));
-  if (settings.directions_brief) body += para(esc(settings.directions_brief));
-  if (settings.steep_road_note) body += para(esc(settings.steep_road_note));
-  body += para(`${inlineLink(findUsUrl, "See the park map and full directions")}.`);
-
-  body += para(`<strong>Parking</strong>`);
-  body += para(esc(settings.parking_info));
-
-  body += figureBox([
-    boxLabel("Lockbox"),
-    figRow("Location", settings.lockbox_location || ""),
-    figRow("Code", settings.lockbox_code || ""),
+    boxLabel("Wi-Fi"),
+    figRow("Network", wifiNetwork),
+    figRow("Password", wifiPassword),
   ].join(""));
 
   body += figureBox([
-    boxLabel("WiFi"),
-    figRow("Network", settings.wifi_network || ""),
-    figRow("Password", settings.wifi_password || ""),
+    boxLabel("Key Collection"),
+    figRow("Lockbox Code", lockboxCode),
   ].join(""));
+  if (lockboxLocation) body += para(esc(lockboxLocation));
+  body += para(`Following this message, you'll receive a picture showing the route from the park entrance to the caravan to help you find us easily.`);
 
-  body += para(`<strong>Contact on the day</strong>`);
-  body += para(esc(settings.contact_number));
+  body += para(`<strong>A Few Friendly Reminders</strong>`);
+  body += `<ul style="margin:0 0 20px;padding-left:20px;font-size:15px;line-height:1.6;list-style:disc;">`;
+  body += `<li style="margin:0 0 10px;">If you use the outdoor furniture, please could you replace the large protective cover once you've finished. This helps keep the furniture clean and in good condition for everyone to enjoy.</li>`;
+  body += `<li style="margin:0 0 10px;">There is a locked storage box on the decking containing the owner's personal belongings. Please do not remove the cover or attempt to open or access it during your stay.</li>`;
+  body += `</ul>`;
 
-  body += para(`<strong>Departure</strong>`);
-  body += para(esc(settings.departure_instructions));
+  body += para(`<strong>Need Any Help?</strong>`);
+  body += para(`If you have any questions or need assistance during your stay, please don't hesitate to get in touch. I'm available every day between 8:00am and 10:00pm and will be happy to help.`);
 
-  if (hasDogs) {
-    body += para(`<strong>Travelling with your dog</strong>`);
-    if (settings.dog_bring_items) body += para(`<strong>What to bring</strong> — ${esc(replaceParkMap(settings.dog_bring_items, findUsUrl, true))}`);
-    if (settings.dog_waste_note) body += para(`<strong>Waste</strong> — ${esc(replaceParkMap(settings.dog_waste_note, findUsUrl, true))}`);
-    if (settings.dog_walking_note) body += para(`<strong>Walking</strong> — ${esc(replaceParkMap(settings.dog_walking_note, findUsUrl, true))}`);
-    if (settings.dog_house_rules) body += para(`<strong>House rules</strong> — ${esc(settings.dog_house_rules)}`);
-  }
-
-  body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  body += para(`We hope you have a fantastic stay and make some wonderful memories!`);
+  body += `<p style="margin:24px 0 0;font-size:15px;color:#1C2A31;">Best regards,<br>Tyler Dee Clarke</p>`;
   const html = emailShell({ title: subject, body });
 
   return { subject, text, html };
