@@ -237,6 +237,20 @@
       "type": "boolean",
       "default": false,
       "title": "Post-stay email sent"
+    },
+    "arrival_info_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Arrival info email sent at"
+    },
+    "arrival_info_send_failed": {
+      "type": "boolean",
+      "default": false,
+      "title": "Arrival info send failed"
+    },
+    "arrival_info_error": {
+      "type": "string",
+      "title": "Arrival info send error"
     }
   },
   "required": [

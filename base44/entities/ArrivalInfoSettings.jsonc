@@ -1,0 +1,97 @@
+{
+  "name": "ArrivalInfoSettings",
+  "type": "object",
+  "properties": {
+    "check_in_time": {
+      "type": "string",
+      "title": "Check-in time"
+    },
+    "check_out_time": {
+      "type": "string",
+      "title": "Check-out time"
+    },
+    "park_address": {
+      "type": "string",
+      "title": "Park address"
+    },
+    "park_postcode": {
+      "type": "string",
+      "title": "Park postcode"
+    },
+    "directions_brief": {
+      "type": "string",
+      "title": "Directions in brief"
+    },
+    "steep_road_note": {
+      "type": "string",
+      "title": "Steep road note"
+    },
+    "parking_info": {
+      "type": "string",
+      "title": "Where to park"
+    },
+    "lockbox_location": {
+      "type": "string",
+      "title": "Lockbox location"
+    },
+    "lockbox_code": {
+      "type": "string",
+      "title": "Lockbox code (read at send time \u2014 never hardcoded)"
+    },
+    "wifi_network": {
+      "type": "string",
+      "title": "WiFi network"
+    },
+    "wifi_password": {
+      "type": "string",
+      "title": "WiFi password"
+    },
+    "contact_number": {
+      "type": "string",
+      "title": "Contact number (for the day)"
+    },
+    "departure_instructions": {
+      "type": "string",
+      "title": "Departure instructions (bins, keys, etc.)"
+    },
+    "dog_bring_items": {
+      "type": "string",
+      "title": "Dog \u2014 what to bring"
+    },
+    "dog_waste_note": {
+      "type": "string",
+      "title": "Dog \u2014 waste (use {{park_map}} for the link)"
+    },
+    "dog_walking_note": {
+      "type": "string",
+      "title": "Dog \u2014 walking (use {{park_map}} for the link)"
+    },
+    "dog_house_rules": {
+      "type": "string",
+      "title": "Dog \u2014 house rules"
+    }
+  },
+  "required": [],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

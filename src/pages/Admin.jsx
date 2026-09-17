@@ -21,6 +21,8 @@ import TextReminderAlerts from "@/components/admin/TextReminderAlerts";
 import AutoCancelUndoAlerts from "@/components/admin/AutoCancelUndoAlerts";
 import GracePeriodAlerts from "@/components/admin/GracePeriodAlerts";
 import FailedBalanceReminderAlerts from "@/components/admin/FailedBalanceReminderAlerts";
+import FailedArrivalInfoAlerts from "@/components/admin/FailedArrivalInfoAlerts";
+import ArrivalInfoSettingsEditor from "@/components/admin/ArrivalInfoSettingsEditor";
 import SendTestEmails from "@/components/admin/SendTestEmails";
 import BlockedDatesManager from "@/components/admin/BlockedDatesManager";
 
@@ -94,6 +96,7 @@ export default function Admin() {
         <NewBookingsBanner />
         <CancellationEmailAlerts />
         <FailedBalanceReminderAlerts />
+        <FailedArrivalInfoAlerts />
         <BalanceOverdueAlerts />
         <TextReminderAlerts />
         <AutoCancelUndoAlerts />
@@ -121,6 +124,10 @@ export default function Admin() {
         <div className="mb-12">
           <h2 className="text-2xl text-white mb-6">Park facilities settings</h2>
           <FacilitiesSettingsEditor />
+        </div>
+        <div className="mb-12">
+          <h2 className="text-2xl text-white mb-6">Arrival info email</h2>
+          <ArrivalInfoSettingsEditor />
         </div>
         <div className="mb-12">
           <h2 className="text-2xl text-white mb-6">Cancellation policy</h2>

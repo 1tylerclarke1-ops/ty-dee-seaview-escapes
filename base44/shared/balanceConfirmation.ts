@@ -11,6 +11,7 @@ import { calculatePrice } from "./pricing.ts";
 import { logEmailAttempt } from "./emailLog.ts";
 import { appBaseUrl } from "./origin.ts";
 import { buildBalancePaidEmail } from "./bookingEmail.ts";
+import { maybeSendArrivalInfoImmediate } from "./arrivalInfo.ts";
 
 export async function confirmBalancePayment(base44, booking, session) {
   // Idempotency — already confirmed (by the other path or a prior run).
@@ -80,6 +81,11 @@ export async function confirmBalancePayment(base44, booking, session) {
 
   // Send the balance-paid confirmation email (best-effort, never blocks).
   await sendBalancePaidEmail(base44, confirmedBooking, breakdown);
+
+  // Arrival info — if arriving within 3 days, send immediately (the balance
+  // payment just confirmed the booking; a last-minute guest needs the lockbox
+  // code without waiting for the daily job).
+  await maybeSendArrivalInfoImmediate(base44, confirmedBooking);
 
   return { confirmed: true, status: "confirmed" };
 }

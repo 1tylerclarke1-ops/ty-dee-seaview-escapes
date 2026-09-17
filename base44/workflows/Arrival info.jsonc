@@ -1,0 +1,45 @@
+{
+  "description": "Daily 09:00 \u2014 sends the arrival info email (lockbox code, WiFi, directions, dog section) to confirmed guests arriving within 3 days. Last-minute bookings (paid when arrival is 3 days or fewer away) are sent immediately on payment instead. Never sends twice (tracked on the booking). Failed sends are flagged in admin.",
+  "name": "Arrival info",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 9 * * *",
+      "one_time_date": null,
+      "timezone": "Europe/London",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "arrival_info",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_arrival_info": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendArrivalInfo",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send arrival info",
+            "description": "Arrival details to guests arriving within 3 days"
+          }
+        }
+      }
+    ]
+  }
+}

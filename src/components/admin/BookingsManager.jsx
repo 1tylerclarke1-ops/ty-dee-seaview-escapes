@@ -24,6 +24,27 @@ export default function BookingsManager() {
   const [logOpenId, setLogOpenId] = useState(null);
   const [logEntries, setLogEntries] = useState({});
   const [logLoading, setLogLoading] = useState(false);
+  const [sendingArrivalId, setSendingArrivalId] = useState(null);
+  const [arrivalErrors, setArrivalErrors] = useState({});
+
+  const sendArrivalInfo = async (b) => {
+    setSendingArrivalId(b.id);
+    setArrivalErrors((m) => ({ ...m, [b.id]: null }));
+    try {
+      const res = await base44.functions.invoke("sendArrivalInfo", { booking_id: b.id });
+      const data = res.data || res;
+      if (data.sent) {
+        load();
+      } else {
+        setArrivalErrors((m) => ({ [b.id]: data.error || "Could not send — check arrival info settings are configured." }));
+      }
+    } catch (e) {
+      const data = e?.data || e;
+      setArrivalErrors((m) => ({ [b.id]: data?.error || "Could not send." }));
+    } finally {
+      setSendingArrivalId(null);
+    }
+  };
 
   const resendConfirmation = async (b) => {
     setResendingId(b.id);
@@ -198,6 +219,26 @@ export default function BookingsManager() {
               )}
               {b.status === "confirmed" && b.balance_paid > 0 && !b.balance_paid_email_sent && (
                 <span className="text-xs text-signal">Balance paid email not sent</span>
+              )}
+              {b.status === "confirmed" && (
+                <>
+                  {b.arrival_info_send_failed ? (
+                    <span className="text-xs text-signal">Arrival info send FAILED</span>
+                  ) : b.arrival_info_sent_at ? (
+                    <span className="text-xs text-white/40">Arrival info sent {format(parseISO(b.arrival_info_sent_at), "d MMM HH:mm")}</span>
+                  ) : (
+                    <span className="text-xs text-white/50">Arrival info not sent</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => sendArrivalInfo(b)}
+                    disabled={sendingArrivalId === b.id}
+                    className="text-xs text-sea hover:underline disabled:opacity-50"
+                  >
+                    {sendingArrivalId === b.id ? "Sending…" : b.arrival_info_sent_at ? "Resend arrival info" : "Send arrival info"}
+                  </button>
+                  {arrivalErrors[b.id] && <span className="text-xs text-signal">{arrivalErrors[b.id]}</span>}
+                </>
               )}
               <button
                 type="button"

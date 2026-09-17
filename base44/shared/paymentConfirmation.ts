@@ -23,6 +23,7 @@ import {
   buildGuestConfirmationEmail,
   buildOwnerAlertEmail,
 } from "./bookingEmail.ts";
+import { maybeSendArrivalInfoImmediate } from "./arrivalInfo.ts";
 
 // Confirm a booking's payment from a verified Stripe Checkout Session.
 // `session` is the Stripe session object (already retrieved + verified by the
@@ -127,6 +128,12 @@ export async function confirmBookingPayment(base44, booking, session) {
 
   // Send confirmation emails to guest and owner.
   await sendConfirmationEmails(base44, confirmedBooking, breakdown, paidInFull);
+
+  // Arrival info — if paid in full and arriving within 3 days, send immediately
+  // so a last-minute booking doesn't wait for the daily 09:00 job.
+  if (paidInFull) {
+    await maybeSendArrivalInfoImmediate(base44, confirmedBooking);
+  }
 
   return { confirmed: true, status: updateData.status };
 }
