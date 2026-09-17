@@ -15,6 +15,9 @@ const MAP_CREDIT = "Park map © Polperro Holiday Park";
 // Pitch 157 marker — estimated from the park map. Verify against the printed
 // map and adjust markerPos if the marker sits off pitch 157.
 const MARKER_POS = { top: 52, left: 66 };
+// Touch-device pin position — nudged up and right from the desktop value to
+// land the pin tip on pitch 157. Verify on device and adjust if still off.
+const MOBILE_MARKER_POS = { top: 46, left: 71 };
 
 const PARK_COORDS = { lat: 50.34, lng: -4.548 };
 const EMBED_SRC = `https://www.google.com/maps?q=${PARK_COORDS.lat},${PARK_COORDS.lng}&z=15&output=embed`;
@@ -154,15 +157,22 @@ export default function FindUs() {
         <div className="hairline pt-8 md:pt-10">
           <h2 className="text-2xl md:text-3xl text-ink mb-3">Finding the van</h2>
           <p className="text-ink-soft max-w-2xl mb-4 text-sm">
-            The van is on pitch 157, marked on the map below. Tap it to zoom — it's detailed, and hard to read
-            on a phone otherwise.
+            The van is on pitch 157, marked on the map below.{" "}
+            <span className="md:hidden">Pinch to zoom in on the map.</span>
+            <span className="hidden md:inline">Tap it to zoom — it's detailed, and hard to read on a phone otherwise.</span>
           </p>
           <ParkMap
             src={MAP_IMAGE}
             alt="Polperro Holiday Park site map showing the layout of pitches, facilities and pitch 157 highlighted"
-            caption="Tap the map to zoom. Pitch 157 is marked in green."
+            caption={
+              <>
+                <span className="md:hidden">Pitch 157 is marked in green. Pinch to zoom.</span>
+                <span className="hidden md:inline">Tap the map to zoom. Pitch 157 is marked in green.</span>
+              </>
+            }
             credit={MAP_CREDIT}
             markerPos={MARKER_POS}
+            mobileMarkerPos={MOBILE_MARKER_POS}
           />
           <p className="mt-2 text-xs text-muted-foreground">{MAP_CREDIT}</p>
 

@@ -15,6 +15,7 @@ export default function ParkMap({
   caption,
   credit,
   markerPos = { top: 38, left: 63 },
+  mobileMarkerPos,
 }) {
   const [open, setOpen] = useState(false);
   const [coarse, setCoarse] = useState(false);
@@ -27,12 +28,13 @@ export default function ParkMap({
     return () => mq.removeEventListener?.("change", update);
   }, []);
 
+  const pos = coarse && mobileMarkerPos ? mobileMarkerPos : markerPos;
   const pin = (
     <span
       className="pointer-events-none absolute z-10"
       style={{
-        top: `${markerPos.top}%`,
-        left: `${markerPos.left}%`,
+        top: `${pos.top}%`,
+        left: `${pos.left}%`,
         transform: "translate(-50%, -100%)",
       }}
     >
