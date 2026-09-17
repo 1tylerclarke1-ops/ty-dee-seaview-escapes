@@ -44,20 +44,22 @@ export default async function (req) {
       const balanceDueDate = balanceDueIso(b.arrival_date);
       const manageUrl = b.cancel_token ? `${appBaseUrl()}/booking/${b.cancel_token}` : null;
 
-      // 70 days — friendly reminder (range 70..61)
-      if (days <= 70 && days > 60 && !remindersSent.includes("70")) {
-        await sendOne(base44, b, "70", balanceOwed, balanceDueDate, days, manageUrl);
-        sent.push({ ref: b.reference, type: "70_days" });
+      // Each reminder fires when its threshold has passed AND it hasn't been
+      // sent yet — no upper bound on the day count. If the daily run is missed
+      // for a day or a week, the next run catches up every missed reminder.
+      // If multiple thresholds have passed, all missed reminders fire in one
+      // run (the guest receives each one, oldest first).
+      if (days <= 70 && !remindersSent.includes("70")) {
+        const ok = await sendOne(base44, b, "70", balanceOwed, balanceDueDate, days, manageUrl);
+        sent.push({ ref: b.reference, type: "70_days", ok });
       }
-      // 60 days — due today (range 60..56)
-      if (days <= 60 && days > 55 && !remindersSent.includes("60")) {
-        await sendOne(base44, b, "60", balanceOwed, balanceDueDate, days, manageUrl);
-        sent.push({ ref: b.reference, type: "60_days" });
+      if (days <= 60 && !remindersSent.includes("60")) {
+        const ok = await sendOne(base44, b, "60", balanceOwed, balanceDueDate, days, manageUrl);
+        sent.push({ ref: b.reference, type: "60_days", ok });
       }
-      // 55 days — overdue with consequences (range 55..54)
-      if (days <= 55 && days > 53 && !remindersSent.includes("55")) {
-        await sendOne(base44, b, "55", balanceOwed, balanceDueDate, days, manageUrl);
-        sent.push({ ref: b.reference, type: "55_days" });
+      if (days <= 55 && !remindersSent.includes("55")) {
+        const ok = await sendOne(base44, b, "55", balanceOwed, balanceDueDate, days, manageUrl);
+        sent.push({ ref: b.reference, type: "55_days", ok });
       }
       // 53 days — flag for admin (7 days after the due date)
       if (days <= 53 && !b.balance_overdue_flagged) {
@@ -68,7 +70,8 @@ export default async function (req) {
       }
     }
 
-    return Response.json({ ok: true, sent, flagged });
+    const failed = sent.filter((s) => !s.ok);
+    return Response.json({ ok: true, sent, failed, flagged });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
@@ -103,4 +106,5 @@ async function sendOne(base44, booking, stage, balanceOwed, balanceDueDate, days
       } catch {}
     }
   }
+  return ok;
 }

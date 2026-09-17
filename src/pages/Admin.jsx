@@ -17,6 +17,7 @@ import ConfigBanner from "@/components/admin/ConfigBanner";
 import NewBookingsBanner from "@/components/admin/NewBookingsBanner";
 import CancellationEmailAlerts from "@/components/admin/CancellationEmailAlerts";
 import BalanceOverdueAlerts from "@/components/admin/BalanceOverdueAlerts";
+import FailedBalanceReminderAlerts from "@/components/admin/FailedBalanceReminderAlerts";
 import SendTestEmails from "@/components/admin/SendTestEmails";
 import BlockedDatesManager from "@/components/admin/BlockedDatesManager";
 
@@ -89,6 +90,7 @@ export default function Admin() {
         <div className="border-t border-white/10 mt-8 mb-10" />
         <NewBookingsBanner />
         <CancellationEmailAlerts />
+        <FailedBalanceReminderAlerts />
         <BalanceOverdueAlerts />
         <ConfigBanner />
         <div className="mb-12">
