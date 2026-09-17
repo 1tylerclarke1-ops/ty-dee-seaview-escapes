@@ -66,6 +66,7 @@ export default async function (req) {
     // --- Confirm: issue the real Stripe refund ---
     const refundDue = preview.refund_due;
     let refundPaid = 0;
+    let refundId = null;
     if (refundDue > 0 && booking.stripe_payment_intent_id) {
       try {
         const refund = await createRefund({
@@ -73,6 +74,7 @@ export default async function (req) {
           amountPence: toMinorUnits(refundDue),
         });
         refundPaid = typeof refund.amount === "number" ? refund.amount / 100 : 0;
+        refundId = refund.id || null;
       } catch (e) {
         return Response.json({ ok: false, error: `Refund failed: ${e.message}` }, { status: 502 });
       }
@@ -128,9 +130,19 @@ export default async function (req) {
       });
     }
 
+    // Persist the cancellation-email flag so the admin dashboard can surface a
+    // loud "cancellation confirmation not sent" alert if this send failed.
+    // Best-effort — the booking is already cancelled and refunded regardless.
+    try {
+      await base44.asServiceRole.entities.Booking.update(booking.id, {
+        cancellation_email_sent: guestOk,
+      });
+    } catch {}
+
     return Response.json({
       ok: true,
       confirm: true,
+      refund_id: refundId,
       refund_paid: refundPaid,
       refund_due: refundDue,
       retained: preview.retained,

@@ -290,42 +290,53 @@ export function buildOwnerDigestEmail({ bookings, enquiries, appBaseUrl }) {
 // and what was retained, with the policy link hyperlinked.
 export function buildGuestCancellationEmail({ booking, preview, appBaseUrl }) {
   const arrivalLong = formatGuestDate(booking.arrival_date);
+  const departureLong = formatGuestDate(addDaysIso(booking.arrival_date, booking.nights));
   const policyUrl = `${appBaseUrl}/terms`;
   const subject = `Your booking has been cancelled — Ty Dee Seaview Escapes`;
   const refundDue = Number(preview.refund_due) || 0;
   const retained = Number(preview.retained) || 0;
+  const tier = preview.refund_tier || "";
 
   const lines = [
     `Hello ${booking.guest_name || ""},`,
     ``,
-    `Your booking arriving ${arrivalLong} (${booking.nights} night(s)) has been cancelled as requested.`,
+    `Your booking arriving ${arrivalLong} and departing ${departureLong} (${booking.nights} night(s)) has been cancelled as requested.`,
+    `Booking reference: ${booking.id}.`,
     ``,
   ];
   if (refundDue > 0) {
     lines.push(`A refund of ${gbp(refundDue)} (${preview.refund_percent}% of what you paid) will be returned to your original payment method within 10 working days.`);
+    if (tier) lines.push(`Cancellation band applied: ${tier}.`);
     if (retained > 0) {
       lines.push(`Under the cancellation policy, ${gbp(retained)} is retained.`);
     }
   } else {
     lines.push(`Under the cancellation policy, no refund is due for this cancellation.`);
   }
-  lines.push(``, `Booking ref ${booking.id}.`, ``, `Our cancellation policy: ${policyUrl}`, ``, `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
+  lines.push(``, `Our cancellation policy: ${policyUrl}`, ``, `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
   const text = lines.join("\n");
 
   let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">Your booking has been cancelled</h1>`;
   body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
   body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
-  body += para(`Your booking arriving ${escapeHtml(arrivalLong)} (${booking.nights} night(s)) has been cancelled as requested.`);
+  body += para(`Your booking arriving ${escapeHtml(arrivalLong)} and departing ${escapeHtml(departureLong)} (${booking.nights} night(s)) has been cancelled as requested.`);
+  body += figureBox([
+    boxLabel("Your stay"),
+    figRow("Arriving", arrivalLong),
+    figRow("Departing", departureLong),
+    figRow("Length", `${booking.nights} night(s)`),
+    figRow("Booking ref", booking.id),
+  ].join(""));
   const refundRows = [boxLabel("Refund")];
   if (refundDue > 0) {
     refundRows.push(figRow("Refunded", `${gbp(refundDue)} (${preview.refund_percent}%)`));
+    if (tier) refundRows.push(figRow("Band applied", tier));
     if (retained > 0) refundRows.push(figRow("Retained", gbp(retained)));
     refundRows.push(`<p style="margin:6px 0 0;font-size:14px;line-height:1.5;color:#5E6E70;">Returned to your original payment method within 10 working days.</p>`);
   } else {
     refundRows.push(`<p style="margin:0;font-size:15px;line-height:1.5;">No refund is due under the cancellation policy.</p>`);
   }
   body += figureBox(refundRows.join(""));
-  body += para(`Booking ref ${escapeHtml(booking.id)}.`);
   body += para(`Read ${inlineLink(policyUrl, "our cancellation policy")}.`);
   body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
   const html = emailShell({ title: subject, body });

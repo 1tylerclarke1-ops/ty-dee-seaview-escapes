@@ -146,6 +146,11 @@
       "default": false,
       "title": "Owner alert email sent"
     },
+    "cancellation_email_sent": {
+      "type": "boolean",
+      "default": false,
+      "title": "Cancellation confirmation email sent to guest"
+    },
     "notes": {
       "type": "string",
       "title": "Notes"

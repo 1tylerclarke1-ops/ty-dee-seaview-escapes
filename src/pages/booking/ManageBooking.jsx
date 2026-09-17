@@ -214,15 +214,24 @@ export default function ManageBooking() {
 
         {stage === "done" && result && (
           <div className="border border-sea/40 bg-sea/5 p-5 md:p-6">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-3">
               <ShieldCheck className="w-5 h-5 text-sea" />
               <h2 className="text-xl">Booking cancelled</h2>
             </div>
-            <p className="text-sm text-ink-soft mb-1">
-              A refund of <strong className="tnum">{gbp(result.refund_due)}</strong> ({result.refund_percent}%) will be returned to your original payment method within 10 working days.
+            <div className="space-y-2 mb-4 text-sm">
+              <Row label="Booking ref" value={b.id} />
+              <Row label="Refund amount" value={gbp(result.refund_due)} strong />
+              <Row label="Refund band" value={result.refund_tier} />
+              <Row label="Timescale" value="Within 10 working days" />
+              <Row label="Refund to" value="Your original payment method" />
+            </div>
+            <p className="text-sm text-ink-soft mb-2">
+              <strong>Please screenshot this page now</strong> for your records — it confirms your cancellation, the refund amount, and the timescale.
             </p>
             <p className="text-sm text-muted">
-              A confirmation has been emailed to you. The dates have been released.
+              {result.guest_email_ok === false
+                ? "We couldn't send your confirmation email just now, but your refund is being processed. If you'd like it resent, please contact us."
+                : "A confirmation has been emailed to you. The dates have been released."}
             </p>
           </div>
         )}
