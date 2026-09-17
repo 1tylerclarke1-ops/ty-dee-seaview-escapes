@@ -19,8 +19,7 @@ const MAP_CREDIT = "Park map © Polperro Holiday Park";
 const MARKER_POS = { top: 47, left: 69 };
 const MOBILE_MARKER_POS = { top: 47, left: 69 };
 
-const PARK_COORDS = { lat: 50.34, lng: -4.548 };
-const EMBED_SRC = `https://www.google.com/maps?q=${PARK_COORDS.lat},${PARK_COORDS.lng}&z=15&output=embed`;
+const EMBED_SRC = "https://www.google.com/maps?q=Polperro+Holiday+Park,+Polperro+Road,+Polperro+PL13+2JE&z=15&output=embed";
 const DIRECTIONS_URL = "https://www.google.com/maps/dir/?api=1&destination=Polperro+Holiday+Park,+Polperro+Road,+Polperro,+PL13+2JE";
 
 const DRIVE_TIMES = [
