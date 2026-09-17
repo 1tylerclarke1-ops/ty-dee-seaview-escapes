@@ -3,8 +3,8 @@ import { format, parseISO, isWithinInterval } from "date-fns";
 
 // A compact admin-only calendar showing the next N months. Each day is
 // colour-coded: booked (guest) dates in a soft green, conflicts (a block
-// overlapping a booking) in red, and owner blocks / free dates with no
-// distinct background. No selection, no interaction — display only.
+// overlapping a booking) in red, owner blocks in amber, and free dates plain.
+// No selection, no interaction — display only.
 
 function isDateInRange(dateStr, ranges) {
   if (!ranges?.length) return false;
@@ -41,8 +41,8 @@ function DayCell({ date, inMonth, blocked, booked }) {
     bg = "bg-green-500/20";
     label = "Booked";
   } else if (blocked) {
-    // Owner block — no distinct background, same as free
-    label = "Block";
+    bg = "bg-amber-600/30 border border-amber-500/40";
+    label = "Owner block";
   }
   return (
     <div
@@ -89,7 +89,10 @@ export default function BlockedCalendar({ blocks = [], bookings = [], months = 4
           <span className="w-3 h-3 bg-red-500/40 rounded-sm" /> Conflict
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 bg-white/5 rounded-sm border border-white/10" /> Free / Owner block
+          <span className="w-3 h-3 bg-white/5 rounded-sm border border-white/10" /> Free
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-3 bg-amber-600/30 rounded-sm border border-amber-500/40" /> Owner block
         </span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
