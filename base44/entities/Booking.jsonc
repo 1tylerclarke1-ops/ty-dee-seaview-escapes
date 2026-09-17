@@ -125,6 +125,24 @@
       "default": [],
       "title": "Balance reminders sent (e.g. [\"70\",\"60\",\"57\",\"55\",\"53\"])"
     },
+    "grace_period_deadline": {
+      "type": "string",
+      "format": "date",
+      "title": "Grace period deadline (set on undo of auto-cancel)"
+    },
+    "grace_period_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Grace period started at (undo timestamp)"
+    },
+    "grace_period_reminders_sent": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Grace period reminders sent (e.g. [\"half\",\"final\"])"
+    },
     "balance_overdue_flagged": {
       "type": "boolean",
       "default": false,

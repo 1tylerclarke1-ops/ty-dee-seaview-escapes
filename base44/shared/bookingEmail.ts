@@ -504,10 +504,10 @@ export function buildAutoCancelEmail({ booking, appBaseUrl }) {
 }
 
 // Booking restored email — sent when the owner undoes an auto-cancellation.
-// Gives the guest a fresh payment link and a warm "good news" tone.
-export function buildBookingRestoredEmail({ booking, balanceOwed, balanceDueDate, appBaseUrl }) {
+// Names the grace period deadline plainly: "Please pay by [date]."
+export function buildBookingRestoredEmail({ booking, balanceOwed, graceDeadline, appBaseUrl }) {
   const arrivalLong = formatGuestDate(booking.arrival_date);
-  const dueLong = formatGuestDate(balanceDueDate);
+  const deadlineLong = formatGuestDate(graceDeadline);
   const amount = gbp(balanceOwed);
   const manageUrl = booking.cancel_token ? `${appBaseUrl}/booking/${booking.cancel_token}` : null;
   const subject = `Your booking has been restored — Ty Dee Seaview Escapes`;
@@ -515,7 +515,9 @@ export function buildBookingRestoredEmail({ booking, balanceOwed, balanceDueDate
   const text = [
     `Hello ${booking.guest_name || ""},`,
     ``,
-    `Good news — your booking arriving ${arrivalLong} has been restored. Your balance of ${amount} is due by ${dueLong}.`,
+    `Good news — your booking arriving ${arrivalLong} has been restored.`,
+    ``,
+    `Please pay by ${deadlineLong}.`,
     ``,
     manageUrl ? `Pay your balance: ${manageUrl}` : ``,
     ``,
@@ -527,13 +529,65 @@ export function buildBookingRestoredEmail({ booking, balanceOwed, balanceDueDate
   let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">Your booking has been restored</h1>`;
   body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
   body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
-  body += para(`Good news — your booking arriving <strong>${escapeHtml(arrivalLong)}</strong> has been restored. Your balance of <strong>${escapeHtml(amount)}</strong> is due by <strong>${escapeHtml(dueLong)}</strong>.`);
+  body += para(`Good news — your booking arriving <strong>${escapeHtml(arrivalLong)}</strong> has been restored.`);
+  body += para(`<strong>Please pay by ${escapeHtml(deadlineLong)}.</strong>`);
   body += figureBox([
     boxLabel("Your booking"),
     figRow("Booking ref", booking.reference),
     figRow("Arriving", arrivalLong),
     figRow("Balance due", amount),
-    figRow("Due by", dueLong),
+    figRow("Pay by", deadlineLong),
+  ].join(""));
+  if (manageUrl) body += `<p style="margin:24px 0 12px;">${buttonLink(manageUrl, "Pay your balance")}</p>`;
+  body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  const html = emailShell({ title: subject, body });
+
+  return { subject, text, html };
+}
+
+// Grace period reminder email — two stages during the grace period after an
+// auto-cancel undo. Both name the deadline plainly.
+//   "half"  — halfway through the grace period, friendly reminder
+//   "final" — day before the deadline, states cancellation consequence
+export function buildGracePeriodReminderEmail({ booking, stage, balanceOwed, graceDeadline, manageUrl }) {
+  const arrivalLong = formatGuestDate(booking.arrival_date);
+  const deadlineLong = formatGuestDate(graceDeadline);
+  const amount = gbp(balanceOwed);
+  const deposit = gbp(booking.deposit_paid || 0);
+
+  let subject, headline, bodyText;
+  if (stage === "half") {
+    subject = `Reminder — please pay by ${deadlineLong} — Ty Dee Seaview Escapes`;
+    headline = "Your balance is due soon";
+    bodyText = `A reminder that your balance of <strong>${escapeHtml(amount)}</strong> for your stay arriving ${escapeHtml(arrivalLong)} is due by <strong>${escapeHtml(deadlineLong)}</strong>.`;
+  } else {
+    subject = `Final reminder — pay by ${deadlineLong} or your booking will be cancelled — Ty Dee Seaview Escapes`;
+    headline = "Final reminder — pay by " + deadlineLong;
+    bodyText = `This is your final reminder. Your balance of <strong>${escapeHtml(amount)}</strong> must be paid by <strong>${escapeHtml(deadlineLong)}</strong>. If we do not receive payment, your booking will be cancelled and your deposit of ${escapeHtml(deposit)} retained.`;
+  }
+
+  const text = [
+    `Hello ${booking.guest_name || ""},`,
+    ``,
+    stage === "half"
+      ? `A reminder that your balance of ${amount} for your stay arriving ${arrivalLong} is due by ${deadlineLong}. Please pay by ${deadlineLong}.`
+      : `This is your final reminder. Your balance of ${amount} must be paid by ${deadlineLong}. If we do not receive payment, your booking will be cancelled and your deposit of ${deposit} retained.`,
+    ``,
+    manageUrl ? `Pay your balance: ${manageUrl}` : ``,
+    ``,
+    `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`,
+  ].filter(Boolean).join("\n");
+
+  let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">${escapeHtml(headline)}</h1>`;
+  body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
+  body += para(bodyText);
+  body += figureBox([
+    boxLabel("Your booking"),
+    figRow("Booking ref", booking.reference),
+    figRow("Arriving", arrivalLong),
+    figRow("Balance due", amount),
+    figRow("Pay by", deadlineLong),
   ].join(""));
   if (manageUrl) body += `<p style="margin:24px 0 12px;">${buttonLink(manageUrl, "Pay your balance")}</p>`;
   body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;

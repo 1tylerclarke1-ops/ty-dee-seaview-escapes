@@ -27,7 +27,7 @@ import { daysBetween, todayIso } from "../../shared/cancellation.ts";
 import { balanceDueIso } from "../../shared/pricing.ts";
 import { logEmailAttempt } from "../../shared/emailLog.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
-import { buildBalanceReminderEmail, buildAutoCancelEmail } from "../../shared/bookingEmail.ts";
+import { buildBalanceReminderEmail, buildAutoCancelEmail, buildGracePeriodReminderEmail } from "../../shared/bookingEmail.ts";
 
 export default async function (req) {
   try {
@@ -62,6 +62,54 @@ export default async function (req) {
       const sessionMs = fresh.balance_session_created_at
         ? new Date(fresh.balance_session_created_at).getTime() : 0;
       if (sessionMs && Date.now() - sessionMs < 3_600_000) continue;
+
+      // Grace period (from undo of auto-cancel): separate reminder schedule
+      // and auto-cancel. While the grace period is running, the normal
+      // day-52 auto-cancel must NOT fire. One reminder at the halfway point,
+      // one the day before the deadline, then cancel if still unpaid.
+      if (fresh.grace_period_deadline) {
+        const graceDeadline = fresh.grace_period_deadline;
+        const daysToDeadline = daysBetween(today, graceDeadline);
+        const graceStart = fresh.grace_period_started_at
+          ? fresh.grace_period_started_at.slice(0, 10) : today;
+        const graceLength = Math.max(1, daysBetween(graceStart, graceDeadline));
+        const halfwayThreshold = Math.floor(graceLength / 2);
+        const graceReminders = fresh.grace_period_reminders_sent || [];
+
+        // Deadline passed — cancel
+        if (daysToDeadline <= 0) {
+          await autoCancel(base44, fresh);
+          continue;
+        }
+
+        // Final reminder: day before deadline (more urgent, checked first)
+        if (daysToDeadline <= 1 && !graceReminders.includes("final") && !remindersHalted) {
+          const ok = await sendGraceReminder(base44, fresh, "final", balanceOwed, graceDeadline, manageUrl);
+          if (!ok) remindersHalted = true;
+          if (ok) {
+            try {
+              await base44.asServiceRole.entities.Booking.update(fresh.id, {
+                grace_period_reminders_sent: [...graceReminders, "final"],
+              });
+            } catch {}
+          }
+        }
+        // Halfway reminder
+        else if (daysToDeadline <= halfwayThreshold && !graceReminders.includes("half") && !remindersHalted) {
+          const ok = await sendGraceReminder(base44, fresh, "half", balanceOwed, graceDeadline, manageUrl);
+          if (!ok) remindersHalted = true;
+          if (ok) {
+            try {
+              await base44.asServiceRole.entities.Booking.update(fresh.id, {
+                grace_period_reminders_sent: [...graceReminders, "half"],
+              });
+            } catch {}
+          }
+        }
+
+        // Skip normal reminder/flag/cancel logic while grace period is active
+        continue;
+      }
 
       const remindersSent = fresh.balance_reminders_sent || [];
       const balanceDueDate = balanceDueIso(fresh.arrival_date);
@@ -180,6 +228,9 @@ async function autoCancel(base44, booking) {
     refund_due: 0,
     refund_paid: 0,
     refund_tier: "unpaid balance — deposit retained",
+    grace_period_deadline: null,
+    grace_period_started_at: null,
+    grace_period_reminders_sent: [],
   });
 
   if (booking.guest_email) {
@@ -203,4 +254,27 @@ async function autoCancel(base44, booking) {
       } catch {}
     }
   }
+}
+
+// Send a grace period reminder (halfway or final). Logged to EmailLog.
+async function sendGraceReminder(base44, booking, stage, balanceOwed, graceDeadline, manageUrl) {
+  if (!booking.guest_email || !manageUrl) return true;
+  const { subject, text, html } = buildGracePeriodReminderEmail({
+    booking, stage, balanceOwed, graceDeadline, manageUrl,
+  });
+  let ok = false;
+  let err = null;
+  try {
+    await base44.asServiceRole.integrations.Core.SendEmail({
+      to: booking.guest_email, subject, text, html,
+    });
+    ok = true;
+  } catch (e) {
+    err = e?.message || String(e);
+  }
+  await logEmailAttempt(base44, {
+    booking_id: booking.id, recipient: booking.guest_email,
+    template: `grace_reminder_${stage}`, subject, ok, error: err,
+  });
+  return ok;
 }

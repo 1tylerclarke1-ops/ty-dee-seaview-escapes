@@ -5,7 +5,7 @@
 
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { findConflict } from "../../shared/availability.ts";
-import { balanceDueIso } from "../../shared/pricing.ts";
+import { todayIso } from "../../shared/cancellation.ts";
 import { logEmailAttempt } from "../../shared/emailLog.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
 import { buildBookingRestoredEmail } from "../../shared/bookingEmail.ts";
@@ -43,6 +43,15 @@ export default async function (req) {
       }, { status: 409 });
     }
 
+    // Grace period: 7 days from now, or until arrival if that is sooner.
+    // During the grace period the normal day-52 auto-cancel is suppressed and
+    // a separate reminder schedule (halfway + day-before) runs instead.
+    const today = todayIso();
+    const sevenDaysDate = new Date(today + "T00:00:00Z");
+    sevenDaysDate.setUTCDate(sevenDaysDate.getUTCDate() + 7);
+    const sevenDaysIso = sevenDaysDate.toISOString().slice(0, 10);
+    const graceDeadline = sevenDaysIso < booking.arrival_date ? sevenDaysIso : booking.arrival_date;
+
     // Restore the booking
     await base44.asServiceRole.entities.Booking.update(booking.id, {
       status: "deposit_paid",
@@ -53,10 +62,13 @@ export default async function (req) {
       refund_tier: null,
       balance_overdue_flagged: false,
       cancellation_email_sent: false,
+      grace_period_deadline: graceDeadline,
+      grace_period_started_at: new Date().toISOString(),
+      grace_period_reminders_sent: [],
     });
 
     // Email the guest a fresh payment link (best-effort)
-    const restored = { ...booking, status: "deposit_paid" };
+    const restored = { ...booking, status: "deposit_paid", grace_period_deadline: graceDeadline };
     if (restored.guest_email && restored.cancel_token) {
       const balanceOwed = Math.max(
         Number(restored.gross_revenue || 0) - Number(restored.deposit_paid || 0) - Number(restored.balance_paid || 0), 0
@@ -64,7 +76,7 @@ export default async function (req) {
       const tpl = buildBookingRestoredEmail({
         booking: restored,
         balanceOwed,
-        balanceDueDate: balanceDueIso(restored.arrival_date),
+        graceDeadline,
         appBaseUrl: appBaseUrl(),
       });
       let ok = false, err = null;

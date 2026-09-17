@@ -19,6 +19,7 @@ import CancellationEmailAlerts from "@/components/admin/CancellationEmailAlerts"
 import BalanceOverdueAlerts from "@/components/admin/BalanceOverdueAlerts";
 import TextReminderAlerts from "@/components/admin/TextReminderAlerts";
 import AutoCancelUndoAlerts from "@/components/admin/AutoCancelUndoAlerts";
+import GracePeriodAlerts from "@/components/admin/GracePeriodAlerts";
 import FailedBalanceReminderAlerts from "@/components/admin/FailedBalanceReminderAlerts";
 import SendTestEmails from "@/components/admin/SendTestEmails";
 import BlockedDatesManager from "@/components/admin/BlockedDatesManager";
@@ -96,6 +97,7 @@ export default function Admin() {
         <BalanceOverdueAlerts />
         <TextReminderAlerts />
         <AutoCancelUndoAlerts />
+        <GracePeriodAlerts />
         <ConfigBanner />
         <div className="mb-12">
           <StripeConnectionPanel />
