@@ -27,14 +27,16 @@ export default function ParkMap({
         <div className="relative block w-full bg-surface" style={{ containerType: "inline-size" }}>
           <Image src={src} alt={alt} fittingType="fit" className="block w-full aspect-[1107/767]" />
           <span
-            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center rounded-full bg-sea text-white font-semibold border-white shadow-md"
+            className="pointer-events-none absolute z-10 flex items-center justify-center rounded-full bg-sea text-white font-semibold border-white shadow-md overflow-hidden"
             style={{
               top: `${markerPos.top}%`,
               left: `${markerPos.left}%`,
               width: "2.7cqw",
-              aspectRatio: "1 / 1",
-              borderWidth: "0.3cqw",
-              fontSize: "1.05cqw",
+              height: "2.7cqw",
+              borderWidth: "0.22cqw",
+              fontSize: "0.78cqw",
+              lineHeight: 1,
+              transform: "translate(-50%, -50%)",
             }}
           >
             {markerLabel}
