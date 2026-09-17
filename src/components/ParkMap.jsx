@@ -30,7 +30,7 @@ export default function ParkMap({
             className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 z-10"
             style={{ top: `${markerPos.top}%`, left: `${markerPos.left}%` }}
           >
-            <span className="flex items-center justify-center w-7 h-7 md:w-9 md:h-9 rounded-full bg-sea text-white text-[0.6rem] md:text-xs font-semibold ring-4 ring-white shadow-lg">
+            <span className="flex items-center justify-center w-5 h-5 md:w-9 md:h-9 rounded-full bg-sea text-white text-[0.5rem] md:text-xs font-semibold ring-2 md:ring-4 ring-white shadow-md md:shadow-lg">
               {markerLabel}
             </span>
           </span>
