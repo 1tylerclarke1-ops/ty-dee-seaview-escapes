@@ -13,6 +13,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { secrets } from 'base44:runtime';
 import { constructWebhookEvent } from '../../shared/stripe.ts';
 import { confirmBookingPayment } from '../../shared/paymentConfirmation.ts';
+import { confirmBalancePayment } from '../../shared/balanceConfirmation.ts';
 
 export default async function(req) {
   const base44 = createClientFromRequest(req);
@@ -56,7 +57,12 @@ export default async function(req) {
         try {
           const booking = await base44.asServiceRole.entities.Booking.get(bookingId);
           if (booking) {
-            await confirmBookingPayment(base44, booking, session);
+            const paymentType = session.metadata && session.metadata.payment_type;
+            if (paymentType === "balance") {
+              await confirmBalancePayment(base44, booking, session);
+            } else {
+              await confirmBookingPayment(base44, booking, session);
+            }
           }
           await base44.asServiceRole.entities.PaymentLog.update(log.id, { processed: true });
         } catch (e) {

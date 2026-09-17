@@ -6,6 +6,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { retrieveSession } from "../../shared/stripe.ts";
 import { confirmBookingPayment } from "../../shared/paymentConfirmation.ts";
+import { confirmBalancePayment } from "../../shared/balanceConfirmation.ts";
 
 export default async function (req) {
   try {
@@ -31,8 +32,11 @@ export default async function (req) {
       return Response.json({ error: "Booking not found" }, { status: 404 });
     }
 
-    const result = await confirmBookingPayment(base44, booking, session);
-    return Response.json({ ok: true, ...result, reference: booking.reference });
+    const paymentType = session.metadata && session.metadata.payment_type;
+    const result = paymentType === "balance"
+      ? await confirmBalancePayment(base44, booking, session)
+      : await confirmBookingPayment(base44, booking, session);
+    return Response.json({ ok: true, ...result, reference: booking.reference, balance_paid: paymentType === "balance" });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

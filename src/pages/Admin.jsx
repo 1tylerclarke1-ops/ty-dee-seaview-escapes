@@ -16,6 +16,7 @@ import StripeConnectionPanel from "@/components/admin/StripeConnectionPanel";
 import ConfigBanner from "@/components/admin/ConfigBanner";
 import NewBookingsBanner from "@/components/admin/NewBookingsBanner";
 import CancellationEmailAlerts from "@/components/admin/CancellationEmailAlerts";
+import BalanceOverdueAlerts from "@/components/admin/BalanceOverdueAlerts";
 import SendTestEmails from "@/components/admin/SendTestEmails";
 import BlockedDatesManager from "@/components/admin/BlockedDatesManager";
 
@@ -88,6 +89,7 @@ export default function Admin() {
         <div className="border-t border-white/10 mt-8 mb-10" />
         <NewBookingsBanner />
         <CancellationEmailAlerts />
+        <BalanceOverdueAlerts />
         <ConfigBanner />
         <div className="mb-12">
           <StripeConnectionPanel />

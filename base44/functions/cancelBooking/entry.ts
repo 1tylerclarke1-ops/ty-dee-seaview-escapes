@@ -19,7 +19,7 @@ export default async function (req) {
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json().catch(() => ({}));
-    const { booking_id, confirm } = body || {};
+    const { booking_id, confirm, balance_overdue } = body || {};
     if (!booking_id) {
       return Response.json({ error: "booking_id required" }, { status: 400 });
     }
@@ -36,9 +36,10 @@ export default async function (req) {
     preview.booking_id = booking_id;
     preview.damage_waiver = Number(booking.damage_waiver) || 0;
 
-    const refundDue = preview.refund_due;
-    const retained = preview.retained;
-    const refundTier = preview.refund_tier;
+    const isBalanceOverdue = !!balance_overdue;
+    const refundDue = isBalanceOverdue ? 0 : preview.refund_due;
+    const retained = isBalanceOverdue ? preview.total_paid : preview.retained;
+    const refundTier = isBalanceOverdue ? "Balance unpaid — deposit retained" : preview.refund_tier;
     const coolingOffExpiryMs = preview.cooling_off_expires_at
       ? new Date(preview.cooling_off_expires_at).getTime()
       : null;
@@ -74,7 +75,11 @@ export default async function (req) {
       refund_date: today,
       refund_tier: refundTier,
       deposit_retained: retained,
+      balance_overdue_flagged: false,
     };
+    if (isBalanceOverdue) {
+      updateData.notes = (booking.notes || "") + "\n\nCancelled for non-payment of balance. Deposit retained, dates released.";
+    }
     if (!booking.cooling_off_expires_at && coolingOffExpiryMs) {
       updateData.cooling_off_expires_at = new Date(coolingOffExpiryMs).toISOString();
     }

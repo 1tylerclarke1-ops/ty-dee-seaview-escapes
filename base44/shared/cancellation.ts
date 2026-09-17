@@ -277,6 +277,9 @@ export function buildPolicyText(policy: any): string {
     "If we cancel",
     "In the unlikely event we cannot honour your booking, you receive a full refund of everything paid. Our liability is limited to that refund.",
     "",
+    "Balance payments",
+    "If you pay a deposit, the balance is due 60 days before arrival. You can pay it from your booking management link at any time. We'll send reminders before it's due. If the balance is unpaid 7 days after the due date, your booking will be cancelled, the dates released, and your deposit retained.",
+    "",
     "Travel insurance",
     "We strongly recommend it.",
   ].join("\n");

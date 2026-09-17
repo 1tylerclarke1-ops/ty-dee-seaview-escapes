@@ -355,6 +355,101 @@ export function buildOwnerCancellationAlert({ booking, preview }) {
   return { subject, text };
 }
 
+// Balance reminder email — 3 stages: 70 days (friendly), 60 days (due today),
+// 55 days (overdue with consequences). Each links to the manage page with a
+// prominent button. Sent as multipart (HTML + plain text).
+export function buildBalanceReminderEmail({ booking, stage, balanceOwed, balanceDueDate, manageUrl }) {
+  const arrivalLong = formatGuestDate(booking.arrival_date);
+  const dueLong = formatGuestDate(balanceDueDate);
+  const amount = gbp(balanceOwed);
+
+  let subject, headline, bodyText, consequence;
+  if (stage === "70") {
+    subject = `Your balance of ${amount} is due by ${dueLong} — Ty Dee Seaview Escapes`;
+    headline = "Your balance is due soon";
+    bodyText = `A friendly reminder that your balance of <strong>${escapeHtml(amount)}</strong> for your stay arriving ${escapeHtml(arrivalLong)} is due by <strong>${escapeHtml(dueLong)}</strong>.`;
+  } else if (stage === "60") {
+    subject = `Your balance of ${amount} is due today — Ty Dee Seaview Escapes`;
+    headline = "Your balance is due today";
+    bodyText = `Your balance of <strong>${escapeHtml(amount)}</strong> for your stay arriving ${escapeHtml(arrivalLong)} is due today. Please pay to keep your booking confirmed.`;
+  } else {
+    subject = `Your balance is overdue — Ty Dee Seaview Escapes`;
+    headline = "Your balance is overdue";
+    bodyText = `Your balance of <strong>${escapeHtml(amount)}</strong> for your stay arriving ${escapeHtml(arrivalLong)} was due on <strong>${escapeHtml(dueLong)}</strong> and is now overdue.`;
+    consequence = `If the balance is not paid within 7 days of the due date, your booking will be cancelled, the dates released, and your deposit retained.`;
+  }
+
+  const lines = [`Hello ${booking.guest_name || ""}`, ``];
+  if (stage === "70") {
+    lines.push(`A friendly reminder that your balance of ${amount} for your stay arriving ${arrivalLong} is due by ${dueLong}.`);
+  } else if (stage === "60") {
+    lines.push(`Your balance of ${amount} for your stay arriving ${arrivalLong} is due today. Please pay to keep your booking confirmed.`);
+  } else {
+    lines.push(`Your balance of ${amount} for your stay arriving ${arrivalLong} was due on ${dueLong} and is now overdue.`);
+    lines.push(`If the balance is not paid within 7 days of the due date, your booking will be cancelled, the dates released, and your deposit retained.`);
+  }
+  lines.push(``, `Pay your balance: ${manageUrl}`, ``, `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
+  const text = lines.join("\n");
+
+  let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">${escapeHtml(headline)}</h1>`;
+  body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
+  body += para(bodyText);
+  if (consequence) body += para(`<strong>${escapeHtml(consequence)}</strong>`);
+  body += figureBox([
+    boxLabel("Your booking"),
+    figRow("Booking ref", booking.reference),
+    figRow("Arriving", arrivalLong),
+    figRow("Balance due", amount),
+    figRow("Due by", dueLong),
+  ].join(""));
+  body += `<p style="margin:24px 0 12px;">${buttonLink(manageUrl, "Pay your balance")}</p>`;
+  body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  const html = emailShell({ title: subject, body });
+
+  return { subject, text, html };
+}
+
+// Balance paid confirmation — sent when a guest pays their balance from the
+// manage page. Confirms the booking is now fully paid and confirmed.
+export function buildBalancePaidEmail({ booking, breakdown, appBaseUrl }) {
+  const arrivalLong = formatGuestDate(booking.arrival_date);
+  const departureLong = formatGuestDate(addDaysIso(booking.arrival_date, booking.nights));
+  const manageUrl = booking.cancel_token ? `${appBaseUrl}/booking/${booking.cancel_token}` : null;
+  const subject = `Your balance is paid — booking fully confirmed — Ty Dee Seaview Escapes`;
+
+  const lines = [
+    `Hello ${booking.guest_name || ""},`,
+    ``,
+    `Your balance has been received and your booking is now fully confirmed.`,
+    `Booking reference: ${booking.reference}.`,
+    `Arriving ${arrivalLong}, departing ${departureLong}, ${booking.nights} night(s).`,
+    `Total paid: ${gbp(breakdown.total)}.`,
+    ``,
+  ];
+  if (manageUrl) lines.push(`Manage your booking: ${manageUrl}`);
+  lines.push(``, `Ty Dee Seaview Escapes — Polperro, Looe, Cornwall`);
+  const text = lines.join("\n");
+
+  let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">Your booking is fully confirmed</h1>`;
+  body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
+  body += para(`Your balance has been received and your booking is now <strong>fully confirmed</strong>. We're looking forward to welcoming you.`);
+  body += figureBox([
+    boxLabel("Your stay"),
+    figRow("Booking ref", booking.reference),
+    figRow("Arriving", arrivalLong),
+    figRow("Departing", departureLong),
+    figRow("Length", `${booking.nights} night(s)`),
+    figRow("Total paid", gbp(breakdown.total)),
+  ].join(""));
+  if (manageUrl) body += `<p style="margin:24px 0 12px;">${buttonLink(manageUrl, "Manage your booking")}</p>`;
+  body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  const html = emailShell({ title: subject, body });
+
+  return { subject, text, html };
+}
+
 function formatEnquiryWhen(iso) {
   try {
     return new Date(iso).toLocaleString("en-GB", {

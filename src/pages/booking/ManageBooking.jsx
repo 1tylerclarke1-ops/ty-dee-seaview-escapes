@@ -37,6 +37,8 @@ export default function ManageBooking() {
   const [loading, setLoading] = useState(true);
 
   const [stage, setStage] = useState("idle"); // idle | previewing | confirming | cancelling | done
+  const [payingBalance, setPayingBalance] = useState(false);
+  const [balanceError, setBalanceError] = useState(null);
   const [preview, setPreview] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [result, setResult] = useState(null);
@@ -78,6 +80,24 @@ export default function ManageBooking() {
     } catch (e) {
       setActionError(e?.response?.data?.error || e?.message || "Cancellation failed");
       setStage("confirming");
+    }
+  };
+
+  const payBalance = async () => {
+    setPayingBalance(true);
+    setBalanceError(null);
+    try {
+      const res = await base44.functions.invoke("createBalanceSession", { token });
+      const data = res?.data ?? res;
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setBalanceError(data.error || "Could not start balance payment. Please try again or contact us.");
+        setPayingBalance(false);
+      }
+    } catch (e) {
+      setBalanceError("Could not start balance payment. Please try again or contact us.");
+      setPayingBalance(false);
     }
   };
 
@@ -129,7 +149,18 @@ export default function ManageBooking() {
           <Row label="Total" value={gbp(b.gross_revenue)} />
           <Row label="Paid" value={gbp(b.deposit_paid + b.balance_paid)} />
           {b.balance_owed > 0 ? (
-            <Row label="Balance due" value={`${gbp(b.balance_owed)} by ${fmtDate(b.balance_due_date)}`} />
+            <>
+              <Row label="Balance due" value={`${gbp(b.balance_owed)} by ${fmtDate(b.balance_due_date)}`} />
+              <button
+                type="button"
+                onClick={payBalance}
+                disabled={payingBalance}
+                className="mt-3 w-full flex items-center justify-center bg-sea text-white px-6 py-3 text-sm font-medium hover:bg-sea-deep transition-colors min-h-[44px] disabled:opacity-50"
+              >
+                {payingBalance ? "Starting checkout…" : `Pay balance — ${gbp(b.balance_owed)}`}
+              </button>
+              {balanceError && <p className="text-sm text-destructive mt-2">{balanceError}</p>}
+            </>
           ) : (
             <Row label="Balance" value="Paid in full" />
           )}

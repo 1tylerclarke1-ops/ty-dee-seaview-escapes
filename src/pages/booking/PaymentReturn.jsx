@@ -21,7 +21,7 @@ export default function PaymentReturn() {
       .invoke("confirmPayment", { session_id: sessionId })
       .then((res) => {
         const data = res.data || res;
-        if (data.confirmed) { setReference(data.reference); setState("confirmed"); }
+        if (data.confirmed) { setReference(data.reference); setState(data.balance_paid ? "balance_paid" : "confirmed"); }
         else if (data.already_confirmed) { setReference(data.reference); setState("already"); }
         else if (data.race_lost) setState("race_lost");
         else setState("error");
@@ -54,6 +54,22 @@ export default function PaymentReturn() {
               </p>
               <p className="mt-4 text-sm text-muted-foreground">
                 Planning your journey? <Link to="/find-us" className="text-sea underline">Find us</Link> — drive times, the last mile, and a map to the van.
+              </p>
+              <Link
+                to="/"
+                className="mt-8 inline-flex items-center justify-center bg-ink text-white px-6 py-3 text-sm font-medium hover:bg-ink-soft transition-colors min-h-[44px]"
+              >
+                Back to home
+              </Link>
+            </>
+          )}
+          {state === "balance_paid" && (
+            <>
+              <p className="text-sm text-sea tracking-wide uppercase">Balance paid</p>
+              <h1 className="text-4xl text-ink mt-3">Your booking is fully confirmed</h1>
+              {reference && <p className="mt-3 text-sm text-muted-foreground">Booking reference <span className="tnum text-ink">{reference}</span></p>}
+              <p className="mt-5 text-ink-soft">
+                Your balance has been received and your booking is now fully confirmed. We've sent you a confirmation email.
               </p>
               <Link
                 to="/"

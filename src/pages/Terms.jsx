@@ -16,6 +16,16 @@ const STATIC_SECTIONS = [
     ],
   },
   {
+    title: "Paying for your stay",
+    body: [
+      "For stays booked more than 60 days before arrival, a 25% deposit secures your booking. The balance is due 60 days before your arrival date.",
+      "You can choose to pay in full at the time of booking — there's nothing further to pay and no balance reminders.",
+      "If your stay begins within 60 days of booking, the full amount is taken at booking.",
+      "You can pay your balance at any time from your booking management link — the same link you received in your confirmation email.",
+      "We'll send friendly reminders before your balance is due. If the balance is unpaid 7 days after the due date, your booking will be cancelled, the dates released, and your deposit retained.",
+    ],
+  },
+  {
     title: "Dogs",
     body: [
       "Well-behaved dogs are welcome by prior arrangement only. Please request at the time of booking.",

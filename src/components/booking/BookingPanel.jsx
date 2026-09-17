@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MAX_GUESTS } from "@/lib/siteConfig";
@@ -30,6 +30,7 @@ export default function BookingPanel({ arrival, length, affected }) {
   const [facilitiesAck, setFacilitiesAck] = useState(false);
   const [cancelAck, setCancelAck] = useState(false);
   const [marketing, setMarketing] = useState(false);
+  const [payInFull, setPayInFull] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [enquirySent, setEnquirySent] = useState(false);
@@ -56,7 +57,9 @@ export default function BookingPanel({ arrival, length, affected }) {
     ? "24 hours before you arrive"
     : "48 hours";
   const payableInFull = arrival ? isPayableInFull(arrival) : false;
-  const amountDue = breakdown ? (payableInFull ? breakdown.total : breakdown.deposit) : 0;
+  const effectiveFull = payableInFull || payInFull;
+  const amountDue = breakdown ? (effectiveFull ? breakdown.total : breakdown.deposit) : 0;
+  const balanceDueDate = arrival ? format(addDays(arrival, -(PRICING_SETTINGS.balance_due_days_before_arrival || 60)), "d MMMM yyyy") : null;
   const canSubmit = !!(
     details.name &&
     details.email &&
@@ -93,6 +96,7 @@ export default function BookingPanel({ arrival, length, affected }) {
         arrival_date: format(arrival, "yyyy-MM-dd"),
         nights: length,
         pricing_fingerprint: PRICING_FINGERPRINT,
+        pay_in_full: payInFull,
         guests,
         dog_count: dogs,
         name: details.name,
@@ -223,6 +227,10 @@ export default function BookingPanel({ arrival, length, affected }) {
                 onEnquiry={handleEnquiry}
                 amountDue={amountDue}
                 payableInFull={payableInFull}
+                payInFull={payInFull}
+                setPayInFull={setPayInFull}
+                breakdown={breakdown}
+                balanceDueDate={balanceDueDate}
                 error={error}
               />
             </div>

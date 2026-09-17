@@ -50,11 +50,17 @@ export async function confirmBookingPayment(base44, booking, session) {
   const arrivalDate = new Date(booking.arrival_date + "T00:00:00Z");
   const breakdown = calculatePrice(arrivalDate, booking.nights, booking.dog_count || 0);
   if (!breakdown) return { error: "Could not price the stay" };
-  const payableInFull = isPayableInFullIso(booking.arrival_date);
-  const expectedPence = toMinorUnits(payableInFull ? breakdown.total : breakdown.deposit);
-  if (session.amount_total !== expectedPence) {
-    return { error: `Amount mismatch: expected ${expectedPence}, got ${session.amount_total}` };
+  // Accept either the deposit or the full amount — a guest who chose to pay
+  // in full at booking (arrival >60 days away) pays the full total, not just
+  // the deposit. The amount itself tells us which, so no flag is needed.
+  const expectedFullPence = toMinorUnits(breakdown.total);
+  const expectedDepositPence = toMinorUnits(breakdown.deposit);
+  const isFullPayment = session.amount_total === expectedFullPence;
+  const isDepositPayment = session.amount_total === expectedDepositPence;
+  if (!isFullPayment && !isDepositPayment) {
+    return { error: `Amount mismatch: expected ${expectedDepositPence} (deposit) or ${expectedFullPence} (full), got ${session.amount_total}` };
   }
+  const paidInFull = isFullPayment;
 
   // Race condition, pre-check: at confirm time only deposit_paid/confirmed
   // bookings block — NOT holds (see availability.ts). If a confirmed booking
@@ -72,12 +78,12 @@ export async function confirmBookingPayment(base44, booking, session) {
   }
   const amountPaid = fromMinorUnits(session.amount_total);
   const updateData = {
-    status: payableInFull ? "confirmed" : "deposit_paid",
+    status: paidInFull ? "confirmed" : "deposit_paid",
     stripe_payment_intent_id: paymentIntentId,
     stripe_fee: stripeFee,
     hold_expires_at: null,
   };
-  if (payableInFull) {
+  if (paidInFull) {
     updateData.deposit_paid = breakdown.deposit;
     updateData.balance_paid = breakdown.balance;
   } else {
@@ -120,7 +126,7 @@ export async function confirmBookingPayment(base44, booking, session) {
   await upsertContact(base44, confirmedBooking, session);
 
   // Send confirmation emails to guest and owner.
-  await sendConfirmationEmails(base44, confirmedBooking, breakdown, payableInFull);
+  await sendConfirmationEmails(base44, confirmedBooking, breakdown, paidInFull);
 
   return { confirmed: true, status: updateData.status };
 }
@@ -194,7 +200,7 @@ async function upsertContact(base44, booking, session) {
   } catch {}
 }
 
-async function sendConfirmationEmails(base44, booking, breakdown, payableInFull) {
+async function sendConfirmationEmails(base44, booking, breakdown, paidInFull) {
   const policyRows = await base44.asServiceRole.entities.CancellationPolicy.list();
   const policy = policyRows && policyRows.length ? normalizePolicy(policyRows[0]) : DEFAULT_CANCELLATION_POLICY;
   const bookedAtMs = booking.created_date ? new Date(booking.created_date).getTime() : Date.now();
@@ -207,7 +213,7 @@ async function sendConfirmationEmails(base44, booking, breakdown, payableInFull)
   const settings = (facRows && facRows[0]) || DEFAULT_FACILITIES_SETTINGS;
 
   const { subject, text: body, html: guestHtml } = buildGuestConfirmationEmail({
-    booking, breakdown, payableInFull, settings,
+    booking, breakdown, paidInFull, settings,
     coolingOffIso, appBaseUrl: appBaseUrl(),
   });
 
@@ -244,7 +250,7 @@ async function sendConfirmationEmails(base44, booking, breakdown, payableInFull)
   // (no double-tell); a failed imminent alert stays unmarked and the digest
   // retries it.
   if (arrivalWithinDays(booking.arrival_date, 7)) {
-    await sendImminentOwnerAlert(base44, booking, breakdown, payableInFull);
+    await sendImminentOwnerAlert(base44, booking, breakdown, paidInFull);
   }
 }
 
@@ -301,8 +307,8 @@ function arrivalWithinDays(arrivalIso, days) {
 // Immediate owner alert for an imminent arrival (within 7 days). Logged as
 // "owner_alert_imminent" so it's distinguishable from the daily digest in the
 // email log. On success, marks the booking alerted so the digest skips it.
-async function sendImminentOwnerAlert(base44, booking, breakdown, payableInFull) {
-  const { subject, text } = buildOwnerAlertEmail({ booking, breakdown, payableInFull });
+async function sendImminentOwnerAlert(base44, booking, breakdown, paidInFull) {
+  const { subject, text } = buildOwnerAlertEmail({ booking, breakdown, paidInFull });
   const owner = ownerEmail();
   let ok = false;
   let err = null;

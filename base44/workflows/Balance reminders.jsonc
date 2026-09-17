@@ -1,0 +1,45 @@
+{
+  "description": "Daily 08:00 \u2014 sends balance payment reminders to deposit-paid guests at 70/60/55 days before arrival, and flags balances as overdue at 53 days for admin action. Stops when the balance is paid (status moves to confirmed). Each send is logged.",
+  "name": "Balance reminders",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 8 * * *",
+      "one_time_date": null,
+      "timezone": "Europe/London",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "balance_reminders",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_reminders": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendBalanceReminders",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send balance reminders",
+            "description": "70/60/55-day reminders + 53-day admin flag"
+          }
+        }
+      }
+    ]
+  }
+}

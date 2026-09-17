@@ -35,6 +35,7 @@ export default async function (req) {
       marketing_consent, facilities_acknowledged, cancellation_acknowledged,
       utm_source, utm_medium, utm_campaign, how_heard,
       pricing_fingerprint,
+      pay_in_full,
     } = body || {};
 
     // --- Validation (server-side, never trusts the browser) ---
@@ -68,7 +69,8 @@ export default async function (req) {
     const breakdown = calculatePrice(arrival, n, dogs);
     if (!breakdown) return Response.json({ error: "Could not price this stay." }, { status: 400 });
     const payableInFull = isPayableInFullIso(arrival_date);
-    const amountDue = payableInFull ? breakdown.total : breakdown.deposit;
+    const payInFullChoice = !payableInFull && !!pay_in_full;
+    const amountDue = (payableInFull || payInFullChoice) ? breakdown.total : breakdown.deposit;
 
     // --- Re-check availability before creating the session ---
     const available = await isAvailable(base44, arrival_date, n);
@@ -134,6 +136,7 @@ export default async function (req) {
           arrival_date,
           nights: String(n),
           marketing_consent: marketing_consent ? "true" : "false",
+          pay_in_full: payInFullChoice ? "true" : "false",
         },
         successUrl: `${origin}/booking/return?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${origin}/booking/cancelled?session_id={CHECKOUT_SESSION_ID}`,

@@ -40,6 +40,10 @@ export default function EnquiryForm({
   onEnquiry,
   amountDue,
   payableInFull,
+  payInFull,
+  setPayInFull,
+  breakdown,
+  balanceDueDate,
   error,
 }) {
   const update = (k) => (v) => setDetails((d) => ({ ...d, [k]: v }));
@@ -116,6 +120,26 @@ export default function EnquiryForm({
 
       {error && <p className="text-sm text-destructive mt-4">{error}</p>}
 
+      {!payableInFull && breakdown && (
+        <div className="mt-6">
+          <label className="text-xs tracking-wide uppercase text-muted-foreground block mb-3">Payment</label>
+          <div className="space-y-2">
+            <label className={`flex items-start gap-3 cursor-pointer p-3 border min-h-[44px] ${!payInFull ? "border-sea bg-sea/5" : "border-line"}`}>
+              <input type="radio" name="payment-choice" checked={!payInFull} onChange={() => setPayInFull(false)} className="w-5 h-5 mt-0.5 accent-sea shrink-0" />
+              <span className="text-sm text-ink-soft">
+                <strong className="text-ink">Pay deposit</strong> — {gbpMoney(breakdown.deposit)} now, {gbpMoney(breakdown.balance)} due by {balanceDueDate}
+              </span>
+            </label>
+            <label className={`flex items-start gap-3 cursor-pointer p-3 border min-h-[44px] ${payInFull ? "border-sea bg-sea/5" : "border-line"}`}>
+              <input type="radio" name="payment-choice" checked={payInFull} onChange={() => setPayInFull(true)} className="w-5 h-5 mt-0.5 accent-sea shrink-0" />
+              <span className="text-sm text-ink-soft">
+                <strong className="text-ink">Pay in full</strong> — {gbpMoney(breakdown.total)} now
+              </span>
+            </label>
+          </div>
+        </div>
+      )}
+
       <button
         type="submit"
         disabled={!canSubmit || submitting}
@@ -128,6 +152,8 @@ export default function EnquiryForm({
       <p className="mt-3 text-xs text-muted-foreground text-center">
         {payableInFull
           ? "You'll pay the full amount by card via Stripe."
+          : payInFull
+          ? "You'll pay the full amount by card via Stripe — nothing further to pay."
           : `You'll pay a ${gbpMoney(amountDue)} deposit now by card via Stripe; the balance is due before arrival.`}
       </p>
       <button

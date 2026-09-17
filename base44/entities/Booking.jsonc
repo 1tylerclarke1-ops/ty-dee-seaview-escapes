@@ -107,6 +107,19 @@
       "default": 0,
       "title": "Balance paid"
     },
+    "balance_reminders_sent": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "title": "Balance reminders sent (e.g. [\"70\",\"60\",\"55\"])"
+    },
+    "balance_overdue_flagged": {
+      "type": "boolean",
+      "default": false,
+      "title": "Balance overdue flagged (admin action needed at 53 days)"
+    },
     "deposit_retained": {
       "type": "number",
       "default": 0,
