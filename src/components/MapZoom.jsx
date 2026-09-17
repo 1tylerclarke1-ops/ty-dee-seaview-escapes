@@ -93,7 +93,7 @@ export default function MapZoom({ src, alt, credit, markerLabel, markerPos, onCl
               style={{
                 top: `${markerPos.top}%`,
                 left: `${markerPos.left}%`,
-                transform: `translate(calc(-50% / ${scale}), calc(-100% / ${scale})) scale(${1 / scale})`,
+                transform: `translate(-50%, -100%) scale(${1 / scale})`,
               }}
             >
               <MapPin className="w-7 h-auto" />
