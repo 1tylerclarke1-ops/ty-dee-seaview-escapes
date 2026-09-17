@@ -222,7 +222,29 @@ export function buildOwnerEnquiryAlertEmail({ name, email, phone, message, arriv
   }
   lines.push(``, `View in admin: ${appBaseUrl}/admin`, ``, `Ty Dee Seaview Escapes`);
   const text = lines.join("\n");
-  return { subject, text };
+
+  // HTML part — figures set apart, message preserved with line breaks, an
+  // admin button so the owner can act in one click.
+  const rows = [boxLabel("Enquiry"), figRow("Name", name || "(no name)")];
+  if (email) rows.push(figRow("Email", email));
+  if (phone) rows.push(figRow("Phone", phone));
+  if (partySize) rows.push(figRow("Party size", `${partySize} guest(s)`));
+  if (dogCount) rows.push(figRow("Dogs", `${dogCount}`));
+  if (arrivalDate) rows.push(figRow("Interested in", formatGuestDate(arrivalDate)));
+
+  let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">New enquiry</h1>`;
+  body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes — contact form</p>`;
+  body += figureBox(rows.join(""));
+  if (message) {
+    const safe = escapeHtml(String(message).slice(0, 500)).replace(/\n/g, "<br>");
+    body += `<p style="margin:0 0 8px;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:#5E6E70;">Message</p>`;
+    body += `<p style="margin:0 0 20px;font-size:15px;line-height:1.6;">${safe}</p>`;
+  }
+  body += `<p style="margin:24px 0 12px;">${buttonLink(`${appBaseUrl}/admin`, "View in admin")}</p>`;
+  body += `<p style="margin:24px 0 0;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  const html = emailShell({ title: subject, body });
+
+  return { subject, text, html };
 }
 
 // The daily owner digest email — one email listing every paid booking AND

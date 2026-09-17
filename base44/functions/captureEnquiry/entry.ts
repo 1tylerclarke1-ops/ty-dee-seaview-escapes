@@ -88,13 +88,13 @@ export default async function (req) {
     if (body.message) {
       const to = ownerEmail();
       if (to) {
-        const { subject, text } = buildOwnerEnquiryAlertEmail({
+        const { subject, text, html } = buildOwnerEnquiryAlertEmail({
           name: body.name, email, phone: body.phone, message: body.message,
           arrivalDate: body.arrival_date, partySize: party, dogCount: dogs,
           appBaseUrl: appBaseUrl(),
         });
         try {
-          await base44.asServiceRole.integrations.Core.SendEmail({ to, subject, text });
+          await base44.asServiceRole.integrations.Core.SendEmail({ to, subject, text, html });
           await logEmailAttempt(base44, { recipient: to, template: "enquiry_alert", subject, ok: true });
         } catch (e) {
           await logEmailAttempt(base44, { recipient: to, template: "enquiry_alert", subject, ok: false, error: e?.message || String(e) });
