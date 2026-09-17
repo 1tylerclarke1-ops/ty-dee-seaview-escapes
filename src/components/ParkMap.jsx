@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Image } from "@/components/ui/image";
 import MapZoom from "@/components/MapZoom";
+import MapPin from "@/components/MapPin";
 
 // Park site map with a marker over pitch 157. Tappable into a fullscreen
 // pinch-zoom viewer so the detailed map is readable on a phone. The marker
@@ -27,10 +28,14 @@ export default function ParkMap({
         <div className="relative block w-full bg-surface">
           <Image src={src} alt={alt} fittingType="fit" className="block w-full aspect-[1107/767]" />
           <span
-            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center rounded-full bg-sea text-white font-semibold ring-2 ring-white shadow-md md:ring-4 md:shadow-lg w-3.5 h-3.5 md:w-9 md:h-9 md:text-xs"
-            style={{ top: `${markerPos.top}%`, left: `${markerPos.left}%` }}
+            className="pointer-events-none absolute z-10"
+            style={{
+              top: `${markerPos.top}%`,
+              left: `${markerPos.left}%`,
+              transform: "translate(-50%, -100%)",
+            }}
           >
-            <span className="hidden md:inline">{markerLabel}</span>
+            <MapPin className="w-5 h-auto md:w-7" />
           </span>
         </div>
         {caption && <p className="mt-3 text-sm text-muted-foreground">{caption}</p>}

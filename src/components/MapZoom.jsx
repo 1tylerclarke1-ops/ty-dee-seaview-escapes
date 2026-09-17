@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Image } from "@/components/ui/image";
+import MapPin from "@/components/MapPin";
 import { Plus, Minus, X } from "lucide-react";
 
 // Fullscreen pinch-zoom viewer for the park map. Pinch to zoom, drag to pan,
@@ -88,14 +89,14 @@ export default function MapZoom({ src, alt, credit, markerLabel, markerPos, onCl
           <div className="relative w-[92%] max-w-[1107px]">
             <Image src={src} alt={alt} fittingType="fit" className="block w-full aspect-[1107/767]" />
             <span
-              className="pointer-events-none absolute z-10 flex items-center justify-center rounded-full bg-sea text-white font-semibold ring-4 ring-white shadow-lg w-7 h-7 text-xs"
+              className="pointer-events-none absolute z-10"
               style={{
                 top: `${markerPos.top}%`,
                 left: `${markerPos.left}%`,
-                transform: `translate(calc(-50% / ${scale}), calc(-50% / ${scale})) scale(${1 / scale})`,
+                transform: `translate(calc(-50% / ${scale}), calc(-100% / ${scale})) scale(${1 / scale})`,
               }}
             >
-              {markerLabel}
+              <MapPin className="w-7 h-auto" />
             </span>
           </div>
         </div>
