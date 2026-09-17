@@ -152,23 +152,31 @@ export default function BlockedDatesManager() {
         {/* Preview panel */}
         {form.start_date && form.end_date && form.start_date <= form.end_date && (
           <div className="mt-5 space-y-4">
-            {/* Cost */}
+            {/* Cost estimate */}
             {preview && !previewing && (
               <div className="bg-white/5 border border-white/10 p-4">
-                <p className="text-xs text-white/40 uppercase tracking-wide mb-3">What this blocks</p>
-                <div className="grid sm:grid-cols-3 gap-4">
+                <p className="text-xs text-white/40 uppercase tracking-wide mb-1">Estimated net contribution at risk</p>
+                <p className="text-xs text-white/40 mb-4">An estimate — max non-overlapping stays at current rates, adjusted by seasonal occupancy, less £80 cleaning per booking.</p>
+                <div className="grid sm:grid-cols-3 gap-4 mb-4">
                   <Stat label="Nights blocked" value={nightsBetween(form.start_date, form.end_date)} />
-                  <Stat label="Bookable stays removed" value={preview.cost?.removedStaysCount ?? 0} />
-                  <Stat label="Rough revenue at risk" value={gbpMoney(preview.cost?.roughRevenue ?? 0)} />
+                  <Stat label="Max stays that could fit" value={preview.cost?.stayCount ?? 0} />
+                  <Stat label="Est. net at risk" value={gbpMoney(preview.cost?.netContribution ?? 0)} />
                 </div>
-                {preview.cost?.seasons?.length > 0 && (
-                  <p className="text-xs text-white/50 mt-3">
-                    Seasons: {preview.cost.seasons.join(", ")}
-                  </p>
+                {preview.cost?.stayCount > 0 && (
+                  <div className="space-y-1 text-sm text-white/60 border-t border-white/10 pt-3">
+                    <div className="flex justify-between"><span>Gross at full occupancy</span><span className="tnum text-white">{gbpMoney(preview.cost.grossRevenue)}</span></div>
+                    <div className="flex justify-between">
+                      <span>Occupancy assumption</span>
+                      <span className="tnum text-white">{preview.cost.occupancyAssumptions.map((a) => `${a.season} ${Math.round(a.occupancy * 100)}%`).join(", ")}</span>
+                    </div>
+                    <div className="flex justify-between"><span>Occupancy-weighted revenue</span><span className="tnum text-white">{gbpMoney(preview.cost.occupancyRevenue)}</span></div>
+                    <div className="flex justify-between"><span>Cleaning ({preview.cost.stayCount} × £80)</span><span className="tnum text-white">−{gbpMoney(preview.cost.cleaningTotal)}</span></div>
+                    <div className="flex justify-between border-t border-white/10 pt-1"><span className="text-white">Net contribution</span><span className="tnum text-white font-medium">{gbpMoney(preview.cost.netContribution)}</span></div>
+                  </div>
                 )}
-                {preview.cost?.removedStaysCount === 0 && (
-                  <p className="text-xs text-white/40 mt-3">
-                    No bookable stays fall in this range — these dates are outside the booking window or not arrival days.
+                {preview.cost?.stayCount === 0 && (
+                  <p className="text-xs text-white/40">
+                    No bookable stays fall in this range — these dates are outside the seasons or not arrival days.
                   </p>
                 )}
               </div>
