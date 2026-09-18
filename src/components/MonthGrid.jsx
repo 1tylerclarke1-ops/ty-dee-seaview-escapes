@@ -94,7 +94,7 @@ export default function MonthGrid({ year, month, selectedArrival, selectedLength
           const ownerBlocked = isDateBlocked(date, blockedRanges);
 
           let cls =
-            "relative aspect-square flex items-center justify-center text-sm transition-colors min-h-[44px] min-w-[44px] tnum ";
+            "relative aspect-square flex items-center justify-center text-sm transition-colors tnum ";
           if (!season) {
             cls += "text-muted-foreground opacity-50";
           } else if (ownerBlocked) {
