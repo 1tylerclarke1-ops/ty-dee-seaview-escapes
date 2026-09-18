@@ -50,6 +50,15 @@ export default async function (req) {
         { status: 400 }
       );
     }
+    // A "your booking is confirmed" email to a guest who cancelled and was
+    // refunded would cause real alarm — refuse it server-side regardless of
+    // the UI. Expired (abandoned checkout) bookings are equally ineligible.
+    if (booking.status === "cancelled" || booking.status === "expired") {
+      return Response.json(
+        { error: `Cannot resend a confirmation for a ${booking.status} booking` },
+        { status: 400 }
+      );
+    }
 
     const policyRows = await base44.asServiceRole.entities.CancellationPolicy.list();
     const policy = policyRows && policyRows.length ? normalizePolicy(policyRows[0]) : DEFAULT_CANCELLATION_POLICY;

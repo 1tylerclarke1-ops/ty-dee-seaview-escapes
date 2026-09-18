@@ -21,6 +21,8 @@ export default function BookingsManager() {
   const [resendErrors, setResendErrors] = useState({});
   const [resendingOwnerId, setResendingOwnerId] = useState(null);
   const [resendOwnerErrors, setResendOwnerErrors] = useState({});
+  const [resendingCancelId, setResendingCancelId] = useState(null);
+  const [resendCancelErrors, setResendCancelErrors] = useState({});
   const [logOpenId, setLogOpenId] = useState(null);
   const [logEntries, setLogEntries] = useState({});
   const [logLoading, setLogLoading] = useState(false);
@@ -85,6 +87,25 @@ export default function BookingsManager() {
       setResendOwnerErrors((m) => ({ [b.id]: data?.error || "Could not send." }));
     } finally {
       setResendingOwnerId(null);
+    }
+  };
+
+  const resendCancellation = async (b) => {
+    setResendingCancelId(b.id);
+    setResendCancelErrors((m) => ({ ...m, [b.id]: null }));
+    try {
+      const res = await base44.functions.invoke("resendCancellationEmail", { booking_id: b.id });
+      const data = res.data || res;
+      if (data.ok) {
+        load();
+      } else {
+        setResendCancelErrors((m) => ({ [b.id]: data.error || "Could not send." }));
+      }
+    } catch (e) {
+      const data = e?.data || e;
+      setResendCancelErrors((m) => ({ [b.id]: data?.error || "Could not send." }));
+    } finally {
+      setResendingCancelId(null);
     }
   };
 
@@ -270,8 +291,26 @@ export default function BookingsManager() {
           )}
 
           {b.status === "cancelled" ? (
-            <div className="mt-4 pt-4 border-t border-white/10 text-sm text-white/60 tnum">
-              Cancelled · refund due {gbpMoney(b.refund_due || 0)} · retained {gbpMoney(b.deposit_retained || 0)} · tier {b.refund_tier || "—"}
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <div className="text-sm text-white/60 tnum">
+                Cancelled · refund due {gbpMoney(b.refund_due || 0)} · retained {gbpMoney(b.deposit_retained || 0)} · tier {b.refund_tier || "—"}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                {b.cancellation_email_sent ? (
+                  <span className="text-xs text-white/40">Cancellation email sent</span>
+                ) : (
+                  <span className="text-xs text-signal">Cancellation email not sent</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => resendCancellation(b)}
+                  disabled={resendingCancelId === b.id}
+                  className="text-xs text-sea hover:underline disabled:opacity-50"
+                >
+                  {resendingCancelId === b.id ? "Sending…" : "Resend cancellation confirmation"}
+                </button>
+                {resendCancelErrors[b.id] && <span className="text-xs text-signal">{resendCancelErrors[b.id]}</span>}
+              </div>
             </div>
           ) : b.status === "expired" ? (
             <div className="mt-4 pt-4 border-t border-white/10 text-sm text-white/50">
