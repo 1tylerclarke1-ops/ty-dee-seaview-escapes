@@ -23,6 +23,7 @@
 // balance_reminders_sent array so a reminder is never sent twice.
 
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { requireInternal } from "../../shared/internalCall.ts";
 import { daysBetween, todayIso } from "../../shared/cancellation.ts";
 import { balanceDueIso } from "../../shared/pricing.ts";
 import { logEmailAttempt } from "../../shared/emailLog.ts";
@@ -32,6 +33,8 @@ import { buildBalanceReminderEmail, buildAutoCancelEmail, buildGracePeriodRemind
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
+    const _guard = await requireInternal(base44, req);
+    if (_guard) return _guard;
     const bookings = await base44.asServiceRole.entities.Booking.filter({
       status: "deposit_paid",
     });

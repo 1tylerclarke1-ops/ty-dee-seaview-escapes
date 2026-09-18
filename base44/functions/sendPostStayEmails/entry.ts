@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { requireInternal } from "../../shared/internalCall.ts";
 import { renderTemplate, textToHtml, DEFAULT_TEMPLATES } from "../../shared/emailTemplates.ts";
 import { seasonForDate } from "../../shared/pricing.ts";
 import { formatGuestDate } from "../../shared/bookingEmail.ts";
@@ -11,6 +12,8 @@ import { appBaseUrl } from "../../shared/origin.ts";
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
+    const _guard = await requireInternal(base44, req);
+    if (_guard) return _guard;
     const today = new Date();
     const target = new Date(today.getTime() - 2 * 24 * 3600 * 1000);
     const targetStr = target.toISOString().slice(0, 10);

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { requireInternal } from "../../shared/internalCall.ts";
 
 // Hourly housekeeping for abandoned checkouts. Marks "held" bookings whose
 // 30-minute hold_expires_at has passed as "expired" — a status distinct from
@@ -10,6 +11,8 @@ import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
+    const _guard = await requireInternal(base44, req);
+    if (_guard) return _guard;
     const now = Date.now();
 
     // Mark expired holds.

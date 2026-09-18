@@ -16,6 +16,7 @@
 // the dashboard can show it; the bookings/enquiries themselves stay recorded
 // regardless.
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { requireInternal } from "../../shared/internalCall.ts";
 import { logEmailAttempt } from "../../shared/emailLog.ts";
 import { ownerEmail, buildOwnerDigestEmail } from "../../shared/bookingEmail.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
@@ -23,6 +24,8 @@ import { appBaseUrl } from "../../shared/origin.ts";
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
+    const _guard = await requireInternal(base44, req);
+    if (_guard) return _guard;
 
     // Paid bookings not yet included in a digest.
     const all = await base44.asServiceRole.entities.Booking.list(null, 500);

@@ -11,6 +11,7 @@
 // cap is hit mid-retry, the remaining confirmations wait for the next day.
 
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { requireInternal } from "../../shared/internalCall.ts";
 import { normalizePolicy, DEFAULT_CANCELLATION_POLICY, computeCoolingOffExpiry } from "../../shared/cancellation.ts";
 import { calculatePrice, isPayableInFullIso } from "../../shared/pricing.ts";
 import { logEmailAttempt } from "../../shared/emailLog.ts";
@@ -26,6 +27,8 @@ import {
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
+    const _guard = await requireInternal(base44, req);
+    if (_guard) return _guard;
     const base = appBaseUrl();
     const retried = [];
     let halted = false;

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
+import { requireInternal } from "../../shared/internalCall.ts";
 import { computeGaps } from "../../shared/gaps.ts";
 import { formatLong, gbp, formatShort } from "../../shared/pricing.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
@@ -11,6 +12,8 @@ import { ownerEmail } from "../../shared/bookingEmail.ts";
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
+    const _guard = await requireInternal(base44, req);
+    if (_guard) return _guard;
     const bookings = await base44.asServiceRole.entities.Booking.list("-arrival_date", 500);
 
     // Expire stale holds (weekly safety net — the hourly "Expire holds" workflow
