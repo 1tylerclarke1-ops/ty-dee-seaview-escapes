@@ -197,7 +197,7 @@ export default function BookingPanel({ arrival, length, affected }) {
                 <Stepper label="Guests" value={guests} min={1} max={MAX_GUESTS} onChange={setGuests} />
                 <div>
                   <Stepper label="Dogs" value={dogs} min={0} max={PRICING_SETTINGS.max_dogs} onChange={setDogs} />
-                  <p className="mt-2 text-xs text-muted-foreground">By prior arrangement — we'll confirm when we accept your booking.</p>
+                  <p className="mt-2 text-xs text-muted-foreground">£{PRICING_SETTINGS.dog_fee} per dog, per stay. Maximum {PRICING_SETTINGS.max_dogs}.</p>
                 </div>
               </div>
               <div ref={breakdownRef} className="mt-8">
@@ -238,7 +238,7 @@ export default function BookingPanel({ arrival, length, affected }) {
         </div>
       </section>
       {isMobile && sticky && (
-        <StickyTotalBar total={amountDue} canSubmit={canSubmit} submitting={submitting} onSubmit={handlePay} />
+        <StickyTotalBar total={breakdown.total} payToday={amountDue} canSubmit={canSubmit} submitting={submitting} onSubmit={handlePay} />
       )}
     </>
   );
