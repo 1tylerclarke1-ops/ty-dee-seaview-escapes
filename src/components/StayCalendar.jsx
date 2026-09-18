@@ -3,7 +3,6 @@ import { format, isBefore, isEqual, parseISO, startOfMonth } from "date-fns";
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SEASON_START, SEASON_END } from "@/lib/siteConfig";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useFacilitiesSettings } from "@/lib/facilities";
 import { base44 } from "@/api/base44Client";
 import MonthGrid from "@/components/MonthGrid";
@@ -13,8 +12,17 @@ import CalendarLegend from "@/components/CalendarLegend";
 // booking window. Mobile shows one month; desktop shows two side by side.
 // The selected stay is preserved while navigating — only the view moves.
 export default function StayCalendar({ selectedArrival, selectedLength, onSelect }) {
-  const isMobile = useIsMobile();
-  const showCount = isMobile ? 1 : 2;
+  // Two months side by side only where there's genuinely room (~900px+).
+  // Below that, one month at a time — a grid never renders narrower than its
+  // content needs.
+  const [showCount, setShowCount] = useState(1);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 900px)");
+    const update = () => setShowCount(mq.matches ? 2 : 1);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
   const reduce = useReducedMotion();
 
   // Owner-blocked date ranges — public, reason-free. Fetched once so every

@@ -62,15 +62,15 @@ export default function MonthGrid({ year, month, selectedArrival, selectedLength
 
   return (
     <div>
-      <div className="flex items-baseline justify-between mb-4 gap-3">
-        <h3 className="text-2xl text-ink">{format(new Date(year, month, 1), "MMMM yyyy")}</h3>
+      <div className="flex flex-col min-[500px]:flex-row items-start min-[500px]:items-baseline justify-between mb-4 gap-1.5 min-[500px]:gap-3">
+        <h3 className="text-2xl text-ink leading-tight">{format(new Date(year, month, 1), "MMMM yyyy")}</h3>
         {closedNote && (
-          <span className="text-[0.65rem] tracking-wide uppercase text-muted-foreground text-right leading-tight">
+          <span className="text-[0.65rem] tracking-wide uppercase text-muted-foreground min-[500px]:text-right leading-tight">
             {closedNote}
           </span>
         )}
         {openNote && (
-          <span className="text-[0.65rem] tracking-wide uppercase text-muted-foreground text-right leading-tight">
+          <span className="text-[0.65rem] tracking-wide uppercase text-muted-foreground min-[500px]:text-right leading-tight">
             {openNote}
           </span>
         )}
