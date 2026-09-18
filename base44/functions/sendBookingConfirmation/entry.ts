@@ -27,6 +27,13 @@ import {
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
+    // Every path here (preview AND send) renders guest PII from a booking
+    // fetched via asServiceRole, bypassing the admin-only RLS on Booking.
+    // So require an admin caller up front — not only on the send=true path.
+    const user = await base44.auth.me();
+    if (!user || user.role !== "admin") {
+      return Response.json({ error: "Admin required" }, { status: 403 });
+    }
     const payload = await req.json().catch(() => ({}));
     const send = payload.send === true;
     const target = payload.target === "owner" ? "owner" : "guest";
@@ -85,10 +92,6 @@ export default async function (req) {
     let sent = false;
     let sendResult = null;
     if (send) {
-      const user = await base44.auth.me();
-      if (!user || user.role !== "admin") {
-        return Response.json({ error: "Admin required to send" }, { status: 403 });
-      }
       if (!recipient) {
         return Response.json(
           { error: target === "owner" ? "OWNER_EMAIL is not configured — set it in Settings → Environment variables" : "Guest email address is missing on this booking" },
