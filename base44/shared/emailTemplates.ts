@@ -120,9 +120,6 @@ Thank you for staying with us — we hope you loved the view as much as we do.
 If you have a spare minute, a short review helps us no end:
 {{review_link}}
 
-And may we email you occasionally about last-minute availability? No more than once a month, only when a stay opens up. Say yes here:
-{{consent_link}}
-
 — The owners, Ty Dee Seaview Escapes`,
   },
 ];

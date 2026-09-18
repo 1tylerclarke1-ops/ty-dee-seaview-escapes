@@ -1,21 +1,22 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { requireInternal } from "../../shared/internalCall.ts";
-import { renderTemplate, textToHtml, DEFAULT_TEMPLATES } from "../../shared/emailTemplates.ts";
-import { seasonForDate } from "../../shared/pricing.ts";
-import { formatGuestDate } from "../../shared/bookingEmail.ts";
+import { buildPostStayEmail } from "../../shared/bookingEmail.ts";
+import { randomToken } from "../../shared/contacts.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
 
-// Daily job — finds confirmed/deposit_paid bookings that departed two days ago
-// and sends the post-stay email (thank you, review request, opt-in prompt).
-// This is where the marketing list grows: the email asks permission, and the
-// guest grants it via a one-click consent link keyed to their contact token.
+// Daily 09:00 job — sends the post-stay thank-you + review request the morning
+// after departure (1 day after, while the stay is still fresh). First-person,
+// one "Leave a review" button, no consent ask (that moved to its own email 14
+// days later, only to guests who left a review). Creates/updates a Contact so
+// the later consent email has an unsubscribe_token to link to. Idempotent via
+// post_stay_sent (set only on a successful send, so a failure retries next day).
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
     const _guard = await requireInternal(base44, req);
     if (_guard) return _guard;
     const today = new Date();
-    const target = new Date(today.getTime() - 2 * 24 * 3600 * 1000);
+    const target = new Date(today.getTime() - 1 * 24 * 3600 * 1000);
     const targetStr = target.toISOString().slice(0, 10);
 
     const bookings = await base44.asServiceRole.entities.Booking.list(null, 500);
@@ -27,21 +28,16 @@ export default async function (req) {
         b.guest_email
     );
 
-    // Load the post-stay template (fall back to seeded default).
-    const tpls = await base44.asServiceRole.entities.EmailTemplate.list(null, 100);
-    let tpl = (tpls || []).find((t) => t.type === "post_stay");
-    if (!tpl) tpl = DEFAULT_TEMPLATES.find((t) => t.type === "post_stay");
-
     const contacts = await base44.asServiceRole.entities.Contact.list(null, 1000);
 
     let sent = 0;
     let failed = 0;
     for (const b of due) {
       try {
-        // Find or create a contact so we have a consent token to link to.
+        // Ensure a contact exists (with an unsubscribe_token) so the later
+        // consent email can link to /consent/<token>.
         let contact = (contacts || []).find((c) => c.email === b.guest_email);
         if (!contact) {
-          const token = (crypto.randomUUID?.() || String(Date.now())).replace(/-/g, "");
           contact = await base44.asServiceRole.entities.Contact.create({
             name: b.guest_name || "",
             email: b.guest_email,
@@ -49,27 +45,15 @@ export default async function (req) {
             first_seen: b.arrival_date,
             last_stayed: b.departure_date,
             stays_count: 1,
-            unsubscribe_token: token,
+            unsubscribe_token: randomToken(),
           });
           contacts.push(contact);
         }
-        const arrival = new Date(b.arrival_date + "T00:00:00Z");
-        const season = seasonForDate(arrival);
-        const dep = b.departure_date;
-        const vars = {
-          name: (b.guest_name || "there").split(" ")[0],
-          arrival_date: formatGuestDate(b.arrival_date),
-          departure_date: dep ? formatGuestDate(dep) : "",
-          nights: b.nights || "",
-          season: season ? ` · ${season.name}` : "",
-          offer_description: "",
-          offer_link: "",
-          unsubscribe_link: `${appBaseUrl()}/unsubscribe/${contact.unsubscribe_token}`,
-          consent_link: `${appBaseUrl()}/consent/${contact.unsubscribe_token}`,
-          review_link: `${appBaseUrl()}/review/${b.reference}`,
-        };
-        const { subject, text } = renderTemplate(tpl, vars);
-        const html = textToHtml(text);
+
+        const { subject, text, html } = buildPostStayEmail({
+          booking: b,
+          appBaseUrl: appBaseUrl(),
+        });
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: b.guest_email,
           subject,

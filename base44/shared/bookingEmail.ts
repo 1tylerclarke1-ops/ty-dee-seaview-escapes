@@ -679,6 +679,79 @@ export function buildBalancePaidEmail({ booking, breakdown, appBaseUrl }) {
   return { subject, text, html };
 }
 
+// Post-stay thank-you + review request — sent the morning after departure (1
+// day after, while the stay is still fresh). First-person, short, personal:
+// mentions the sea view from the van and the walk down into Polperro. One
+// call to action: a "Leave a review" button to /review/<reference>. No consent
+// ask, no other links. Signed "Tyler" — these are personal, in the owner's
+// voice, so a first name suits them (transactional emails stay signed "The
+// owners, Ty Dee Seaview Escapes"). Multipart: HTML (emailShell + button) and
+// a plain-text fallback that necessarily shows the URL.
+export function buildPostStayEmail({ booking, appBaseUrl }) {
+  const reviewUrl = `${appBaseUrl}/review/${booking.reference}`;
+  const subject = `Thank you for staying at Ty Dee`;
+
+  const text = [
+    `Hello ${booking.guest_name || ""},`,
+    ``,
+    `Thank you for staying with us — I hope the view from the van was everything you'd hoped for, and that you found time for the walk down into Polperro.`,
+    ``,
+    `If you have a spare minute, a short review helps us no end:`,
+    reviewUrl,
+    ``,
+    `Tyler`,
+    `Ty Dee Seaview Escapes`,
+  ].join("\n");
+
+  let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">Thank you for staying</h1>`;
+  body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
+  body += para(`Thank you for staying with us — I hope the view from the van was everything you'd hoped for, and that you found time for the walk down into Polperro.`);
+  body += para(`If you have a spare minute, a short review helps us no end.`);
+  body += `<p style="margin:24px 0 12px;">${buttonLink(reviewUrl, "Leave a review")}</p>`;
+  body += `<p style="margin:24px 0 0;font-size:15px;color:#1C2A31;">Tyler<br><span style="font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</span></p>`;
+  const html = emailShell({ title: subject, body });
+
+  return { subject, text, html };
+}
+
+// Marketing-consent request — sent 14 days after departure, only to guests who
+// left a review and have not already consented or unsubscribed. Three or four
+// lines, first-person, references their kind review, then a single one-click
+// "Say yes" button to /consent/<token>. No pressure, no marketing language, no
+// second ask — if ignored, it is never sent again (guarded by consent_email_sent
+// on the booking, set only on a successful send). Signed "Tyler". Multipart.
+export function buildConsentEmail({ booking, contact, appBaseUrl }) {
+  const consentUrl = `${appBaseUrl}/consent/${contact.unsubscribe_token}`;
+  const subject = `One last thing — Ty Dee Seaview Escapes`;
+
+  const text = [
+    `Hello ${booking.guest_name || ""},`,
+    ``,
+    `Thank you for the kind words — they mean a lot when you're a one-caravan operation.`,
+    ``,
+    `May I email you occasionally when a stay opens up? No more than once a month, only when something's free. One click to say yes:`,
+    consentUrl,
+    ``,
+    `If you'd rather not, that's the end of it — I won't ask again.`,
+    ``,
+    `Tyler`,
+    `Ty Dee Seaview Escapes`,
+  ].join("\n");
+
+  let body = `<h1 style="margin:0 0 4px;font-size:22px;line-height:1.2;color:#1C2A31;">One last thing</h1>`;
+  body += `<p style="margin:0 0 20px;font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</p>`;
+  body += para(`Hello ${escapeHtml(booking.guest_name || "")},`);
+  body += para(`Thank you for the kind words — they mean a lot when you're a one-caravan operation.`);
+  body += para(`May I email you occasionally when a stay opens up? No more than once a month, only when something's free.`);
+  body += `<p style="margin:24px 0 12px;">${buttonLink(consentUrl, "Say yes")}</p>`;
+  body += para(`If you'd rather not, that's the end of it — I won't ask again.`);
+  body += `<p style="margin:24px 0 0;font-size:15px;color:#1C2A31;">Tyler<br><span style="font-size:14px;color:#5E6E70;">Ty Dee Seaview Escapes</span></p>`;
+  const html = emailShell({ title: subject, body });
+
+  return { subject, text, html };
+}
+
 function formatEnquiryWhen(iso) {
   try {
     return new Date(iso).toLocaleString("en-GB", {

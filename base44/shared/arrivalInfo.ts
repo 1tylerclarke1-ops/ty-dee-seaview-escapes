@@ -87,7 +87,7 @@ export function buildArrivalInfoEmail({ booking, settings }) {
     ``,
     `Best regards,`,
     ``,
-    `Tyler Dee Clarke`,
+    `Tyler`,
   ].join("\n");
 
   // --- HTML ---
@@ -119,7 +119,7 @@ export function buildArrivalInfoEmail({ booking, settings }) {
   body += para(`If you have any questions or need assistance during your stay, please don't hesitate to get in touch. I'm available every day between 8:00am and 10:00pm and will be happy to help.`);
 
   body += para(`We hope you have a fantastic stay and make some wonderful memories!`);
-  body += `<p style="margin:24px 0 0;font-size:15px;color:#1C2A31;">Best regards,<br>Tyler Dee Clarke</p>`;
+  body += `<p style="margin:24px 0 0;font-size:15px;color:#1C2A31;">Best regards,<br>Tyler</p>`;
   const html = emailShell({ title: subject, body });
 
   return { subject, text, html };

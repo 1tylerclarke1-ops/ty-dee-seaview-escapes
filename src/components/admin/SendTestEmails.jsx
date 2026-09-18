@@ -3,21 +3,19 @@ import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { allowedLengthsForArrival } from "@/lib/pricing";
 
-// Admin-only "Send test emails" — renders the real guest confirmation and the
-// real owner digest for a synthetic booking priced from the live engine, and
-// sends both to an entered address. Nothing persists except two EmailLog
-// rows marked as tests. The backend function (sendTestBookingEmails) does
-// all the work; this is just the form + result display.
+// Admin-only "Send test emails" — renders the real production email templates
+// for a synthetic booking priced from the live engine, and sends them to an
+// address you enter. Choose which email: the booking confirmation + owner
+// digest, the post-stay review request, or the marketing-consent ask. Nothing
+// is saved — no booking, no contact, no review, no consent record — only an
+// EmailLog row marked as a test. Every subject is prefixed [TEST].
 export default function SendTestEmails() {
   const def = new Date();
   def.setDate(def.getDate() + 75);
   const [arrivalDate, setArrivalDate] = useState(def.toISOString().slice(0, 10));
   const [nights, setNights] = useState(7);
+  const [which, setWhich] = useState("booking");
 
-  // The test must respect the real booking rules — show the allowed stay
-  // lengths for the chosen arrival and clamp to a valid value, so the admin
-  // can never submit a combination that could never be booked (e.g. 3 nights
-  // on a Monday, which only allows 4 or multiples of 7).
   const allowedLengths = useMemo(() => {
     try {
       return allowedLengthsForArrival(new Date(arrivalDate + "T00:00:00Z"));
@@ -34,12 +32,15 @@ export default function SendTestEmails() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
+  const emailCount = which === "booking" ? 2 : 1;
+
   const send = async () => {
     setSending(true);
     setError(null);
     setResult(null);
     try {
       const res = await base44.functions.invoke("sendTestBookingEmails", {
+        which,
         arrival_date: arrivalDate,
         nights: Number(nights),
         recipient_email: recipient,
@@ -63,11 +64,31 @@ export default function SendTestEmails() {
   return (
     <div className="border border-white/15 bg-white/[0.03] p-6 md:p-8">
       <p className="text-sm text-white/50">
-        Builds a realistic booking from the live pricing engine and sends the real guest confirmation and owner digest to an address you enter. Nothing is saved — no booking, no blocked dates, no counter changes — only two EmailLog rows marked as tests. Both subjects are prefixed [TEST].
+        Builds a realistic booking from the live pricing engine and sends the real production email to an address you enter. Nothing is saved — no booking, no contact, no review, no consent record — only an EmailLog row marked as a test. The subject is prefixed [TEST].
       </p>
 
+      <div className="mt-4">
+        <span className="block text-xs text-white/50 mb-2">Which email</span>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: "booking", label: "Booking confirmation + digest" },
+            { id: "post_stay", label: "Post-stay review request" },
+            { id: "consent", label: "Marketing-consent ask" },
+          ].map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setWhich(opt.id)}
+              className={`px-3 py-2 text-sm border min-h-[44px] ${which === opt.id ? "bg-white text-ink border-white" : "bg-transparent text-white/70 border-white/20 hover:border-white/40"}`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="mt-4 border border-signal/30 bg-signal/10 p-3 text-sm text-signal">
-        This sends <strong>2 emails</strong> to the address below in one click. The per-recipient daily cap is roughly 3–4 — sending leaves little room for real emails to that address today. Use a throwaway address if you can.
+        This sends <strong>{emailCount} email{emailCount === 1 ? "" : "s"}</strong> to the address below in one click. The per-recipient daily cap is roughly 3–4 — sending leaves little room for real emails to that address today. Use a throwaway address if you can.
       </div>
 
       <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -98,7 +119,7 @@ export default function SendTestEmails() {
           disabled={sending || !recipient || !nightsValid}
           className="bg-white text-ink px-5 py-2.5 text-sm font-medium hover:bg-white/90 disabled:opacity-50 min-h-[44px]"
         >
-          {sending ? "Sending…" : "Send test emails"}
+          {sending ? "Sending…" : "Send test email"}
         </button>
       </div>
 
@@ -134,12 +155,14 @@ function Field({ label, children }) {
 }
 
 function Result({ result }) {
-  const { guest, owner, breakdown, logs } = result;
+  const { guest, owner, post_stay, consent, breakdown, logs } = result;
   return (
     <div className="mt-6 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <SendStatus title="Guest confirmation" data={guest} />
-        <SendStatus title="Owner digest" data={owner} />
+        {guest && <SendStatus title="Guest confirmation" data={guest} />}
+        {owner && <SendStatus title="Owner digest" data={owner} />}
+        {post_stay && <SendStatus title="Post-stay review request" data={post_stay} />}
+        {consent && <SendStatus title="Marketing-consent ask" data={consent} />}
       </div>
       {breakdown && (
         <div className="border border-white/15 bg-white/[0.02] p-4 text-sm text-white/70">

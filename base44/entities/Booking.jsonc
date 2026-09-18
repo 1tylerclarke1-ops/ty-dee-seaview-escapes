@@ -238,6 +238,11 @@
       "default": false,
       "title": "Post-stay email sent"
     },
+    "consent_email_sent": {
+      "type": "boolean",
+      "default": false,
+      "title": "Marketing-consent email sent (14 days after departure, reviewers only)"
+    },
     "arrival_info_sent_at": {
       "type": "string",
       "format": "date-time",

@@ -1,6 +1,6 @@
 {
-  "description": "Daily 09:00 \u2014 sends the post-stay thank-you + review request the morning after departure (1 day after, while the stay is still fresh). The consent ask moved to its own email 14 days later.",
-  "name": "Post-stay emails",
+  "description": "Daily 09:00 \u2014 sends the marketing-consent ask 14 days after departure, only to guests who left a review and have not already consented or unsubscribed. One ask, no chase.",
+  "name": "Consent emails",
   "trigger": {
     "condition": null,
     "config": {
@@ -21,7 +21,7 @@
   "definition": {
     "document": {
       "dsl": "1.0.0",
-      "name": "post_stay_emails",
+      "name": "consent_emails",
       "version": "1.0",
       "namespace": "base44"
     },
@@ -30,13 +30,13 @@
         "run_job": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "sendPostStayEmails",
+            "function_name": "sendConsentEmails",
             "args": {}
           },
           "then": "end",
           "x-base44": {
-            "title": "Send post-stay emails",
-            "description": "Thank-you + review request, the morning after departure"
+            "title": "Send consent emails",
+            "description": "Consent ask, 14 days after departure, to reviewers only"
           }
         }
       }

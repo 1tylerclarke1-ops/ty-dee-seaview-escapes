@@ -1,11 +1,14 @@
-// Admin-only "send test emails" — renders the REAL guest confirmation and the
-// REAL owner digest for a synthetic booking built from the live pricing
-// engine, and sends both to an address the admin enters. Nothing persists
-// except two EmailLog rows marked as tests: no Booking record is created, no
-// dates are blocked, no counter/pitch-fee is touched. Both subjects are
-// prefixed [TEST] so they can never be mistaken for a real booking. The owner
-// email is sent immediately (not waiting for the 09:00 digest). The UI warns
-// that this consumes ~2 of the per-recipient daily email cap (~3-4).
+// Admin-only "send test emails" — renders the REAL production email templates
+// for a synthetic booking built from the live pricing engine, and sends them
+// to an address the admin enters. `which` selects the email(s):
+//   "booking"   (default) — guest confirmation + owner digest (2 emails)
+//   "post_stay"           — post-stay thank-you + review request (1 email)
+//   "consent"             — marketing-consent ask, using a synthetic contact
+//                          with an unsubscribe_token (1 email)
+// Nothing persists except EmailLog rows marked as tests: no Booking, Contact,
+// Review, or consent record is created, no dates are blocked, no counter/pitch-
+// fee is touched. Every subject is prefixed [TEST] so it can never be mistaken
+// for a real email. The UI warns about the per-recipient daily email cap.
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.44";
 import { calculatePrice, isPayableInFullIso, balanceDueIso } from "../../shared/pricing.ts";
 import { allowedLengthsForArrival, seasonForDate } from "../../shared/bookingRules.ts";
@@ -15,11 +18,16 @@ import {
   computeCoolingOffExpiry,
 } from "../../shared/cancellation.ts";
 import { DEFAULT_FACILITIES_SETTINGS } from "../../shared/facilities.ts";
-import { bookingCancelToken } from "../../shared/contacts.ts";
+import { bookingCancelToken, randomToken } from "../../shared/contacts.ts";
 import { formatBookingReference } from "../../shared/bookingReference.ts";
 import { logEmailAttempt } from "../../shared/emailLog.ts";
 import { appBaseUrl } from "../../shared/origin.ts";
-import { buildGuestConfirmationEmail, buildOwnerDigestEmail } from "../../shared/bookingEmail.ts";
+import {
+  buildGuestConfirmationEmail,
+  buildOwnerDigestEmail,
+  buildPostStayEmail,
+  buildConsentEmail,
+} from "../../shared/bookingEmail.ts";
 
 export default async function (req) {
   try {
@@ -30,6 +38,7 @@ export default async function (req) {
     }
 
     const body = await req.json().catch(() => ({}));
+    const which = String(body.which || "booking");
     const arrival_date = String(body.arrival_date || "").trim();
     const nights = Number(body.nights);
     const recipient = String(body.recipient_email || "").trim().toLowerCase();
@@ -44,8 +53,7 @@ export default async function (req) {
     }
 
     // Enforce the real booking rules — refuse an invalid arrival/length
-    // combination (e.g. a Monday arrival only allows 4 nights or multiples of
-    // 7), so a test email never renders a stay that could never be booked.
+    // combination so a test email never renders a stay that could never be booked.
     const arrivalDate = new Date(arrival_date + "T00:00:00Z");
     if (!seasonForDate(arrivalDate)) {
       return Response.json({ error: "Arrival date is outside the booking season." }, { status: 400 });
@@ -101,22 +109,57 @@ export default async function (req) {
       cancel_token: bookingCancelToken(),
     };
 
-    // Real guest confirmation template.
-    const guest = buildGuestConfirmationEmail({
-      booking, breakdown, payableInFull, settings,
-      coolingOffIso, appBaseUrl: appBaseUrl(),
-    });
-    const guestSubject = `[TEST] ${guest.subject}`;
+    const base = appBaseUrl();
+    const breakdownOut = {
+      seasonName: breakdown.season ? (breakdown.season.name || null) : null,
+      total: breakdown.total,
+      deposit: breakdown.deposit,
+      balance: breakdown.balance,
+      payableInFull,
+      balanceDue: balanceDueIso(arrival_date),
+    };
 
-    // Real owner digest template — with just this one booking.
-    const owner = buildOwnerDigestEmail({
-      bookings: [booking],
-      enquiries: [],
-      appBaseUrl: appBaseUrl(),
-    });
+    if (which === "post_stay") {
+      const built = buildPostStayEmail({ booking, appBaseUrl: base });
+      const subject = `[TEST] ${built.subject}`;
+      let ok = false, err = null;
+      try {
+        await base44.asServiceRole.integrations.Core.SendEmail({ to: recipient, subject, text: built.text, html: built.html });
+        ok = true;
+      } catch (e) { err = e?.message || String(e); }
+      await logEmailAttempt(base44, { booking_id: null, recipient, template: "test_post_stay", subject, ok, error: err });
+      const logs = await recentTestLogs(base44, recipient, ["test_post_stay"]);
+      return Response.json({ ok: true, post_stay: { ok, error: err, subject }, breakdown: breakdownOut, logs });
+    }
+
+    if (which === "consent") {
+      // Synthetic contact — NOT persisted. Needs an unsubscribe_token for the
+      // /consent link, exactly like a real contact would have.
+      const contact = {
+        email: recipient,
+        name: guest_name,
+        unsubscribe_token: randomToken(),
+        marketing_consent: false,
+        unsubscribed: false,
+      };
+      const built = buildConsentEmail({ booking, contact, appBaseUrl: base });
+      const subject = `[TEST] ${built.subject}`;
+      let ok = false, err = null;
+      try {
+        await base44.asServiceRole.integrations.Core.SendEmail({ to: recipient, subject, text: built.text, html: built.html });
+        ok = true;
+      } catch (e) { err = e?.message || String(e); }
+      await logEmailAttempt(base44, { booking_id: null, recipient, template: "test_consent", subject, ok, error: err });
+      const logs = await recentTestLogs(base44, recipient, ["test_consent"]);
+      return Response.json({ ok: true, consent: { ok, error: err, subject }, breakdown: breakdownOut, logs });
+    }
+
+    // Default: "booking" — guest confirmation + owner digest.
+    const guest = buildGuestConfirmationEmail({ booking, breakdown, payableInFull, settings, coolingOffIso, appBaseUrl: base });
+    const guestSubject = `[TEST] ${guest.subject}`;
+    const owner = buildOwnerDigestEmail({ bookings: [booking], enquiries: [], appBaseUrl: base });
     const ownerSubject = `[TEST] ${owner.subject}`;
 
-    // Send both to the entered address (immediately — no digest wait).
     let guestOk = false, guestError = null;
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({ to: recipient, subject: guestSubject, text: guest.text, html: guest.html });
@@ -129,42 +172,30 @@ export default async function (req) {
       ownerOk = true;
     } catch (e) { ownerError = e?.message || String(e); }
 
-    // The only thing that persists: two EmailLog rows marked as tests.
-    await logEmailAttempt(base44, {
-      booking_id: null, recipient,
-      template: "test_booking_confirmation_guest",
-      subject: guestSubject, ok: guestOk, error: guestError,
-    });
-    await logEmailAttempt(base44, {
-      booking_id: null, recipient,
-      template: "test_owner_digest",
-      subject: ownerSubject, ok: ownerOk, error: ownerError,
-    });
+    await logEmailAttempt(base44, { booking_id: null, recipient, template: "test_booking_confirmation_guest", subject: guestSubject, ok: guestOk, error: guestError });
+    await logEmailAttempt(base44, { booking_id: null, recipient, template: "test_owner_digest", subject: ownerSubject, ok: ownerOk, error: ownerError });
 
-    // Return the actual EmailLog rows so the admin sees the audit trail.
-    let logs = [];
-    try {
-      logs = await base44.asServiceRole.entities.EmailLog.filter(
-        { recipient, template: { $in: ["test_booking_confirmation_guest", "test_owner_digest"] } },
-        "-sent_at", 5
-      );
-    } catch {}
+    const logs = await recentTestLogs(base44, recipient, ["test_booking_confirmation_guest", "test_owner_digest"]);
 
     return Response.json({
       ok: true,
       guest: { ok: guestOk, error: guestError, subject: guestSubject },
       owner: { ok: ownerOk, error: ownerError, subject: ownerSubject },
-      breakdown: {
-        seasonName: breakdown.season ? (breakdown.season.name || null) : null,
-        total: breakdown.total,
-        deposit: breakdown.deposit,
-        balance: breakdown.balance,
-        payableInFull,
-        balanceDue: balanceDueIso(arrival_date),
-      },
-      logs: logs || [],
+      breakdown: breakdownOut,
+      logs,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
+  }
+}
+
+async function recentTestLogs(base44, recipient, templates) {
+  try {
+    return await base44.asServiceRole.entities.EmailLog.filter(
+      { recipient, template: { $in: templates } },
+      "-sent_at", 5
+    ) || [];
+  } catch {
+    return [];
   }
 }
