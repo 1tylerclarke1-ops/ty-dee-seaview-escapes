@@ -3,8 +3,12 @@
 // a discount schedule — offers are one-off, private by default, and framed
 // as late availability rather than "last minute discount".
 
-export const CLEANING_COST = 80;
-export const MIN_NET_PER_NIGHT = 60;
+import { PRICING_SETTINGS } from "./pricing.ts";
+// Single source of truth for the floor lives in PRICING_SETTINGS (shared with
+// the LOS discount floor check). Re-exported here so existing callers keep
+// working; the values are 80 and 60 respectively.
+export const CLEANING_COST = PRICING_SETTINGS.cleaning_cost;
+export const MIN_NET_PER_NIGHT = PRICING_SETTINGS.min_net_per_night;
 
 // Seasons never auto-discounted. The ladder never suggests an offer for these;
 // the gaps view marks them "protected" and disables the one-click button.

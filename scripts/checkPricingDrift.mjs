@@ -73,6 +73,12 @@ const SHARED_SCALAR_KEYS = [
   "max_dogs",
   "deposit_percentage",
   "balance_due_days_before_arrival",
+  "min_net_per_night",
+  "cleaning_cost",
+  "los_discount_7_nights",
+  "los_discount_14_nights",
+  "los_discount_21_nights",
+  "los_discount_28_nights",
 ];
 
 export function checkPricingDrift() {

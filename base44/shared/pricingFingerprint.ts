@@ -16,7 +16,13 @@ export function pricingFingerprint(scalars, seasons, bookingRules) {
       dog_fee_per_dog: scalars.dog_fee_per_dog,
       max_dogs: scalars.max_dogs,
       deposit_percentage: scalars.deposit_percentage,
-      balance_due_days_before_arrival: scalars.balance_due_days_before_arrival
+      balance_due_days_before_arrival: scalars.balance_due_days_before_arrival,
+      min_net_per_night: scalars.min_net_per_night,
+      cleaning_cost: scalars.cleaning_cost,
+      los_discount_7_nights: scalars.los_discount_7_nights,
+      los_discount_14_nights: scalars.los_discount_14_nights,
+      los_discount_21_nights: scalars.los_discount_21_nights,
+      los_discount_28_nights: scalars.los_discount_28_nights
     },
     seasons: seasons.map((s) => ({
       name: s.name,

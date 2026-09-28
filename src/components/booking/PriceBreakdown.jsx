@@ -13,6 +13,12 @@ export default function PriceBreakdown({ breakdown, arrival }) {
   if (breakdown.shortBreakSupplement > 0) {
     rows.push({ label: "Short break supplement", value: gbpMoney(breakdown.shortBreakSupplement) });
   }
+  if (breakdown.losDiscount > 0) {
+    rows.push({
+      label: `${breakdown.losDiscountTierNights}-night discount (${breakdown.losDiscountPercent}%)`,
+      value: `−${gbpMoney(breakdown.losDiscount)}`,
+    });
+  }
   if (breakdown.dogFee > 0) {
     rows.push({ label: `Dogs (${breakdown.dogs})`, value: gbpMoney(breakdown.dogFee) });
   }

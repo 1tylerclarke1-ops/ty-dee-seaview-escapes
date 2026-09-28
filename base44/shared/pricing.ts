@@ -15,6 +15,17 @@ export const PRICING_SETTINGS = {
   max_dogs: 2,
   deposit_percentage: 25,
   balance_due_days_before_arrival: 60,
+  // Net-per-night floor and cleaning cost used by the LOS discount floor check.
+  // Mirrored from offers.ts (the offer floor) so there is one source of truth.
+  min_net_per_night: 60,
+  cleaning_cost: 80,
+  // Length-of-stay discount tiers (percent). A stay earns the highest tier whose
+  // threshold it meets or exceeds; under 7 nights earns nothing. Applied to the
+  // accommodation subtotal after nightly rates resolve, before the dog fee.
+  los_discount_7_nights: 10,
+  los_discount_14_nights: 15,
+  los_discount_21_nights: 15,
+  los_discount_28_nights: 20,
 };
 
 export function roundTo(value, increment) {
@@ -63,9 +74,50 @@ export function isPayableInFullIso(arrivalIso, todayIsoValue) {
   return balanceDueIso(arrivalIso) <= today;
 }
 
+// Length-of-stay discount tier for a stay of N nights. Tiers are cumulative:
+// a stay of N nights earns the highest configured tier whose threshold N
+// meets or exceeds. Stays under 7 nights earn no discount.
+export function losDiscountPercent(nights) {
+  const s = PRICING_SETTINGS;
+  if (nights >= 28) return s.los_discount_28_nights;
+  if (nights >= 21) return s.los_discount_21_nights;
+  if (nights >= 14) return s.los_discount_14_nights;
+  if (nights >= 7) return s.los_discount_7_nights;
+  return 0;
+}
+
+export function losDiscountTierNights(nights) {
+  if (nights >= 28) return 28;
+  if (nights >= 21) return 21;
+  if (nights >= 14) return 14;
+  if (nights >= 7) return 7;
+  return 0;
+}
+
+// Computes the LOS discount on the accommodation subtotal (nights + short-break
+// supplement). Never breaches the min_net_per_night floor: if the full tier
+// discount would push net per night (after cleaning) below the floor, the
+// discount is reduced to the largest amount that still clears it — or to zero
+// if the base is already at the floor. `floorLimited` is true whenever the
+// applied amount is less than the requested tier amount, so admin can be told
+// the discount was capped.
+export function computeLosDiscount(nights, accommodationSubtotal) {
+  const pct = losDiscountPercent(nights);
+  const tierNights = losDiscountTierNights(nights);
+  if (!pct || accommodationSubtotal <= 0) {
+    return { amount: 0, percent: 0, tierNights: 0, floorLimited: false };
+  }
+  const requested = Math.round((accommodationSubtotal * pct) / 100);
+  const maxDiscount = accommodationSubtotal -
+    (PRICING_SETTINGS.min_net_per_night * nights + PRICING_SETTINGS.cleaning_cost);
+  const amount = Math.max(0, Math.min(requested, Math.max(0, maxDiscount)));
+  return { amount, percent: pct, tierNights, floorLimited: amount < requested };
+}
+
 // Full price breakdown for a stay. All nights priced at the arrival season's
-// rates. Dog supplement added once per stay (included in deposit). Mirrors
-// src/lib/pricing.js calculatePrice exactly.
+// rates. The LOS discount is applied to the accommodation subtotal (nights +
+// short-break supplement) before the dog fee. Dog supplement added once per
+// stay (included in deposit). Mirrors src/lib/pricing.js calculatePrice exactly.
 export function calculatePrice(arrival, nights, dogs = 0) {
   const season = seasonForDate(arrival);
   if (!season) return null;
@@ -77,13 +129,15 @@ export function calculatePrice(arrival, nights, dogs = 0) {
     nightsSubtotal += isWeekendNight(nightDate) ? wknd : wd;
   }
   const shortBreakSupplement = nights < 7 ? PRICING_SETTINGS.short_break_supplement : 0;
+  const accommodationSubtotal = nightsSubtotal + shortBreakSupplement;
+  const los = computeLosDiscount(nights, accommodationSubtotal);
   const dogCount = Math.min(dogs || 0, PRICING_SETTINGS.max_dogs);
   const dogFee = dogCount
     ? PRICING_SETTINGS.dog_fee_per_dog
       ? PRICING_SETTINGS.dog_fee * dogCount
       : PRICING_SETTINGS.dog_fee
     : 0;
-  const total = nightsSubtotal + shortBreakSupplement + dogFee;
+  const total = accommodationSubtotal - los.amount + dogFee;
   // Deposit rounds UP (ceil), never down — £82.50 → £83.
   const deposit = Math.ceil((total * PRICING_SETTINGS.deposit_percentage) / 100);
   const balance = total - deposit;
@@ -92,6 +146,11 @@ export function calculatePrice(arrival, nights, dogs = 0) {
     nights,
     nightsSubtotal,
     shortBreakSupplement,
+    accommodationSubtotal,
+    losDiscount: los.amount,
+    losDiscountPercent: los.percent,
+    losDiscountTierNights: los.tierNights,
+    losDiscountFloorLimited: los.floorLimited,
     dogFee,
     total,
     deposit,

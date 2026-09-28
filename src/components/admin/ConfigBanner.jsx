@@ -47,6 +47,30 @@ export default function ConfigBanner() {
     );
   }
 
+  if (status.los_floor_warnings && status.los_floor_warnings.length) {
+    return (
+      <div className="mb-10 border border-signal/50 bg-signal/10 p-5 flex items-start gap-3">
+        <AlertTriangle className="w-5 h-5 text-signal flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-white font-medium">Length-of-stay discount capped by the £{PRICING_SETTINGS.min_net_per_night}/night floor</p>
+          <p className="text-sm text-white/60 mt-1">
+            The full discount isn't applied in these seasons because it would drop net per night below the floor:
+          </p>
+          <ul className="mt-2 text-sm text-white/70 tnum space-y-0.5">
+            {status.los_floor_warnings.map((w) => (
+              <li key={`${w.season}-${w.nights}`}>
+                {w.season} · {w.nights} nights · {w.percent}% requested → £{w.applied} applied
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-white/40 mt-2">
+            Lower the discount for these seasons, or accept the cap — the floor protects your net per night.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (status.owner_email_set === false) {
     return (
       <div className="mb-10 border border-signal/50 bg-signal/10 p-5 flex items-start gap-3">
