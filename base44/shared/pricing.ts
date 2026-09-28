@@ -24,8 +24,13 @@ export const PRICING_SETTINGS = {
   // accommodation subtotal after nightly rates resolve, before the dog fee.
   los_discount_7_nights: 10,
   los_discount_14_nights: 15,
-  los_discount_21_nights: 15,
-  los_discount_28_nights: 20,
+  los_discount_21_nights: 20,
+  los_discount_28_nights: 25,
+  // Per-season LOS discount overrides. A season named here can set any subset of
+  // the four tier percentages; missing tiers fall back to the defaults above.
+  // Empty by default — populate e.g. { "Peak summer": { los_discount_7_nights: 0 } }
+  // to exclude a season's 7-night stays from the discount.
+  los_discount_overrides: {},
 };
 
 export function roundTo(value, increment) {
@@ -77,12 +82,14 @@ export function isPayableInFullIso(arrivalIso, todayIsoValue) {
 // Length-of-stay discount tier for a stay of N nights. Tiers are cumulative:
 // a stay of N nights earns the highest configured tier whose threshold N
 // meets or exceeds. Stays under 7 nights earn no discount.
-export function losDiscountPercent(nights) {
+export function losDiscountPercent(nights, seasonName) {
   const s = PRICING_SETTINGS;
-  if (nights >= 28) return s.los_discount_28_nights;
-  if (nights >= 21) return s.los_discount_21_nights;
-  if (nights >= 14) return s.los_discount_14_nights;
-  if (nights >= 7) return s.los_discount_7_nights;
+  const ov = seasonName && s.los_discount_overrides ? s.los_discount_overrides[seasonName] : null;
+  const pick = (key) => (ov && ov[key] != null ? ov[key] : s[key]);
+  if (nights >= 28) return pick("los_discount_28_nights");
+  if (nights >= 21) return pick("los_discount_21_nights");
+  if (nights >= 14) return pick("los_discount_14_nights");
+  if (nights >= 7) return pick("los_discount_7_nights");
   return 0;
 }
 
@@ -101,8 +108,8 @@ export function losDiscountTierNights(nights) {
 // if the base is already at the floor. `floorLimited` is true whenever the
 // applied amount is less than the requested tier amount, so admin can be told
 // the discount was capped.
-export function computeLosDiscount(nights, accommodationSubtotal) {
-  const pct = losDiscountPercent(nights);
+export function computeLosDiscount(nights, accommodationSubtotal, seasonName) {
+  const pct = losDiscountPercent(nights, seasonName);
   const tierNights = losDiscountTierNights(nights);
   if (!pct || accommodationSubtotal <= 0) {
     return { amount: 0, percent: 0, tierNights: 0, floorLimited: false };
@@ -130,7 +137,7 @@ export function calculatePrice(arrival, nights, dogs = 0) {
   }
   const shortBreakSupplement = nights < 7 ? PRICING_SETTINGS.short_break_supplement : 0;
   const accommodationSubtotal = nightsSubtotal + shortBreakSupplement;
-  const los = computeLosDiscount(nights, accommodationSubtotal);
+  const los = computeLosDiscount(nights, accommodationSubtotal, season.name);
   const dogCount = Math.min(dogs || 0, PRICING_SETTINGS.max_dogs);
   const dogFee = dogCount
     ? PRICING_SETTINGS.dog_fee_per_dog

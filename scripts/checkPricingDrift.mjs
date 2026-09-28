@@ -79,6 +79,7 @@ const SHARED_SCALAR_KEYS = [
   "los_discount_14_nights",
   "los_discount_21_nights",
   "los_discount_28_nights",
+  "los_discount_overrides",
 ];
 
 export function checkPricingDrift() {

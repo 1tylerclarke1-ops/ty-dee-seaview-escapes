@@ -22,7 +22,8 @@ export function pricingFingerprint(scalars, seasons, bookingRules) {
       los_discount_7_nights: scalars.los_discount_7_nights,
       los_discount_14_nights: scalars.los_discount_14_nights,
       los_discount_21_nights: scalars.los_discount_21_nights,
-      los_discount_28_nights: scalars.los_discount_28_nights
+      los_discount_28_nights: scalars.los_discount_28_nights,
+      los_discount_overrides: scalars.los_discount_overrides
     },
     seasons: seasons.map((s) => ({
       name: s.name,
