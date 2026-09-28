@@ -29,7 +29,7 @@ export const PRICING_SETTINGS = {
   // Per-season LOS discount overrides. A season named here can set any subset of
   // the four tier percentages; missing tiers fall back to the defaults above.
   // Empty by default — populate it to exclude a season tier from the discount.
-  los_discount_overrides: {},
+  los_discount_overrides: { "Peak summer": { los_discount_7_nights: 0 } },
 };
 
 export function roundTo(value, increment) {

@@ -35,7 +35,7 @@ export const PRICING_SETTINGS = {
   // Per-season LOS discount overrides. A season named here can set any subset of
   // the four tier percentages; missing tiers fall back to the defaults above.
   // Empty by default — populate it to exclude a season tier from the discount.
-  los_discount_overrides: {},
+  los_discount_overrides: { "Peak summer": { los_discount_7_nights: 0 } },
   seasons: [
     { name: "Autumn",             start_date: "2026-10-05", end_date: "2026-10-22", nightly_rate:  80, weekend_modifier: 19 },
     { name: "October half-term",   start_date: "2026-10-23", end_date: "2026-11-02", nightly_rate:  95, weekend_modifier: 16 },
