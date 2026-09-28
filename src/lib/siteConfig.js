@@ -10,6 +10,12 @@ export const MAX_GUESTS = 6;
 
 export const SITE_ORIGIN = "https://tydeeseaviewescapes.co.uk";
 
+// 1200×630 server-side crop of the sea-view photo for Open Graph / Twitter
+// cards. Served on the fly by the Wix Media Platform (media.base44.com),
+// so no separate file is stored. Absolute URL — social scrapers need it.
+export const SOCIAL_IMAGE =
+  "https://media.base44.com/images/public/6a8c357fbddaa3182705f397/eba602fdb_View.jpg/v1/fill/w_1200,h_630,al_c,q_90/eba602fdb_View.jpg";
+
 export const NAV_LINKS = [
   { label: "Home", path: "/" },
   { label: "The Caravan", path: "/caravan" },
