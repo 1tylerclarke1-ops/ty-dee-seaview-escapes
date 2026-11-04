@@ -6,6 +6,7 @@ import Photo from "@/components/Photo";
 import Lightbox from "@/components/Lightbox";
 import Seo from "@/components/Seo";
 import Reviews from "@/components/Reviews";
+import WinterPromo from "@/components/WinterPromo";
 import { BUSINESS } from "@/lib/siteConfig";
 import { lodgingSchema, SITE_ORIGIN } from "@/lib/structuredData";
 
@@ -78,6 +79,8 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      <WinterPromo />
 
       {/* Contained pair — exterior + pitch (image left) */}
       <section className="max-w-[1400px] mx-auto px-6 md:px-10 py-20 md:py-28">
