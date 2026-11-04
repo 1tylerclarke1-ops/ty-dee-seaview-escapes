@@ -46,12 +46,16 @@ export default function WinterPromo() {
           className="block w-full h-full"
         />
         <div className="absolute inset-0 scrim-bottom" />
-        <div className="absolute inset-0 flex items-end">
-          <div className="max-w-[1400px] mx-auto px-6 md:px-10 pb-12 w-full">
+        <div className="absolute inset-x-0 top-0">
+          <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-6 md:pt-8">
             <span className="inline-block text-xs tracking-[0.2em] uppercase bg-white/90 text-ink px-4 py-2">
               November — March
             </span>
-            <h2 className="mt-5 text-white hero-text-shadow text-4xl md:text-6xl leading-tight">
+          </div>
+        </div>
+        <div className="absolute inset-0 flex items-end">
+          <div className="max-w-[1400px] mx-auto px-6 md:px-10 pb-12 w-full">
+            <h2 className="text-white hero-text-shadow text-4xl md:text-6xl leading-tight">
               Winter by the Cornish coast
             </h2>
             <p className="mt-4 text-white/90 text-lg md:text-xl max-w-xl">
@@ -62,27 +66,27 @@ export default function WinterPromo() {
       </div>
 
       {/* Overlapping card */}
-      <div className="relative -mt-10 md:-mt-16 mx-6 md:mx-auto md:max-w-[1200px] bg-surface border border-line p-8 md:p-12">
+      <div className="relative -mt-10 md:-mt-16 mx-6 md:mx-auto md:max-w-[1200px] bg-surface border border-line rounded-t-lg p-8 md:p-12">
         <div className="grid md:grid-cols-12 gap-10">
           <div className="md:col-span-7">
             <div className="flex gap-4 py-5 border-b border-line">
               <Waves className="w-6 h-6 text-sea shrink-0" strokeWidth={1.5} />
               <div>
-                <p className="text-ink font-medium">The coast, at its quietest</p>
+                <p className="font-display text-lg text-ink">The coast, at its quietest</p>
                 <p className="mt-1 text-ink-soft">Calmer beaches, harbour villages and fresh sea air, without the crowds.</p>
               </div>
             </div>
             <div className="flex gap-4 py-5 border-b border-line">
               <Flame className="w-6 h-6 text-sea shrink-0" strokeWidth={1.5} />
               <div>
-                <p className="text-ink font-medium">A warm welcome back</p>
+                <p className="font-display text-lg text-ink">A warm welcome back</p>
                 <p className="mt-1 text-ink-soft">Settle in beside the electric fireplace, with your own space to unwind.</p>
               </div>
             </div>
             <div className="flex gap-4 py-5">
               <CalendarDays className="w-6 h-6 text-sea shrink-0" strokeWidth={1.5} />
               <div>
-                <p className="text-ink font-medium">A few days, or a full week</p>
+                <p className="font-display text-lg text-ink">A few days, or a full week</p>
                 <p className="mt-1 text-ink-soft">Three nights from Friday, four from Monday, or longer if you prefer.</p>
               </div>
             </div>
